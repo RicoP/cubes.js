@@ -25,7 +25,7 @@ vec4 fragment() {
 	vec2 uv     = vTextureuv; 
 	vec3 color  = texture2D(uTexture, uv).rgb; 
 
-	return vec4( color + normal, 1.0); 
+	return vec4(.6, .0, .2, 1.0); 
 }
 
 
