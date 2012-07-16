@@ -33,6 +33,16 @@ var modelview = new Float32Array(16);
 var idgen = new cubes.Id.Generator(); 
 var selectedid = 0; 
 
+var cubeSides = [
+	vec3.create([ 0, 0, 0]), //None 
+	vec3.create([ 0,-1, 0]), //1 
+	vec3.create([ 0, 0,-1]), //2 
+	vec3.create([ 1, 0, 0]), //3 
+	vec3.create([-1, 0, 0]), //4 
+	vec3.create([ 0, 0, 1]), //5 
+	vec3.create([ 0, 1, 0])  //6 
+];
+
 var objects = [
 	{
 		position : [ 0,0,0 ],
@@ -108,12 +118,18 @@ function draw(info) {
 		var y = canvas.height - tapEvent.position[0].y; 
 		
 		gl.readPixels(x, y, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, buf); 
-		var r,g,b; 
+		var r,g,b,a; 
 		r = buf[0]; 
 		g = buf[1]; 
 		b = buf[2]; 
+		a = buf[3]; 
 
-		selectedid = cubes.Id.fromColor(r,g,b).asNumber(); 
+		var side = r; 
+
+		selectedid = cubes.Id.fromColor(0,g,b).asNumber(); 
+	
+		dlog(cubeSides[side]); 
+		dlog(r,g,b,a); 
 		dlog(selectedid); 
 	}
 
@@ -139,8 +155,8 @@ function drawCubes(program) {
 	if(aNormal !== -1) { 
 		gl.vertexAttribPointer(aNormal, 4, GL_FLOAT, false, cube.stride, cube.noffset); 
 		gl.enableVertexAttribArray(aNormal); 
-	}
-	
+	} 	
+
 	for(var i = 0; i != objects.length; i++) { 
 		var object = objects[i]; 
 		if(uIdColor) {
