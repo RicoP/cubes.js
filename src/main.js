@@ -7,8 +7,9 @@
 "use strict"; 
 
 var cube; 
+var program; 
 
-var canvas = document.getElementByTagName("canvas")[0]; 
+var canvas = document.getElementsByTagName("canvas")[0]; 
 var gl = null; 
 
 #ifdef DEBUG 
@@ -26,22 +27,27 @@ var camera = mat4.lookAt(cameraPos, vec3.add(cameraPos, cameraNormal, cameraDir)
 
 
 GLT.loadmanager.loadFiles({
-	"files" : ["cube.obj"], 
+	"files" : ["cube.obj", "diffuse.shader"], 
 	"error" : function(file, err) {
 		derr(file, err); 
 	}, 
 	"finished" : function(files) {
 		cube = files["cube.obj"]; 
+		program = GLT.SHADER.compileProgram(gl,files["diffuse.shader"]);
 		dlog("LOADED"); 
 		start(); 
+		GLT.requestGameFrame(draw); 
 	}
 });
 
 function start() {
 	gl.enable( GL_DEPTH_TEST ); 
 	//gl.enable( GL_CULL_FACE ); 
-	gl.clearColor(0.0f / 255.0f, 68.0f / 255.0f, 153.0f / 255.0f, 1.0);
-	
+	gl.clearColor(0 / 255, 68 / 255, 153 / 255, 1);
 }
+
+function draw(time) {
+	GLT.requestGameFrame(draw); 
+} 
 
 }());
