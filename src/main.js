@@ -5,6 +5,7 @@
 #include "debug.js" 
 #include "assert.js"
 #include "cubes.id.js"
+#include "cubes.cube.js"
 
 (function() {
 "use strict"; 
@@ -47,15 +48,9 @@ var cubeNormals = [
 	vec3.create([-1, 0, 0])  //6 
 ];
 
-var objects = [
-	{
-		position : vec3.create([ 0,0,0 ]),
-		id       : idgen.next()
-	}, 
-	{
-		position : vec3.create([ 0,0,1 ]),
-		id       : idgen.next()
-	}
+var cubelist = [
+	new cubes.Cube({ x : 0, y : 0, z : 0 }, idgen.next()), 
+	new cubes.Cube({ x : 0, y : 0, z : 1 }, idgen.next()) 
 ];
 
 var tapped = false; 
@@ -63,26 +58,6 @@ var tapEvent = null;
 var dragged = false; 
 var dragEvent = null; 
 var eventPosition = { x : 0, y : 0 }; 
-
-GLT.loadmanager.loadFiles({
-	"files" : ["cube.obj", "diffuse.shader", "id.shader", "cube.png", "skybox.obj", "skybox2.png"], 
-	"error" : function(file, err) {
-		derr(file, err); 
-	}, 
-	"finished" : function(files) {
-		cube = files["cube.obj"]; 
-		sky  = files["skybox.obj"]; 
-		program = GLT.SHADER.compileProgram(gl,files["diffuse.shader"]);
-		idprogram = GLT.SHADER.compileProgram(gl,files["id.shader"]);
-		cubetex = createTexture(files["cube.png"]);
-		skytex = createTexture(files["skybox2.png"]);
-
-		dlog("LOADED"); 
-		start(); 
-		recalcCamera(); 
-		GLT.requestGameFrame(gameloop); 
-	}
-});
 
 function createTexture(img) {
 	assert(img); 
@@ -101,7 +76,7 @@ function recalcCamera() {
 	camera = mat4.lookAt(cameraPos, cameraDir, cameraUp); 
 }
 
-function start() {
+function setup() {
 	gl.enable( GL_DEPTH_TEST ); 
 	gl.enable( GL_CULL_FACE ); 
 
@@ -215,10 +190,10 @@ function draw(info) {
 } 
 
 function translateCube(id, vec) {
-	for(var i = 0; i != objects.length; i++) {
-		var object = objects[i]; 		
+	for(var i = 0; i != cubelist.length; i++) {
+		var object = cubelist[i]; 		
 		if(object.id.asNumber() === id) { 
-			vec3.add(object.position, vec); 
+			vec3.add(object.vector, vec); 
 			return; 
 		}
 	}
@@ -255,14 +230,15 @@ function drawCubes(program) {
 		gl.uniform1i(uTexture, 0); 
 	}
 
-	for(var i = 0; i != objects.length; i++) { 
-		var object = objects[i]; 
+	for(var i = 0; i != cubelist.length; i++) { 
+		var object = cubelist[i]; 
+
 		if(uIdColor) {
 			gl.uniform3fv(uIdColor, object.id.asColor()); 
 		}
 
 		mat4.multiply(projection, camera, modelview); 
-		mat4.translate(modelview, object.position); 
+		mat4.translate(modelview, object.vector); 
 
 		gl.uniformMatrix4fv(uModelview, false, modelview); 
 
@@ -282,7 +258,6 @@ function drawSky(program) {
 	assert(uTexture); 
 	assert(aTextureuv !== -1); 
 	assert(aVertex    !== -1); 
-
 
 	gl.bindBuffer(GL_ARRAY_BUFFER, skyBuffer); 
 
@@ -305,7 +280,25 @@ function drawSky(program) {
 	gl.drawArrays(GL_TRIANGLES, 0, sky.numVertices); 
 }
 
+GLT.loadmanager.loadFiles({
+	"files" : ["cube.obj", "diffuse.shader", "id.shader", "cube.png", "skybox.obj", "skybox2.png"], 
+	"error" : function(file, err) {
+		derr(file, err); 
+	}, 
+	"finished" : function(files) {
+		cube = files["cube.obj"]; 
+		sky  = files["skybox.obj"]; 
+		program = GLT.SHADER.compileProgram(gl,files["diffuse.shader"]);
+		idprogram = GLT.SHADER.compileProgram(gl,files["id.shader"]);
+		cubetex = createTexture(files["cube.png"]);
+		skytex = createTexture(files["skybox2.png"]);
 
+		dlog("LOADED"); 
+		setup(); 
+		recalcCamera(); 
+		GLT.requestGameFrame(gameloop); 
+	}
+});
 
 }());
 
