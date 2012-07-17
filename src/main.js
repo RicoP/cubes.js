@@ -6,9 +6,6 @@
 #include "assert.js"
 #include "cubes.id.js"
 
-#define PULL 0
-#define PUSH 1 
-
 (function() {
 "use strict"; 
 
@@ -37,7 +34,6 @@ var camera     = mat4.identity();
 var modelview = new Float32Array(16); 
 
 var idgen = new cubes.Id.Generator(); 
-var selectedid = 0; 
 var cubetex = null; 
 var skytex = null; 
 
@@ -64,6 +60,9 @@ var objects = [
 
 var tapped = false; 
 var tapEvent = null; 
+var dragged = false; 
+var dragEvent = null; 
+var eventPosition = { x : 0, y : 0 }; 
 
 GLT.loadmanager.loadFiles({
 	"files" : ["cube.obj", "diffuse.shader", "id.shader", "cube.png", "skybox.obj", "skybox2.png"], 
@@ -80,7 +79,8 @@ GLT.loadmanager.loadFiles({
 
 		dlog("LOADED"); 
 		start(); 
-		GLT.requestGameFrame(draw); 
+		recalcCamera(); 
+		GLT.requestGameFrame(gameloop); 
 	}
 });
 
@@ -103,6 +103,7 @@ function recalcCamera() {
 
 function start() {
 	gl.enable( GL_DEPTH_TEST ); 
+	gl.enable( GL_CULL_FACE ); 
 
 	cubeBuffer = gl.createBuffer(); 
 	gl.bindBuffer(GL_ARRAY_BUFFER, cubeBuffer); 
@@ -125,58 +126,92 @@ function start() {
 	hammer.ontap = function(ev) {
 		tapped = true; 
 		tapEvent = ev; 
+		var x = ev.position[0].x; 
+		var y = canvas.height - ev.position[0].y; 
+		eventPosition.x = x; 		
+		eventPosition.y = y; 		
 	}; 
+
+	hammer.ondrag = function(ev) {
+		dragged = true; 
+		dragEvent = ev; 
+		var x = ev.position.x; 
+		var y = canvas.height - ev.position.y; 
+		eventPosition.x = x; 		
+		eventPosition.y = y; 		
+	};
 }
 
+function gameloop(info) {
+	update(info); 
+	draw(info); 
+	GLT.requestGameFrame(gameloop); 
+} 
 
-function draw(info) {
-	var rot = mat4.identity(); 
-	mat4.rotateY(rot, info.time.delta); 
-	mat4.multiplyVec3(rot, cameraPos); 
-	recalcCamera(); 
+function update(info) {
+	var r = 0; 
+	var g = 0; 
+	var b = 0; 
+	var a = 0; 
+	var side = 0; 
+	var selectedid = 0; 
+	var touchedTheSky = false; 
+	var touchedACube  = false; 
 
-	if(tapped) { 
-		tapped = false; 
-
+	if(tapped || dragged) {
 		gl.clearColor(0,0,0,0); 
 		gl.clear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT); 
 		drawCubes(idprogram); 
 
 		var buf = new Uint8Array(4); 
-		var x = tapEvent.position[0].x; 
-		var y = canvas.height - tapEvent.position[0].y; 
+		var x = eventPosition.x; 
+		var y = eventPosition.y; 
 		
 		gl.readPixels(x, y, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, buf); 
-		var r,g,b,a; 
 		r = buf[0]; 
 		g = buf[1]; 
 		b = buf[2]; 
 		a = buf[3]; 
 
-		var side = r; 
+		side = r; 
+	}
 
+	touchedTheSky = (side === 0); 
+	touchedACube  = !touchedTheSky; 
+
+	if(tapped && touchedACube) { 
 		selectedid = cubes.Id.fromColor(0,g,b).asNumber(); 
 	
 		dlog(cubeNormals[side]); 
 		dlog(r,g,b,a); 
 		dlog(selectedid); 
 
-
-
 		var normal = cubeNormals[side];
 	
 		translateCube(selectedid, normal); 
 	}
 
+	if(dragged && touchedTheSky) {		
+		var rot = mat4.identity(); 
+		dlog(2 * Math.PI * dragEvent.distanceX / canvas.width);
+		mat4.rotateY(rot, (-2 * Math.PI * dragEvent.distanceX / canvas.width) / 50); 
+		mat4.multiplyVec3(rot, cameraPos); 
+		recalcCamera(); 
+	}
+	
+	tapped = false; 
+	dragged = false; 
+}
+
+function draw(info) {
 	gl.disable( GL_DEPTH_TEST ); 
+	gl.disable( GL_CULL_FACE ); 
 	drawSky(program); 
 	gl.enable( GL_DEPTH_TEST ); 
+	gl.enable( GL_CULL_FACE ); 
 
 	gl.clear(GL_DEPTH_BUFFER_BIT); 
 	drawCubes(program); 
-
-
-	GLT.requestGameFrame(draw); 
 } 
 
 function translateCube(id, vec) {
@@ -274,5 +309,3 @@ function drawSky(program) {
 
 }());
 
-#undef PULL
-#undef PUSH 
