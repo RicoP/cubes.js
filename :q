@@ -3,7 +3,6 @@
 #include <gltoolbox.js>  
 #include <hammer.js>  
 #include "debug.js" 
-#include "assert.js"
 #include "cubes.id.js"
 
 #define PULL 0
@@ -13,7 +12,6 @@
 "use strict"; 
 
 var cube; 
-var sky; 
 var program; 
 var idprogram; 
 var vtnBuffer; 
@@ -38,7 +36,6 @@ var modelview = new Float32Array(16);
 var idgen = new cubes.Id.Generator(); 
 var selectedid = 0; 
 var cubetex = null; 
-var skytex = null; 
 
 var cubeNormals = [
 	vec3.create([ 0, 0, 0]), //None 
@@ -65,39 +62,27 @@ var tapped = false;
 var tapEvent = null; 
 
 GLT.loadmanager.loadFiles({
-	"files" : ["cube.obj", "diffuse.shader", "id.shader", "cube.png", "skybox.obj", "skybox.jpg"], 
+	"files" : ["cube.obj", "diffuse.shader", "id.shader", "cube.png"], 
 	"error" : function(file, err) {
 		derr(file, err); 
 	}, 
 	"finished" : function(files) {
 		cube = files["cube.obj"]; 
-		sky  = files["skybox.obj"]; 
 		program = GLT.SHADER.compileProgram(gl,files["diffuse.shader"]);
 		idprogram = GLT.SHADER.compileProgram(gl,files["id.shader"]);
-		assert(files["cube.png"]); 
-
-
-		cubetex = createTexture(files["cube.png"]);
-		skytex = createTexture(files["skybox.png"]);
+		cubetex = gl.createTexture(); 
+		gl.bindTexture(GL_TEXTURE_2D, cubetex); 
+		gl.pixelStorei(GL_UNPACK_FLIP_Y_WEBGL, 1); 
+		gl.texImage2D(GL_TEXTURE_2D, 0, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, files["cube.png"]); 
+		gl.texParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR); 
+		gl.texParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); 
+		gl.bindTexture(GL_TEXTURE_2D, null); 		
 
 		dlog("LOADED"); 
 		start(); 
 		GLT.requestGameFrame(draw); 
 	}
 });
-
-function createTexture(img) {
-	assert(img); 
-
-	var tex = gl.createTexture(); 
-	gl.bindTexture(GL_TEXTURE_2D, tex); 
-	gl.pixelStorei(GL_UNPACK_FLIP_Y_WEBGL, 1); 
-	gl.texImage2D(GL_TEXTURE_2D, 0, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, img); 
-	gl.texParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR); 
-	gl.texParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); 
-	gl.bindTexture(GL_TEXTURE_2D, null); 		
-	return tex; 
-}
 
 function recalcCamera() {
 	camera = mat4.lookAt(cameraPos, cameraDir, cameraUp); 
@@ -166,8 +151,6 @@ function draw(info) {
 		translateCube(selectedid, normal); 
 	}
 
-
-
 	gl.clearColor(0 / 255, 68 / 255, 153 / 255, 1);
 	gl.clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); 
 	drawCubes(program); 
@@ -194,19 +177,12 @@ function drawCubes(program) {
 	var uIdColor   = gl.getUniformLocation(program, "uIdColor"); 
 	var uTexture   = gl.getUniformLocation(program, "uTexture"); 	
 	var aVertex    = gl.getAttribLocation(program, "aVertex"); 
-	var aTextureuv = gl.getAttribLocation(program, "aTextureuv"); 
 	var aNormal    = gl.getAttribLocation(program, "aNormal"); 
 
 	gl.bindBuffer(GL_ARRAY_BUFFER, vtnBuffer); 
 
 	gl.vertexAttribPointer(aVertex, 4, GL_FLOAT, false, cube.stride, cube.voffset); 
 	gl.enableVertexAttribArray(aVertex); 
-
-	if(aTextureuv !== -1) {
-		gl.vertexAttribPointer(aTextureuv, 4, GL_FLOAT, false, cube.stride, cube.toffset); 
-		gl.enableVertexAttribArray(aTextureuv); 
-	}
-
 	if(aNormal !== -1) { 
 		gl.vertexAttribPointer(aNormal, 4, GL_FLOAT, false, cube.stride, cube.noffset); 
 		gl.enableVertexAttribArray(aNormal); 

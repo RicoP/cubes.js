@@ -10,16 +10,17 @@ varying float vSide; // 1,2,3,4,5,6
 attribute vec3 aVertex;
 attribute vec3 aNormal;
 
-const vec3 ONE   = vec3( 0.0, -1.0,  0.0); 
-const vec3 TWO   = vec3( 0.0,  0.0, -1.0); 
-const vec3 THREE = vec3( 1.0,  0.0,  0.0); 
-const vec3 FOUR  = vec3(-1.0,  0.0,  0.0); 
-const vec3 FIVE  = vec3( 0.0,  0.0,  1.0); 
-const vec3 SIX   = vec3( 0.0,  1.0,  0.0); 
+const vec3 ONE   = vec3( 1.0, 0.0, 0.0); 
+const vec3 TWO   = vec3( 0.0, 1.0, 0.0); 
+const vec3 THREE = vec3( 0.0, 0.0, 1.0); 
+const vec3 FOUR  = vec3( 0.0, 0.0,-1.0); 
+const vec3 FIVE  = vec3( 0.0,-1.0, 0.0); 
+const vec3 SIX   = vec3(-1.0, 0.0, 0.0); 
 
 void main() {
-	float side = 10.0; 
+	float side = 0.0; 
 	const float e = 0.0001; 
+
 	if(length(aNormal - ONE) < e) { 
 		side = 1.0;
 	} else if(length(aNormal - TWO) < e) { 
@@ -39,6 +40,7 @@ void main() {
 	gl_Position = uModelview * vec4(aVertex, 1.0);  
 }
 #endif
+
 #ifdef FRAGMENT
 vec4 fragment() {
 	return vec4(vSide / 255.0, uIdColor.yz, 1.0); 

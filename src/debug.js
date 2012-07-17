@@ -2,8 +2,8 @@
 #define DEBUG_JS 
 
 #ifndef RELEASE 
-	#define dlog(...) console.log(__VA_ARGS__, __FILE__ + ":" + __LINE__)
-	#define derr(...) console.error(__VA_ARGS__, __FILE__ + ":" + __LINE__)
+	#define dlog(...)   console.log("DEBUG (" + __FILE__ + ":" + __LINE__ + ")", __VA_ARGS__ )
+	#define derr(...) console.error("ERROR (" + __FILE__ + ":" + __LINE__ + ")", __VA_ARGS__ )
 	#define DEBUG 
 #else 
 	#define dlog(...) 
