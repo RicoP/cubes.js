@@ -16,7 +16,8 @@ var cube;
 var sky; 
 var program; 
 var idprogram; 
-var vtnBuffer; 
+var cubeBuffer; 
+var skyBuffer; 
 
 var canvas = document.getElementsByTagName("canvas")[0]; 
 var gl = null; 
@@ -65,7 +66,7 @@ var tapped = false;
 var tapEvent = null; 
 
 GLT.loadmanager.loadFiles({
-	"files" : ["cube.obj", "diffuse.shader", "id.shader", "cube.png", "skybox.obj", "skybox.jpg"], 
+	"files" : ["cube.obj", "diffuse.shader", "id.shader", "cube.png", "skybox.obj", "skybox2.png"], 
 	"error" : function(file, err) {
 		derr(file, err); 
 	}, 
@@ -74,11 +75,8 @@ GLT.loadmanager.loadFiles({
 		sky  = files["skybox.obj"]; 
 		program = GLT.SHADER.compileProgram(gl,files["diffuse.shader"]);
 		idprogram = GLT.SHADER.compileProgram(gl,files["id.shader"]);
-		assert(files["cube.png"]); 
-
-
 		cubetex = createTexture(files["cube.png"]);
-		skytex = createTexture(files["skybox.png"]);
+		skytex = createTexture(files["skybox2.png"]);
 
 		dlog("LOADED"); 
 		start(); 
@@ -106,9 +104,13 @@ function recalcCamera() {
 function start() {
 	gl.enable( GL_DEPTH_TEST ); 
 
-	vtnBuffer = gl.createBuffer(); 
-	gl.bindBuffer(GL_ARRAY_BUFFER, vtnBuffer); 
+	cubeBuffer = gl.createBuffer(); 
+	gl.bindBuffer(GL_ARRAY_BUFFER, cubeBuffer); 
 	gl.bufferData(GL_ARRAY_BUFFER, cube.rawData, GL_STATIC_DRAW);
+
+	skyBuffer = gl.createBuffer(); 
+	gl.bindBuffer(GL_ARRAY_BUFFER, skyBuffer); 
+	gl.bufferData(GL_ARRAY_BUFFER, sky.rawData, GL_STATIC_DRAW);
 
 	var hammer = new Hammer(canvas); 
 	/*var events = ["ondragstart", "ondrag", "ondraged", "onswipe", "ontap", "ondoubletap", "onhold", "ontransformstart", "ontransform", "ontransformed"]; 
@@ -166,10 +168,11 @@ function draw(info) {
 		translateCube(selectedid, normal); 
 	}
 
+	gl.disable( GL_DEPTH_TEST ); 
+	drawSky(program); 
+	gl.enable( GL_DEPTH_TEST ); 
 
-
-	gl.clearColor(0 / 255, 68 / 255, 153 / 255, 1);
-	gl.clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); 
+	gl.clear(GL_DEPTH_BUFFER_BIT); 
 	drawCubes(program); 
 
 
@@ -197,7 +200,7 @@ function drawCubes(program) {
 	var aTextureuv = gl.getAttribLocation(program, "aTextureuv"); 
 	var aNormal    = gl.getAttribLocation(program, "aNormal"); 
 
-	gl.bindBuffer(GL_ARRAY_BUFFER, vtnBuffer); 
+	gl.bindBuffer(GL_ARRAY_BUFFER, cubeBuffer); 
 
 	gl.vertexAttribPointer(aVertex, 4, GL_FLOAT, false, cube.stride, cube.voffset); 
 	gl.enableVertexAttribArray(aVertex); 
@@ -231,6 +234,43 @@ function drawCubes(program) {
 		gl.drawArrays(GL_TRIANGLES, 0, cube.numVertices); 
 	}
 }
+
+function drawSky(program) {
+	gl.useProgram(program); 
+
+	var uModelview = gl.getUniformLocation(program, "uModelview"); 
+	var uTexture   = gl.getUniformLocation(program, "uTexture"); 	
+	var aVertex    = gl.getAttribLocation(program, "aVertex"); 
+	var aTextureuv = gl.getAttribLocation(program, "aTextureuv"); 
+	
+	assert(uModelview); 
+	assert(uTexture); 
+	assert(aTextureuv !== -1); 
+	assert(aVertex    !== -1); 
+
+
+	gl.bindBuffer(GL_ARRAY_BUFFER, skyBuffer); 
+
+	gl.vertexAttribPointer(aVertex, 4, GL_FLOAT, false, sky.stride, sky.voffset); 
+	gl.enableVertexAttribArray(aVertex); 
+
+	gl.vertexAttribPointer(aTextureuv, 4, GL_FLOAT, false, sky.stride, sky.toffset); 
+	gl.enableVertexAttribArray(aTextureuv); 
+
+	gl.bindTexture(GL_TEXTURE_2D, skytex); 
+	gl.uniform1i(uTexture, 0); 
+
+	mat4.multiply(projection, camera, modelview); 
+	//mat4.identity(modelview); 
+	mat4.translate(modelview, cameraPos); 
+	//mat4.rotateY(modelview, Date.now() / 1000); 
+
+	gl.uniformMatrix4fv(uModelview, false, modelview); 
+
+	gl.drawArrays(GL_TRIANGLES, 0, sky.numVertices); 
+}
+
+
 
 }());
 
