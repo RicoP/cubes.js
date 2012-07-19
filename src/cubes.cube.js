@@ -17,6 +17,7 @@ cubes.Cube = function(position, id) {
 	this.id     = id; 	
 	this.vector = vect; 
 	this.state  = new cubes.Cubemachine(this); 
+	this.bling  = 0; 
 };
 
 #endif 

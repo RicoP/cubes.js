@@ -165,7 +165,7 @@ function update(info) {
 	
 		//translateCube(selectedid, normal); 
 		var cube = getCubeById(selectedid); 
-		cube.state.tap(normal); 
+		cube.state.tap(info, normal); 
 	}
 
 	if(dragged && touchedTheSky) {		
@@ -181,7 +181,7 @@ function update(info) {
 
 	for(var i = 0; i != cubelist.length; i++) {
 		var cube = cubelist[i]; 
-		cube.state.tick(info.time.delta); 
+		cube.state.tick(info); 
 	}
 }
 
@@ -225,6 +225,7 @@ function drawCubes(program) {
 	var uModelview = gl.getUniformLocation(program, "uModelview"); 
 	var uIdColor   = gl.getUniformLocation(program, "uIdColor"); 
 	var uTexture   = gl.getUniformLocation(program, "uTexture"); 	
+	var uBling     = gl.getUniformLocation(program, "uBling");   	
 	var aVertex    = gl.getAttribLocation(program, "aVertex"); 
 	var aTextureuv = gl.getAttribLocation(program, "aTextureuv"); 
 	var aNormal    = gl.getAttribLocation(program, "aNormal"); 
@@ -256,6 +257,10 @@ function drawCubes(program) {
 			gl.uniform3fv(uIdColor, object.id.asColor()); 
 		}
 
+		if(uBling) {
+			gl.uniform1f(uBling, object.bling); 
+		}
+
 		mat4.multiply(projection, camera, modelview); 
 		mat4.translate(modelview, object.vector); 
 
@@ -270,6 +275,7 @@ function drawSky(program) {
 
 	var uModelview = gl.getUniformLocation(program, "uModelview"); 
 	var uTexture   = gl.getUniformLocation(program, "uTexture"); 	
+	var uBling     = gl.getUniformLocation(program, "uBling");   	
 	var aVertex    = gl.getAttribLocation(program, "aVertex"); 
 	var aTextureuv = gl.getAttribLocation(program, "aTextureuv"); 
 	
@@ -295,6 +301,7 @@ function drawSky(program) {
 	//mat4.rotateY(modelview, Date.now() / 1000); 
 
 	gl.uniformMatrix4fv(uModelview, false, modelview); 
+	gl.uniform1f(uBling, 0); 
 
 	gl.drawArrays(GL_TRIANGLES, 0, sky.numVertices); 
 }
