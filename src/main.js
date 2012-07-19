@@ -165,7 +165,7 @@ function update(info) {
 	
 		//translateCube(selectedid, normal); 
 		var cube = getCubeById(selectedid); 
-		cube.state.tap(info, normal); 
+		cube.tap(info, normal); 
 	}
 
 	if(dragged && touchedTheSky) {		
@@ -181,7 +181,7 @@ function update(info) {
 
 	for(var i = 0; i != cubelist.length; i++) {
 		var cube = cubelist[i]; 
-		cube.state.tick(info); 
+		cube.tick(info); 
 	}
 }
 
