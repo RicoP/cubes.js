@@ -48,6 +48,17 @@ var cubeNormals = [
 	vec3.create([-1, 0, 0])  //6 
 ];
 
+var cubeDragSides = [
+	//U  L  R  D
+	[ 0, 0, 0, 0], //0
+	[ 2, 3, 4, 5], //1
+	[ 0, 0, 0, 0], //2
+	[ 2, 6, 1, 5], //3
+	[ 2, 1, 6, 5], //4
+	[ 0, 0, 0, 0], //5
+	[ 2, 4, 3, 5], //6
+];
+
 var cubelist = [
 	new cubes.Cube({ x : 0, y : 0, z : 0 }, idgen.next()), 
 	new cubes.Cube({ x : 0, y : 0, z : 1 }, idgen.next()) 
@@ -99,6 +110,7 @@ function setup() {
 		}(events[i])); 
 	}*/
 	hammer.ontap = function(ev) {
+		dlog("Tap"); 
 		tapped = true; 
 		tapEvent = ev; 
 		var x = ev.position[0].x; 
@@ -108,6 +120,7 @@ function setup() {
 	}; 
 
 	hammer.ondrag = function(ev) {
+		dlog("Drag"); 
 		dragged = true; 
 		dragEvent = ev; 
 		var x = ev.position.x; 
@@ -149,26 +162,51 @@ function update(info) {
 		a = buf[3]; 
 
 		side = r; 
+		selectedid = cubes.Id.fromColor(0,g,b).asNumber(); 
+
+		assert(side >= 0 && side <= 6); 
 	}
 
-	touchedTheSky = (side === 0); 
+	touchedTheSky = (selectedid  === 0); 
 	touchedACube  = !touchedTheSky; 
 
-	if(tapped && touchedACube) { 
-		selectedid = cubes.Id.fromColor(0,g,b).asNumber(); 
-	
-		dlog(cubeNormals[side]); 
-		dlog(r,g,b,a); 
-		dlog(selectedid); 
-
+	if(touchedACube && tapped) { 
 		var normal = cubeNormals[side];
-	
-		//translateCube(selectedid, normal); 
+			
 		var cube = getCubeById(selectedid); 
 		cube.tap(info, normal); 
 	}
+	else if(touchedACube && dragged) { 
+		var dir = 0; 
 
-	if(dragged && touchedTheSky) {		
+		if(Math.abs(dragEvent.distanceX) > Math.abs(dragEvent.distanceY)) {
+			if(dragEvent.distanceX > 0) {
+				dir = 2; 
+			}
+			else {
+				dir = 1; 
+			}
+		}
+		else {
+			if(dragEvent.distanceY > 0) {
+				dir = 3; 
+			}
+			else {
+				dir = 0; 
+			}
+
+		}
+		var normal = cubeNormals[ cubeDragSides[side][dir] ]; 
+
+		if(side === 2 || side === 5) { 
+			derr("TODO: Implement top and bottom drag."); 
+		}
+		else {
+			var cube = getCubeById(selectedid); 
+			cube.tap(info, normal); 
+		}
+	}
+	else if(touchedTheSky && dragged) {		
 		var rot = mat4.identity(); 
 		mat4.rotateY(rot, (-2 * Math.PI * dragEvent.distanceX / canvas.width) / 50); 
 		mat4.multiplyVec3(rot, cameraPos); 

@@ -2,11 +2,15 @@
 #define ASSERT_JS 
 
 #ifndef RELEASE 
-	#define assert(x)                        \
-	do {                                     \
-		if(!(x)) {                           \
-			throw "assertion failed: " + #x; \
-		}                                    \
+	function __error(message, file, line) {
+		throw new Error(message + " in"  + file + ":" + line); 
+	}
+
+	#define assert(x)                                         \
+	do {                                                      \
+		if(!(x)) {                                            \
+			__error("assertion failed: " + #x + " = " + (x), __FILE__, __LINE__); \
+		}                                                     \
 	} while(false) 
 
 #else 

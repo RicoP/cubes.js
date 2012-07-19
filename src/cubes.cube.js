@@ -56,7 +56,7 @@ cubes.Cube = (function() {
 		this.tap = function(info, dir) {		
 			assert( info.time ); 
 			assert( dir instanceof Float32Array ); 
-			assert( Math.abs((vec3.length(dir) - 1.0)) < 0.0001 ); 
+			assert( Math.abs((vec3.length(dir) - 1.0)) < 0.0001); 
 
 			switch(state) {
 				case STATE_NONE: 
