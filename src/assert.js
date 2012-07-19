@@ -2,7 +2,8 @@
 #define ASSERT_JS 
 
 #ifndef RELEASE 
-	#define assert(x) do {                   \
+	#define assert(x)                        \
+	do {                                     \
 		if(!(x)) {                           \
 			throw "assertion failed: " + #x; \
 		}                                    \

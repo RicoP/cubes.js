@@ -170,7 +170,6 @@ function update(info) {
 
 	if(dragged && touchedTheSky) {		
 		var rot = mat4.identity(); 
-		dlog(2 * Math.PI * dragEvent.distanceX / canvas.width);
 		mat4.rotateY(rot, (-2 * Math.PI * dragEvent.distanceX / canvas.width) / 50); 
 		mat4.multiplyVec3(rot, cameraPos); 
 		recalcCamera(); 
