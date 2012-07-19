@@ -163,7 +163,9 @@ function update(info) {
 
 		var normal = cubeNormals[side];
 	
-		translateCube(selectedid, normal); 
+		//translateCube(selectedid, normal); 
+		var cube = getCubeById(selectedid); 
+		cube.state.tap(normal); 
 	}
 
 	if(dragged && touchedTheSky) {		
@@ -176,6 +178,11 @@ function update(info) {
 	
 	tapped = false; 
 	dragged = false; 
+
+	for(var i = 0; i != cubelist.length; i++) {
+		var cube = cubelist[i]; 
+		cube.state.tick(info.time.delta); 
+	}
 }
 
 function draw(info) {
@@ -188,6 +195,18 @@ function draw(info) {
 	gl.clear(GL_DEPTH_BUFFER_BIT); 
 	drawCubes(program); 
 } 
+
+function getCubeById(id) {
+	for(var i = 0; i != cubelist.length; i++) {
+		var object = cubelist[i]; 		
+		if(object.id.asNumber() === id) { 
+			return object; 
+		}
+	}
+
+	derr("id", id, "not found."); 
+	return null; 
+}
 
 function translateCube(id, vec) {
 	for(var i = 0; i != cubelist.length; i++) {

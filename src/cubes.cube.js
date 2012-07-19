@@ -4,6 +4,7 @@
 #include <glmatrix.js> 
 #include "cubes.js" 
 #include "cubes.id.js" 
+#include "cubes.cubemachine.js" 
 #include "assert.js" 
 
 cubes.Cube = function(position, id) {
@@ -12,9 +13,10 @@ cubes.Cube = function(position, id) {
 
 	var vect = vec3.create([position.x, position.y, position.z]);
 
-	this.grid   = position; 
+	this.grid   = [position.x, position.y, position.z]; 
 	this.id     = id; 	
 	this.vector = vect; 
+	this.state  = new cubes.Cubemachine(this); 
 };
 
 #endif 
