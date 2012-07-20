@@ -25,7 +25,7 @@ cubes.Cube = (function() {
 		var blingoffset = 0.0; 
 
 		this.tick = function(info) {		
-			assert(info.time); 
+			checkprop(info, time); 
 
 			switch(state) {
 				case STATE_NONE: 
@@ -54,8 +54,8 @@ cubes.Cube = (function() {
 		};
 
 		this.tap = function(info, dir) {		
-			assert( info.time ); 
-			assert( dir instanceof Float32Array ); 
+			checkprop(info, time); 
+			checktype(dir, Float32Array); 
 			assert( Math.abs((vec3.length(dir) - 1.0)) < 0.0001); 
 
 			switch(state) {
@@ -82,8 +82,10 @@ cubes.Cube = (function() {
 	}
 
 	return function(position, id) {
-		assert("x" in position && "y" in position && "z" in position);
-		assert(id instanceof cubes.Id); 
+		checkprop(position, x); 
+		checkprop(position, y); 
+		checkprop(position, z); 
+		checktype(id, cubes.Id); 
 
 		var vect = vec3.create([position.x, position.y, position.z]);
 

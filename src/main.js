@@ -40,23 +40,23 @@ var skytex = null;
 
 var cubeNormals = [
 	vec3.create([ 0, 0, 0]), //None 
-	vec3.create([ 1, 0, 0]), //1 
-	vec3.create([ 0, 1, 0]), //2 
-	vec3.create([ 0, 0, 1]), //3 
-	vec3.create([ 0, 0,-1]), //4 
-	vec3.create([ 0,-1, 0]), //5 
-	vec3.create([-1, 0, 0])  //6 
+	vec3.create([ 1, 0, 0]), //1 +x
+	vec3.create([ 0, 1, 0]), //2 +y
+	vec3.create([ 0, 0, 1]), //3 +z
+	vec3.create([ 0, 0,-1]), //4 -z
+	vec3.create([ 0,-1, 0]), //5 -y
+	vec3.create([-1, 0, 0])  //6 -x
 ];
 
 var cubeDragSides = [
 	//U  L  R  D
 	[ 0, 0, 0, 0], //0
-	[ 2, 3, 4, 5], //1
-	[ 0, 0, 0, 0], //2
-	[ 2, 6, 1, 5], //3
-	[ 2, 1, 6, 5], //4
-	[ 0, 0, 0, 0], //5
-	[ 2, 4, 3, 5], //6
+	[ 2, 3, 4, 5], //1 +x
+	[ 0, 0, 0, 0], //2 +y
+	[ 2, 6, 1, 5], //3 +z
+	[ 2, 1, 6, 5], //4 -z
+	[ 0, 0, 0, 0], //5 -y
+	[ 2, 4, 3, 5], //6 -x
 ];
 
 var cubelist = [
@@ -356,7 +356,7 @@ GLT.loadmanager.loadFiles({
 		cubetex = createTexture(files["cube.png"]);
 		skytex = createTexture(files["skybox2.png"]);
 
-		dlog("LOADED"); 
+		dlog("LOADED ", __DATE__ , __TIME__  ); 
 		setup(); 
 		recalcCamera(); 
 		GLT.requestGameFrame(gameloop); 

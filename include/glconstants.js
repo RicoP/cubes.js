@@ -1,6 +1,10 @@
-#ifndef GLCONSTANTS_JS
-#define GLCONSTANTS_JS
+#ifndef __GLCONSTANTS_JS
+#define __GLCONSTANTS_JS
 
-#include "../glconstants.js/glconstants.h"
+#ifdef RELEASE 
+	#include "../glconstants.js/glconstants.h"
+#else 	
+	#include "../glconstants.js/glconstants.js"
+#endif 
 
 #endif
