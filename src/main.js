@@ -7,15 +7,21 @@
 #include "cubes.id.js"
 #include "cubes.cube.js"
 
+#define PREVIEW_WIDTH 180
+#define PREVIEW_HEIGHT 135
+#define PREVIEW_BORDER 15
+
 (function() {
 "use strict"; 
 
 var cube; 
 var sky; 
 var program; 
+var borderprogram; 
 var idprogram; 
 var cubeBuffer; 
 var skyBuffer; 
+var borderBuffer; 
 
 var canvas = document.getElementsByTagName("canvas")[0]; 
 var gl = null; 
@@ -64,6 +70,13 @@ var cubelist = [
 	new cubes.Cube({ x : 0, y : 0, z : 1 }, idgen.next()) 
 ];
 
+var border = new Float32Array([
+	-1, -1, 
+	 1, -1, 
+	 1,  1, 
+	-1,  1 
+]); 
+
 var tapped = false; 
 var tapEvent = null; 
 var dragged = false; 
@@ -89,7 +102,10 @@ function recalcCamera() {
 
 function setup() {
 	gl.enable( GL_DEPTH_TEST ); 
+	gl.enable( GL_SCISSOR_TEST ); 
 	gl.enable( GL_CULL_FACE ); 
+	gl.lineWidth(5); 
+	gl.clearColor(0,0,0,0); 
 
 	cubeBuffer = gl.createBuffer(); 
 	gl.bindBuffer(GL_ARRAY_BUFFER, cubeBuffer); 
@@ -98,6 +114,10 @@ function setup() {
 	skyBuffer = gl.createBuffer(); 
 	gl.bindBuffer(GL_ARRAY_BUFFER, skyBuffer); 
 	gl.bufferData(GL_ARRAY_BUFFER, sky.rawData, GL_STATIC_DRAW);
+
+	borderBuffer = gl.createBuffer(); 
+	gl.bindBuffer(GL_ARRAY_BUFFER, borderBuffer); 
+	gl.bufferData(GL_ARRAY_BUFFER, border, GL_STATIC_DRAW); 
 
 	var hammer = new Hammer(canvas); 
 	/*var events = ["ondragstart", "ondrag", "ondraged", "onswipe", "ontap", "ondoubletap", "onhold", "ontransformstart", "ontransform", "ontransformed"]; 
@@ -147,7 +167,7 @@ function update(info) {
 	var touchedACube  = false; 
 
 	if(tapped || dragged) {
-		gl.clearColor(0,0,0,0); 
+		gl.clearDepth(1); 
 		gl.clear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT); 
 		drawCubes(idprogram); 
 
@@ -229,7 +249,26 @@ function draw(info) {
 	gl.enable( GL_DEPTH_TEST ); 
 	gl.enable( GL_CULL_FACE ); 
 
+	gl.clearDepth(1); 
 	gl.clear(GL_DEPTH_BUFFER_BIT); 
+
+	var viewport = gl.getParameter(GL_VIEWPORT); 
+	var x = viewport[0]; 
+	var y = viewport[1]; 
+	var w = viewport[2]; 
+	var h = viewport[3]; 
+
+	gl.scissor(w - PREVIEW_WIDTH - PREVIEW_BORDER, PREVIEW_BORDER, PREVIEW_WIDTH, PREVIEW_HEIGHT); 
+	gl.viewport(w - PREVIEW_WIDTH - PREVIEW_BORDER, PREVIEW_BORDER, PREVIEW_WIDTH, PREVIEW_HEIGHT); 
+	drawBorder(borderprogram); 
+	drawCubes(program); 
+
+	gl.clearDepth(0); 
+	gl.clear(GL_DEPTH_BUFFER_BIT); 
+
+	gl.scissor(x,y,w,h);  
+	gl.viewport(x,y,w,h);  
+
 	drawCubes(program); 
 } 
 
@@ -245,24 +284,14 @@ function getCubeById(id) {
 	return null; 
 }
 
-function translateCube(id, vec) {
-	for(var i = 0; i != cubelist.length; i++) {
-		var object = cubelist[i]; 		
-		if(object.id.asNumber() === id) { 
-			vec3.add(object.vector, vec); 
-			return; 
-		}
-	}
-
-	derr("id", id, "not found."); 
-}
-
 function drawCubes(program) {
 	gl.useProgram(program); 
+
 	var uModelview = gl.getUniformLocation(program, "uModelview"); 
 	var uIdColor   = gl.getUniformLocation(program, "uIdColor"); 
 	var uTexture   = gl.getUniformLocation(program, "uTexture"); 	
 	var uBling     = gl.getUniformLocation(program, "uBling");   	
+
 	var aVertex    = gl.getAttribLocation(program, "aVertex"); 
 	var aTextureuv = gl.getAttribLocation(program, "aTextureuv"); 
 	var aNormal    = gl.getAttribLocation(program, "aNormal"); 
@@ -343,8 +372,23 @@ function drawSky(program) {
 	gl.drawArrays(GL_TRIANGLES, 0, sky.numVertices); 
 }
 
+function drawBorder(program) {
+	gl.useProgram(program); 
+
+	var aVertex    = gl.getAttribLocation(program, "aVertex"); 
+	
+	assert(aVertex    !== -1); 
+
+	gl.bindBuffer(GL_ARRAY_BUFFER, borderBuffer); 
+
+	gl.vertexAttribPointer(aVertex, 2, GL_FLOAT, false, 0, 0); 
+	gl.enableVertexAttribArray(aVertex); 
+	
+	gl.drawArrays(GL_LINE_LOOP, 0, 4); 
+}
+
 GLT.loadmanager.loadFiles({
-	"files" : ["cube.obj", "diffuse.shader", "id.shader", "cube.png", "skybox.obj", "skybox2.png"], 
+	"files" : ["cube.obj", "diffuse.shader", "id.shader", "cube.png", "skybox.obj", "skybox2.png", "border.shader"], 
 	"error" : function(file, err) {
 		derr(file, err); 
 	}, 
@@ -353,6 +397,7 @@ GLT.loadmanager.loadFiles({
 		sky  = files["skybox.obj"]; 
 		program = GLT.SHADER.compileProgram(gl,files["diffuse.shader"]);
 		idprogram = GLT.SHADER.compileProgram(gl,files["id.shader"]);
+		borderprogram = GLT.SHADER.compileProgram(gl,files["border.shader"]);
 		cubetex = createTexture(files["cube.png"]);
 		skytex = createTexture(files["skybox2.png"]);
 
@@ -364,4 +409,9 @@ GLT.loadmanager.loadFiles({
 });
 
 }());
+
+#undef PREVIEW_WIDTH  
+#undef PREVIEW_HEIGHT 
+#undef PREVIEW_BORDER 
+
 
