@@ -12,17 +12,19 @@
 #define STATE_MARKED 2
 
 cubes.Cube = (function() { 
+	var tmpvector  = vec3.create();
+
 	function Statemachine(cube) {		
 		"use strict"; 
 
-		var speed     = 2;
+		var speed = 2.0;
 
-		var state     = STATE_NONE;  
-		var grid      = cube.grid;
-		var direction = vec3.create(); 
-		var startpos  = vec3.create(); 
-		var tmpvector = vec3.create();
+		var state       = STATE_NONE;  
+		var grid        = cube.grid;
+		var direction   = vec3.create(); 
+		var startpos    = vec3.create(); 
 		var blingoffset = 0.0; 
+		var movetime    = 0; 
 
 		this.tick = function(info) {		
 			checkprop(info, time); 
@@ -37,12 +39,13 @@ cubes.Cube = (function() {
 
 				case STATE_MOVE: 
 				vec3.add(cube.vector, vec3.scale(direction, info.time.delta * speed, tmpvector)); 
-				vec3.subtract(cube.vector, startpos, tmpvector); 
-				if(vec3.length(tmpvector) >= 1.0) {
+				movetime += info.time.delta * speed;
+				if(movetime >= 1) {
 					//we reached our destination.
 					state = STATE_NONE; 
 					vec3.set(vec3.add(startpos, direction, tmpvector), cube.vector); 
 					//TODO: Grid 
+					movetime = 0.0; 
 					cube.bling = 0; 
 				}
 				break; 
@@ -55,7 +58,7 @@ cubes.Cube = (function() {
 
 		this.tap = function(info, dir) {		
 			checkprop(info, time); 
-			checktype(dir, Float32Array); 
+			checkclass(dir, Float32Array); 
 			assert( Math.abs((vec3.length(dir) - 1.0)) < 0.0001); 
 
 			switch(state) {
@@ -71,6 +74,7 @@ cubes.Cube = (function() {
 				direction = dir; 
 				vec3.set(cube.vector, startpos); 
 				cube.bling = 0; 
+				movetime = 0.0; 
 				state = STATE_MOVE; 
 				break; 
 
@@ -85,7 +89,7 @@ cubes.Cube = (function() {
 		checkprop(position, x); 
 		checkprop(position, y); 
 		checkprop(position, z); 
-		checktype(id, cubes.Id); 
+		checkclass(id, cubes.Id); 
 
 		var vect = vec3.create([position.x, position.y, position.z]);
 

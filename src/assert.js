@@ -20,9 +20,9 @@
 		}                                                                        \
 	} while(false)
 
-	#define checktype(obj, type)                                                 \
+	#define checkclass(obj, type)                                                \
 	do {                                                                         \
-		if(typeof obj !== (#type).toLowerCase() && !(obj instanceof type)) {     \
+		if(!(obj instanceof type)) {                                             \
 			__error("Objct " + #obj + " is not from type " + #type, __FILE__, __LINE__); \
 		}                                                                        \
 	} while(false)
@@ -33,7 +33,7 @@
 #else 
 	#define assert(x)
 	#define checkprop(obj, prop)
-	#define checktype(obj, type)
+	#define checkclass(obj, type)
 
 #endif 
 

@@ -90,8 +90,8 @@ function createTexture(img) {
 	gl.bindTexture(GL_TEXTURE_2D, tex); 
 	gl.pixelStorei(GL_UNPACK_FLIP_Y_WEBGL, 1); 
 	gl.texImage2D(GL_TEXTURE_2D, 0, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, img); 
-	gl.texParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR); 
-	gl.texParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); 
+	gl.texParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST); 
+	gl.texParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST); 
 	gl.bindTexture(GL_TEXTURE_2D, null); 		
 	return tex; 
 }
@@ -401,12 +401,17 @@ GLT.loadmanager.loadFiles({
 		cubetex = createTexture(files["cube.png"]);
 		skytex = createTexture(files["skybox2.png"]);
 
-		dlog("LOADED ", __DATE__ , __TIME__  ); 
 		setup(); 
 		recalcCamera(); 
 		GLT.requestGameFrame(gameloop); 
 	}
 });
+
+#ifdef RELEASE 
+	console.log("RELEASE. Build:", __DATE__, __TIME__); 
+#else
+	console.log("DEBUG. Build:", __DATE__, __TIME__); 
+#endif 
 
 }());
 
