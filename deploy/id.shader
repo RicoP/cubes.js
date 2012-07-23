@@ -1,7 +1,7 @@
 #ifdef GL_ES
 precision highp float;
 #endif
-uniform mat4 uModelview; 
+uniform mat4 uModelviewprojection; 
 uniform vec3 uIdColor; 
 
 varying float vSide; // 1,2,3,4,5,6
@@ -37,7 +37,7 @@ void main() {
 
 	vSide = side; 
 
-	gl_Position = uModelview * vec4(aVertex, 1.0);  
+	gl_Position = uModelviewprojection * vec4(aVertex, 1.0);  
 }
 #endif
 

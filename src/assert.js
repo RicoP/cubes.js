@@ -22,7 +22,7 @@
 
 	#define checkclass(obj, type)                                                \
 	do {                                                                         \
-		if(!(obj instanceof type)) {                                             \
+		if(!(obj instanceof type) && !(#type.toLowerCase() === typeof obj)) {    \
 			__error("Objct " + #obj + " is not from type " + #type, __FILE__, __LINE__); \
 		}                                                                        \
 	} while(false)

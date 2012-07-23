@@ -38,7 +38,7 @@ var cameraDir  = vec3.create([0,0,0]);
 var cameraUp   = vec3.create([0,1,0]); 
 var camera     = mat4.identity();  
 
-var modelview = new Float32Array(16); 
+var tmpmatrix = mat4.create();  
 
 var idgen = new cubes.Id.Generator(); 
 var cubetex = null; 
@@ -104,7 +104,7 @@ function setup() {
 	gl.enable( GL_DEPTH_TEST ); 
 	gl.enable( GL_SCISSOR_TEST ); 
 	gl.enable( GL_CULL_FACE ); 
-	gl.lineWidth(5); 
+	gl.lineWidth(10); 
 	gl.clearColor(0,0,0,0); 
 
 	cubeBuffer = gl.createBuffer(); 
@@ -130,7 +130,6 @@ function setup() {
 		}(events[i])); 
 	}*/
 	hammer.ontap = function(ev) {
-		dlog("Tap"); 
 		tapped = true; 
 		tapEvent = ev; 
 		var x = ev.position[0].x; 
@@ -140,7 +139,6 @@ function setup() {
 	}; 
 
 	hammer.ondrag = function(ev) {
-		dlog("Drag"); 
 		dragged = true; 
 		dragEvent = ev; 
 		var x = ev.position.x; 
@@ -251,7 +249,6 @@ function draw(info) {
 
 	gl.clearDepth(1); 
 	gl.clear(GL_DEPTH_BUFFER_BIT); 
-
 	var viewport = gl.getParameter(GL_VIEWPORT); 
 	var x = viewport[0]; 
 	var y = viewport[1]; 
@@ -287,7 +284,7 @@ function getCubeById(id) {
 function drawCubes(program) {
 	gl.useProgram(program); 
 
-	var uModelview = gl.getUniformLocation(program, "uModelview"); 
+	var uModelviewprojection = gl.getUniformLocation(program, "uModelviewprojection"); 
 	var uIdColor   = gl.getUniformLocation(program, "uIdColor"); 
 	var uTexture   = gl.getUniformLocation(program, "uTexture"); 	
 	var uBling     = gl.getUniformLocation(program, "uBling");   	
@@ -295,6 +292,8 @@ function drawCubes(program) {
 	var aVertex    = gl.getAttribLocation(program, "aVertex"); 
 	var aTextureuv = gl.getAttribLocation(program, "aTextureuv"); 
 	var aNormal    = gl.getAttribLocation(program, "aNormal"); 
+
+	var modelviewprojection = tmpmatrix; 
 
 	gl.bindBuffer(GL_ARRAY_BUFFER, cubeBuffer); 
 
@@ -327,10 +326,10 @@ function drawCubes(program) {
 			gl.uniform1f(uBling, object.bling); 
 		}
 
-		mat4.multiply(projection, camera, modelview); 
-		mat4.translate(modelview, object.vector); 
+		mat4.multiply(projection, camera, modelviewprojection); 
+		mat4.translate(modelviewprojection, object.vector); 
 
-		gl.uniformMatrix4fv(uModelview, false, modelview); 
+		gl.uniformMatrix4fv(uModelviewprojection, false, modelviewprojection); 
 
 		gl.drawArrays(GL_TRIANGLES, 0, cube.numVertices); 
 	}
@@ -339,13 +338,15 @@ function drawCubes(program) {
 function drawSky(program) {
 	gl.useProgram(program); 
 
-	var uModelview = gl.getUniformLocation(program, "uModelview"); 
+	var uModelviewprojection = gl.getUniformLocation(program, "uModelviewprojection"); 
 	var uTexture   = gl.getUniformLocation(program, "uTexture"); 	
 	var uBling     = gl.getUniformLocation(program, "uBling");   	
 	var aVertex    = gl.getAttribLocation(program, "aVertex"); 
 	var aTextureuv = gl.getAttribLocation(program, "aTextureuv"); 
+
+	var modelviewprojection = tmpmatrix; 
 	
-	assert(uModelview); 
+	assert(uModelviewprojection); 
 	assert(uTexture); 
 	assert(aTextureuv !== -1); 
 	assert(aVertex    !== -1); 
@@ -361,12 +362,10 @@ function drawSky(program) {
 	gl.bindTexture(GL_TEXTURE_2D, skytex); 
 	gl.uniform1i(uTexture, 0); 
 
-	mat4.multiply(projection, camera, modelview); 
-	//mat4.identity(modelview); 
-	mat4.translate(modelview, cameraPos); 
-	//mat4.rotateY(modelview, Date.now() / 1000); 
+	mat4.multiply(projection, camera, modelviewprojection); 
+	mat4.translate(modelviewprojection, cameraPos); 
 
-	gl.uniformMatrix4fv(uModelview, false, modelview); 
+	gl.uniformMatrix4fv(uModelviewprojection, false, modelviewprojection); 
 	gl.uniform1f(uBling, 0); 
 
 	gl.drawArrays(GL_TRIANGLES, 0, sky.numVertices); 

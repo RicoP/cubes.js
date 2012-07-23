@@ -2,7 +2,7 @@
 precision highp float;
 #endif
 
-uniform mat4 uModelview; 
+uniform mat4 uModelviewprojection; 
 uniform sampler2D uTexture; 
 uniform float uBling; 
 
@@ -15,7 +15,7 @@ attribute vec3 aNormal;
 
 void main() {
 	vTextureuv = aTextureuv; 
-	gl_Position = uModelview * vec4(aVertex, 1.0);  
+	gl_Position = uModelviewprojection * vec4(aVertex, 1.0);  
 }
 #endif
 
