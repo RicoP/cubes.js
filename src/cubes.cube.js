@@ -34,7 +34,7 @@ cubes.Cube = (function() {
 				break; 
 
 				case STATE_MARKED: 
-				cube.bling = Math.abs(Math.sin(2.0 * Math.PI * (info.time.total - blingoffset))); 	
+				cube.bling = 0.618 * Math.sin(2.0 * Math.PI * (info.time.total - blingoffset)); 	
 				break; 
 
 				case STATE_MOVE: 
@@ -58,6 +58,7 @@ cubes.Cube = (function() {
 
 		this.tap = function(info, dir) {		
 			checkprop(info, time); 
+			checkclass(info.time.delta, Number);  
 			checkclass(dir, Float32Array); 
 			assert( Math.abs((vec3.length(dir) - 1.0)) < 0.0001); 
 

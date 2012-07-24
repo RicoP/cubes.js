@@ -6,6 +6,7 @@
 #include "assert.js"
 #include "cubes.id.js"
 #include "cubes.cube.js"
+#include "cubes.random.js" 
 
 #define PREVIEW_WIDTH 180
 #define PREVIEW_HEIGHT 135
@@ -40,7 +41,6 @@ var camera     = mat4.identity();
 
 var tmpmatrix = mat4.create();  
 
-var idgen = new cubes.Id.Generator(); 
 var cubetex = null; 
 var skytex = null; 
 
@@ -66,8 +66,8 @@ var cubeDragSides = [
 ];
 
 var cubelist = [
-	new cubes.Cube({ x : 0, y : 0, z : 0 }, idgen.next()), 
-	new cubes.Cube({ x : 0, y : 0, z : 1 }, idgen.next()) 
+	//new cubes.Cube({ x : 0, y : 0, z : 0 }, idgen.next()), 
+	//new cubes.Cube({ x : 0, y : 0, z : 1 }, idgen.next()) 
 ];
 
 var border = new Float32Array([
@@ -104,7 +104,7 @@ function setup() {
 	gl.enable( GL_DEPTH_TEST ); 
 	gl.enable( GL_SCISSOR_TEST ); 
 	gl.enable( GL_CULL_FACE ); 
-	gl.lineWidth(10); 
+	gl.lineWidth(4.5); 
 	gl.clearColor(0,0,0,0); 
 
 	cubeBuffer = gl.createBuffer(); 
@@ -216,7 +216,7 @@ function update(info) {
 		}
 		var normal = cubeNormals[ cubeDragSides[side][dir] ]; 
 
-		if(side === 2 || side === 5) { 
+		if(side === 2 || side === 5 || side === 0) { 
 			derr("TODO: Implement top and bottom drag."); 
 		}
 		else {
@@ -225,9 +225,16 @@ function update(info) {
 		}
 	}
 	else if(touchedTheSky && dragged) {		
-		var rot = mat4.identity(); 
+		var rot = mat4.identity(tmpmatrix); 
+		var negDir = vec3.create(cameraDir); 
+		vec3.scale(negDir, -1); 
+
+		mat4.translate(rot, negDir); 
 		mat4.rotateY(rot, (-2 * Math.PI * dragEvent.distanceX / canvas.width) / 50); 
+		mat4.translate(rot, cameraDir); 
+
 		mat4.multiplyVec3(rot, cameraPos); 
+
 		recalcCamera(); 
 	}
 	
@@ -387,7 +394,7 @@ function drawBorder(program) {
 }
 
 GLT.loadmanager.loadFiles({
-	"files" : ["cube.obj", "diffuse.shader", "id.shader", "cube.png", "skybox.obj", "skybox2.png", "border.shader"], 
+	"files" : ["cube.obj", "diffuse.shader", "id.shader", "cube.png", "skybox.obj", "skybox2.png", "border.shader", "map1.json"], 
 	"error" : function(file, err) {
 		derr(file, err); 
 	}, 
@@ -399,6 +406,22 @@ GLT.loadmanager.loadFiles({
 		borderprogram = GLT.SHADER.compileProgram(gl,files["border.shader"]);
 		cubetex = createTexture(files["cube.png"]);
 		skytex = createTexture(files["skybox2.png"]);
+		var map = files["map1.json"]; 
+
+		var idgen = new cubes.Id.Generator(); 
+
+		for(var i = 0; i != map.cubes.length; i++) {
+			cubelist.push( new cubes.Cube(map.cubes[i].position, idgen.next()) ); 
+		}
+
+		cameraDir[0] = map.grid.width  >> 1; 
+		cameraDir[1] = map.grid.height >> 1; 
+		cameraDir[2] = map.grid.depth  >> 1; 
+
+		vec3.set(cameraDir, cameraPos); 
+		cameraPos[2] += map.grid.depth; 
+		
+
 
 		setup(); 
 		recalcCamera(); 
