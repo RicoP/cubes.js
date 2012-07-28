@@ -7,6 +7,7 @@
 #include "cubes.id.js"
 #include "cubes.cube.js"
 #include "cubes.random.js" 
+#include "cubes.statemachine.js" 
 
 #define PREVIEW_WIDTH 180
 #define PREVIEW_HEIGHT 135

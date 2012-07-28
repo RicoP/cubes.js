@@ -19,8 +19,8 @@
 "use strict";  
 
 cubes.Statemachine = function(canvas, cameraPos, cameraDir) {
-	checktype(cameraPos, Float32Array); 
-	checktype(cameraDir, Float32Array); 
+	checkclass(cameraPos, Float32Array); 
+	checkclass(cameraDir, Float32Array); 
 	assert(cameraPos.length === 3); 
 	assert(cameraDir.length === 3); 
 
@@ -39,7 +39,7 @@ cubes.Statemachine = function(canvas, cameraPos, cameraDir) {
 	function markCube(obj) {
 		checkprop(obj, cube); 
 		if(obj.cube !== null) {
-			checktype(obj.cube, cubes.Cube); 
+			checkclass(obj.cube, cubes.Cube); 
 			obj.cube.bling = 0.0; 
 		}
 
@@ -57,7 +57,7 @@ cubes.Statemachine = function(canvas, cameraPos, cameraDir) {
 	function hasCube(obj) {
 		checkprop(obj, cube); 
 		if(obj.cube !== null) {
-			checktype(obj.cube, cubes.cube); 
+			checkclass(obj.cube, cubes.Cube); 
 			return true; 
 		}
 		return false; 
@@ -66,22 +66,29 @@ cubes.Statemachine = function(canvas, cameraPos, cameraDir) {
 	function transaction(trans, obj) {
 		switch(state) {
 			case STATE_NONE: 
-			return stateNone(trans, obj); 
+			state = stateNone(trans, obj); 
+			break;
 
 			case STATE_CUBE_MARKED: 
-			return stateCubeMarked(trans, obj); 
+			state = stateCubeMarked(trans, obj); 
+			break;
 
 			case STATE_CUBE_DRAG: 
-			return stateCubeDrag(trans, obj); 
+			state = stateCubeDrag(trans, obj); 
+			break;
 
 			case STATE_CUBE_MOVE: 
-			return stateCubeMove(trans, obj); 
+			state = stateCubeMove(trans, obj); 
+			break;
 
 			case STATE_SKY_DRAG: 
-			return stateSkyDrag(trans, obj); 
-		}
+			state = stateSkyDrag(trans, obj); 
+			break;
 
-		throw new Error("unknown transaction " + trans); 
+			default: 
+			assert(false && ("unknown transaction " + trans)); 
+			break; 
+		}
 	}
 
 	function stateNone(trans, obj) {
@@ -217,126 +224,35 @@ cubes.Statemachine = function(canvas, cameraPos, cameraDir) {
 		return STATE_SKY_DRAG; 
 	}
 
-	this.tap = function(info, cube, dir, dice) {
-		//cube might be null -> Sky
-
-		switch(state) {
-			case STATE_NONE: 
-			case STATE_SKY_DRAG: 
-			if(cube !== null) {
-				markCube(cube); 			
-				state = STATE_CUBE_MARKED; 
-			}
-			break; 
-
-			case STATE_CUBE_MARKED: 
-			if(cube === markedCube) {
-				checkType(diceSide, Number); 
-				checkType(dir, Float32Array); //dir is a Float Array
-				assert(dir.length === 3);     //dir a vec3 
-				assert( Math.abs((vec3.length(dir) - 1.0)) < 0.0001 ); //dir is a Normal 
-				assert(dice >= 1 && dice <= 6); 				
-
-				blingoffset = info.time.total; 
-				vec3.set(dir, direction); 
-				markedCube.bling = 0.0; 
-				diceSide = dice; 
-			} else if(cube instanceof cubes.cube) {
-				markCube(cube); 			
-			} else {
-				markCube(null); 			
-				state = STATE_NONE; 
-			}
-			break; 
-
-			case STATE_CUBE_DRAG: 
-			case STATE_CUBE_MOVE: 
-			break; 
-
-			default: 
-			derr("Tap: unknown State", state); 
-			break; 
-		}
+	this.tap = function(info, obj) {
+		var oldstate = state; 
+		transaction(TRANS_TAP, obj); 
+		dlog("Tap",oldstate,"->",state); 
 	};
 
-	this.drag = function(info, cube, position) {
-		//cube might be null -> Sky
-
-		switch(state) {
-			case STATE_NONE: 
-			if(cube === null) {
-				//Sky
-				state = STATE_SKY_DRAG; 
-			} else {
-				state = STATE_CUBE_DRAG; 
-			}
-			break; 
-
-			case STATE_SKY_DRAG: 			
-			var rot = mat4.identity(tmpmatrix); 
-			var negDir = vec3.create(cameraDir); 
-			vec3.scale(negDir, -1); 
-
-			mat4.translate(rot, negDir); 
-			mat4.rotateY(rot, (-2 * Math.PI * dragEvent.distanceX / canvas.width) / 50); 
-			mat4.translate(rot, cameraDir); 
-
-			mat4.multiplyVec3(rot, cameraPos); 
-			break; 
-
-			case STATE_CUBE_MARKED: 
-			if(cube === markedCube) {
-				state = STATE_CUBE_DRAG; 
-			} else if(cube instanceof cubes.Cube){
-				markCube(cube); 			
-			} else {
-				markCube(null); 			
-				state = STATE_NONE; 	
-			}
-			break; 
-
-			case STATE_CUBE_DRAG: 
-			checkprop(position, x); 
-			checkprop(position, y); 
-
-			var distX = position.x - dragStartPosition.x;
-			var distY = position.y - dragStartPosition.y;
-
-			var absX  = Math.abs(distX); 
-			var absY  = Math.abs(distY); 
-
-			var dir = 0; 
-			
-			if(absX > absY && absX > DRAGDIST) {
-				//Drag Horizontal
-				dir = distX < 0 ? 1 : 2; // Left Right
-				direction = cubes.Cube.getNormal(diceSide, dir); 
-				state = STATE_CUBE_MOVE; 
-			}
-			else if(absY > absX && absY > DRAGDIST) {
-				//Drag Verticaly
-				dir = distY < 0 ? 0 : 3; // Up Down
-				direction = cubes.Cube.getNormal(diceSide, dir); 
-				state = STATE_CUBE_MOVE; 
-			}
-
-				state = STATE_CUBE_MOVE; 
-			break; 
-		}
+	this.dragStart = function(info, obj) {	
+		var oldstate = state; 
+		transaction(TRANS_DRAG_START, obj); 
+		dlog("DragStart",oldstate,"->",state); 
 	};
 
-	this.dragStart = function(info, cube) {	
-		//cube might be null -> Sky
+	this.drag = function(info, obj) {
+		var oldstate = state; 
+		transaction(TRANS_DRAG, obj); 
+		dlog("Drag",oldstate,"->",state); 
 	};
 
-	this.dragEnd = function(info, cube) {	
-		//cube might be null -> Sky
+	this.dragEnd = function(info, obj) {	
+		var oldstate = state; 
+		transaction(TRANS_DRAG_END, obj); 
+		dlog("DragEnd",oldstate,"->",state); 
 	};
 
-	this.tick = function(info, cube) {	
-		//cube might be null -> Sky
+	this.tick = function(info, obj) {	
+		var oldstate = state; 
+		transaction(TRANS_TICK, obj); 
+		//dlog("Tick",oldstate,"->",state); 
 	};
-
 };
 
 }()); 
