@@ -1,0 +1,60 @@
+<body>
+<canvas id="c" width=32 height=32></canvas> 
+<script> 
+function border(x,y) {					
+	return (x-2) < 0 || (y-2) < 0 || (10-x) < 0 || (10-y) < 0;  
+}
+
+function smileSad(x,y) {
+	return false; 	
+}
+
+function smileHappy(x,y) {
+	return false; 
+}
+
+function smileNeutral(x,y) {
+	return x==y; 
+}
+
+function smileVic(x,y) {
+	return false; 
+}
+
+var canvas = document.body.getElementsByTagName("canvas")[0]; 
+var ctx    = canvas.getContext("2d"); 
+var img    = ctx.createImageData(32,32); 
+var data   = img.data; 
+var colors = [ [[0,0,255],[100,100,255]], 
+		       [[255,0,0],[255,100,100]], 
+			   [[128,128,128], [200,200,200]], 
+			   [[0,255,0],[100,255,100]] ];
+
+var generators = [smileSad, smileHappy, smileNeutral, smileVic]; 
+
+var smile = 0; 
+
+for(var x = 0; x != 24; x++)
+for(var y = 0; y != 24; y++) {
+	var lx = x % 12; 
+	var ly = y % 12; 
+	var index = (x + y*32)*4; 
+	var smile = (y > 12 ? 2 : 0) + (x > 12 ? 1 : 0); 
+	var touple = colors[smile]; 
+	var f      = generators[smile]; 
+	var bg = touple[0]; 
+	var fg = touple[1]; 
+
+	var color = (border(lx,ly) || f(lx,ly)) ? bg : fg;
+	data[index+0] = color[0]; 
+	data[index+1] = color[1]; 
+	data[index+2] = color[2]; 
+	data[index+3] = 255; 
+}
+
+ctx.putImageData(img, 0,0); 
+
+
+</script> 
+</body> 
+
