@@ -29,7 +29,7 @@ var canvas = document.getElementsByTagName("canvas")[0];
 var gl = null; 
 
 #ifdef DEBUG 
-	gl = GLT.createSafeContext(canvas); 
+	gl = GLT.createContext(canvas); 
 #else 
 	gl = GLT.createContext(canvas); 
 #endif 
@@ -402,9 +402,9 @@ GLT.loadmanager.loadFiles({
 	"finished" : function(files) {
 		cube = files["cube.obj"]; 
 		sky  = files["skybox.obj"]; 
-		program = GLT.SHADER.compileProgram(gl,files["diffuse.shader"]);
-		idprogram = GLT.SHADER.compileProgram(gl,files["id.shader"]);
-		borderprogram = GLT.SHADER.compileProgram(gl,files["border.shader"]);
+		program = GLT.shader.compileProgram(gl,files["diffuse.shader"]);
+		idprogram = GLT.shader.compileProgram(gl,files["id.shader"]);
+		borderprogram = GLT.shader.compileProgram(gl,files["border.shader"]);
 		cubetex = createTexture(files["cube.png"]);
 		skytex = createTexture(files["skybox2.png"]);
 		var map = files["map1.json"]; 
