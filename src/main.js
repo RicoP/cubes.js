@@ -1,6 +1,9 @@
 #include <glconstants.js> 
 #include <glmatrix.js> 
-#include <gltoolbox.js>  
+#include <glt.createcontext.js>  
+#include <glt.requestgameframe.js>  
+#include <glt.loadmanager.js>  
+#include <glt.shader.js>  
 #include <hammer.js>  
 #include "debug.js" 
 #include "assert.js"

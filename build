@@ -1,2 +1,3 @@
 #/bin/sh
-cpp entry.js -P -undef -nostdinc -Wtrigraphs -fdollars-in-identifiers -I include > deploy/game.js
+cpp entry.js -P -undef -nostdinc -Wtrigraphs -fdollars-in-identifiers -I include -I gltoolbox.js/src > deploy/game.js
+
