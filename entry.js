@@ -2,7 +2,7 @@
 (function(document, window) { 
 #endif
 
-#include "src/main_old.js"
+#include "src/main.js"
 
 #ifdef RELEASE 
 }(document, window)); 

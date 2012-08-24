@@ -26,20 +26,18 @@ cubes.Cube = (function() {
 		var blingoffset = 0.0; 
 		var movetime    = 0; 
 
-		this.tick = function(info) {		
-			checkprop(info, time); 
-
+		this.tick = function(time) {		
 			switch(state) {
 				case STATE_NONE: 
 				break; 
 
 				case STATE_MARKED: 
-				cube.bling = 0.618 * Math.sin(2.0 * Math.PI * (info.time.total - blingoffset)); 	
+				cube.bling = 0.618 * Math.sin(2.0 * Math.PI * (time.total - blingoffset)); 	
 				break; 
 
 				case STATE_MOVE: 
-				vec3.add(cube.vector, vec3.scale(direction, info.time.delta * speed, tmpvector)); 
-				movetime += info.time.delta * speed;
+				vec3.add(cube.vector, vec3.scale(direction, time.delta * speed, tmpvector)); 
+				movetime += time.delta * speed;
 				if(movetime >= 1) {
 					//we reached our destination.
 					state = STATE_NONE; 
@@ -56,9 +54,8 @@ cubes.Cube = (function() {
 			}
 		};
 
-		this.tap = function(info, dir) {		
-			checkprop(info, time); 
-			checkclass(info.time.delta, Number);  
+		this.tap = function(time, dir) {		
+			checkclass(time.delta, Number);  
 			checkclass(dir, Float32Array); 
 			assert( Math.abs((vec3.length(dir) - 1.0)) < 0.0001); 
 
@@ -71,7 +68,7 @@ cubes.Cube = (function() {
 				break; 
 
 				case STATE_MARKED: 
-				blingoffset = info.time.total; 
+				blingoffset = time.total; 
 				direction = dir; 
 				vec3.set(cube.vector, startpos); 
 				cube.bling = 0; 
