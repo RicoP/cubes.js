@@ -1,11 +1,9 @@
 #ifdef RELEASE 
-(function() { 
+(function(document, window) { 
 #endif
 
-
-#include "src/main.js"
-
+#include "src/main_old.js"
 
 #ifdef RELEASE 
-}()); 
+}(document, window)); 
 #endif 

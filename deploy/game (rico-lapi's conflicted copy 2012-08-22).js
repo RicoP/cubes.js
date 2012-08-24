@@ -2215,27 +2215,25 @@ GLT.createContext = createContext;
 }(GLT));
 (function(GLT) {
 "use strict";
-var win, raf, starttime, lasttime, time;
-win = window;
-raf =
- win.requestAnimationFrame ||
- win.webkitRequestAnimationFrame ||
- win.mozRequestAnimationFrame ||
- win.oRequestAnimationFrame ||
- win.msRequestAnimationFrame ||
- function( callback ) {
-  win.setTimeout(callback, 16);
- };
 function reset() {
  starttime = -1;
- time.total = 0;
- time.frame = 0;
 }
-starttime = -1;
-lasttime = 0;
-time = {
- "total" : 0,
+var requestAnimationFrame =
+ window.requestAnimationFrame ||
+ window.webkitRequestAnimationFrame ||
+ window.mozRequestAnimationFrame ||
+ window.oRequestAnimationFrame ||
+ function( callback ){
+  window.setTimeout(callback, 1000 / 60);
+ };
+var starttime = -1;
+var lasttime = 0;
+var time = {
  "delta" : 0,
+ "total" : 0
+};
+var loopObject = {
+ "time" : time,
  "frame" : 0,
  "reset" : reset
 };
@@ -2245,17 +2243,16 @@ function requestGameFrame(callback) {
   if(starttime === -1) {
    lasttime = now;
    starttime = now;
-   time.frame = 0;
+   loopObject.frame = 0;
   }
-  var delta = (now - lasttime) / 1000.0;
-  time.delta = delta;
-  time.total += delta;
-  callback(time);
-  time.frame++;
-  lasttime = now;
+  time.delta = (now - lasttime) / 1000.0;
+  time.total = (now - starttime) / 1000.0;
+  callback(loopObject);
   GLT.keys.update();
+  lasttime = now;
+  loopObject.frame++;
  }
- raf(innerCall);
+ requestAnimationFrame(innerCall);
 }
 GLT.requestGameFrame = requestGameFrame;
 }(GLT));
@@ -2444,10 +2441,7 @@ function simpleAjaxCall(key, file, success, error) {
   }
   if(xhr.readyState === 2 || xhr.readyState === 3){
    mime = mimeToType(xhr.getResponseHeader("content-type"));
-   if(file.toLowerCase().lastIndexOf(".json") + 5 === file.length) {
-    mime = 2;
-   }
-   else if(file.toLowerCase().lastIndexOf(".obj") + 4 === file.length) {
+   if(file.toLowerCase().lastIndexOf(".obj") + 4 === file.length) {
     mime = 6;
    }
    if(mime === 5) {
@@ -2570,466 +2564,6 @@ function compileProgram(gl, programsource) {
 GLT.shader = {};
 GLT.shader.compileProgram = compileProgram;
 }(GLT));
-function Hammer(element, options, undefined)
-{
-    var self = this;
-    var defaults = {
-        prevent_default : false,
-        css_hacks : true,
-        swipe : true,
-        swipe_time : 200,
-        swipe_min_distance : 20,
-        drag : true,
-        drag_vertical : true,
-        drag_horizontal : true,
-        drag_min_distance : 20,
-        transform : true,
-        scale_treshold : 0.1,
-        rotation_treshold : 15,
-        tap : true,
-        tap_double : true,
-        tap_max_interval : 300,
-        tap_max_distance : 10,
-        tap_double_distance: 20,
-        hold : true,
-        hold_timeout : 500
-    };
-    options = mergeObject(defaults, options);
-    (function() {
-        if(!options.css_hacks) {
-            return false;
-        }
-        var vendors = ['webkit','moz','ms','o',''];
-        var css_props = {
-            "userSelect": "none",
-            "touchCallout": "none",
-            "userDrag": "none",
-            "tapHighlightColor": "rgba(0,0,0,0)"
-        };
-        var prop = '';
-        for(var i = 0; i < vendors.length; i++) {
-            for(var p in css_props) {
-                prop = p;
-                if(vendors[i]) {
-                    prop = vendors[i] + prop.substring(0, 1).toUpperCase() + prop.substring(1);
-                }
-                element.style[ prop ] = css_props[p];
-            }
-        }
-    })();
-    var _distance = 0;
-    var _angle = 0;
-    var _direction = 0;
-    var _pos = { };
-    var _fingers = 0;
-    var _first = false;
-    var _gesture = null;
-    var _prev_gesture = null;
-    var _touch_start_time = null;
-    var _prev_tap_pos = {x: 0, y: 0};
-    var _prev_tap_end_time = null;
-    var _hold_timer = null;
-    var _offset = {};
-    var _mousedown = false;
-    var _event_start;
-    var _event_move;
-    var _event_end;
-    var _has_touch = ('ontouchstart' in window);
-    this.option = function(key, val) {
-        if(val != undefined) {
-            options[key] = val;
-        }
-        return options[key];
-    };
-    this.getDirectionFromAngle = function( angle )
-    {
-        var directions = {
-            down: angle >= 45 && angle < 135,
-            left: angle >= 135 || angle <= -135,
-            up: angle < -45 && angle > -135,
-            right: angle >= -45 && angle <= 45
-        };
-        var direction, key;
-        for(key in directions){
-            if(directions[key]){
-                direction = key;
-                break;
-            }
-        }
-        return direction;
-    };
-    function countFingers( event )
-    {
-        return event.touches ? event.touches.length : 1;
-    }
-    function getXYfromEvent( event )
-    {
-        event = event || window.event;
-        if(!_has_touch) {
-            var doc = document,
-                body = doc.body;
-            return [{
-                x: event.pageX || event.clientX + ( doc && doc.scrollLeft || body && body.scrollLeft || 0 ) - ( doc && doc.clientLeft || body && doc.clientLeft || 0 ),
-                y: event.pageY || event.clientY + ( doc && doc.scrollTop || body && body.scrollTop || 0 ) - ( doc && doc.clientTop || body && doc.clientTop || 0 )
-            }];
-        }
-        else {
-            var pos = [], src, touches = event.touches.length > 0 ? event.touches : event.changedTouches;
-            for(var t=0, len=touches.length; t<len; t++) {
-                src = touches[t];
-                pos.push({ x: src.pageX, y: src.pageY });
-            }
-            return pos;
-        }
-    }
-    function getAngle( pos1, pos2 )
-    {
-        return Math.atan2(pos2.y - pos1.y, pos2.x - pos1.x) * 180 / Math.PI;
-    }
-    function calculateScale(pos_start, pos_move)
-    {
-        if(pos_start.length == 2 && pos_move.length == 2) {
-            var x, y;
-            x = pos_start[0].x - pos_start[1].x;
-            y = pos_start[0].y - pos_start[1].y;
-            var start_distance = Math.sqrt((x*x) + (y*y));
-            x = pos_move[0].x - pos_move[1].x;
-            y = pos_move[0].y - pos_move[1].y;
-            var end_distance = Math.sqrt((x*x) + (y*y));
-            return end_distance / start_distance;
-        }
-        return 0;
-    }
-    function calculateRotation(pos_start, pos_move)
-    {
-        if(pos_start.length == 2 && pos_move.length == 2) {
-            var x, y;
-            x = pos_start[0].x - pos_start[1].x;
-            y = pos_start[0].y - pos_start[1].y;
-            var start_rotation = Math.atan2(y, x) * 180 / Math.PI;
-            x = pos_move[0].x - pos_move[1].x;
-            y = pos_move[0].y - pos_move[1].y;
-            var end_rotation = Math.atan2(y, x) * 180 / Math.PI;
-            return end_rotation - start_rotation;
-        }
-        return 0;
-    }
-    function triggerEvent( eventName, params )
-    {
-        params.touches = getXYfromEvent(params.originalEvent);
-        params.type = eventName;
-        if(isFunction(self["on"+ eventName])) {
-            self["on"+ eventName].call(self, params);
-        }
-    }
-    function cancelEvent(event)
-    {
-        event = event || window.event;
-        if(event.preventDefault){
-            event.preventDefault();
-            event.stopPropagation();
-        }else{
-            event.returnValue = false;
-            event.cancelBubble = true;
-        }
-    }
-    function reset()
-    {
-        _pos = {};
-        _first = false;
-        _fingers = 0;
-        _distance = 0;
-        _angle = 0;
-        _gesture = null;
-    }
-    var gestures = {
-        hold : function(event)
-        {
-            if(options.hold) {
-                _gesture = 'hold';
-                clearTimeout(_hold_timer);
-                _hold_timer = setTimeout(function() {
-                    if(_gesture == 'hold') {
-                        triggerEvent("hold", {
-                            originalEvent : event,
-                            position : _pos.start
-                        });
-                    }
-                }, options.hold_timeout);
-            }
-        },
-        swipe : function(event)
-        {
-            if(!_pos.move) {
-                return;
-            }
-            var _distance_x = _pos.move[0].x - _pos.start[0].x;
-            var _distance_y = _pos.move[0].y - _pos.start[0].y;
-            _distance = Math.sqrt(_distance_x*_distance_x + _distance_y*_distance_y);
-            var now = new Date().getTime();
-            var touch_time = now - _touch_start_time;
-            if(options.swipe && (options.swipe_time > touch_time) && (_distance > options.swipe_min_distance)) {
-                _angle = getAngle(_pos.start[0], _pos.move[0]);
-                _direction = self.getDirectionFromAngle(_angle);
-                _gesture = 'swipe';
-                var position = { x: _pos.move[0].x - _offset.left,
-                    y: _pos.move[0].y - _offset.top };
-                var event_obj = {
-                    originalEvent : event,
-                    position : position,
-                    direction : _direction,
-                    distance : _distance,
-                    distanceX : _distance_x,
-                    distanceY : _distance_y,
-                    angle : _angle
-                };
-                triggerEvent("swipe", event_obj);
-            }
-        },
-        drag : function(event)
-        {
-            var _distance_x = _pos.move[0].x - _pos.start[0].x;
-            var _distance_y = _pos.move[0].y - _pos.start[0].y;
-            _distance = Math.sqrt(_distance_x * _distance_x + _distance_y * _distance_y);
-            if(options.drag && (_distance > options.drag_min_distance) || _gesture == 'drag') {
-                _angle = getAngle(_pos.start[0], _pos.move[0]);
-                _direction = self.getDirectionFromAngle(_angle);
-                var is_vertical = (_direction == 'up' || _direction == 'down');
-                if(((is_vertical && !options.drag_vertical) || (!is_vertical && !options.drag_horizontal))
-                    && (_distance > options.drag_min_distance)) {
-                    return;
-                }
-                _gesture = 'drag';
-                var position = { x: _pos.move[0].x - _offset.left,
-                    y: _pos.move[0].y - _offset.top };
-                var event_obj = {
-                    originalEvent : event,
-                    position : position,
-                    direction : _direction,
-                    distance : _distance,
-                    distanceX : _distance_x,
-                    distanceY : _distance_y,
-                    angle : _angle
-                };
-                if(_first) {
-                    triggerEvent("dragstart", event_obj);
-                    _first = false;
-                }
-                triggerEvent("drag", event_obj);
-                cancelEvent(event);
-            }
-        },
-        transform : function(event)
-        {
-            if(options.transform) {
-                if(countFingers(event) != 2) {
-                    return false;
-                }
-                var rotation = calculateRotation(_pos.start, _pos.move);
-                var scale = calculateScale(_pos.start, _pos.move);
-                if(_gesture != 'drag' &&
-                    (_gesture == 'transform' || Math.abs(1-scale) > options.scale_treshold || Math.abs(rotation) > options.rotation_treshold)) {
-                    _gesture = 'transform';
-                    _pos.center = { x: ((_pos.move[0].x + _pos.move[1].x) / 2) - _offset.left,
-                        y: ((_pos.move[0].y + _pos.move[1].y) / 2) - _offset.top };
-                    var event_obj = {
-                        originalEvent : event,
-                        position : _pos.center,
-                        scale : scale,
-                        rotation : rotation
-                    };
-                    if(_first) {
-                        triggerEvent("transformstart", event_obj);
-                        _first = false;
-                    }
-                    triggerEvent("transform", event_obj);
-                    cancelEvent(event);
-                    return true;
-                }
-            }
-            return false;
-        },
-        tap : function(event)
-        {
-            var now = new Date().getTime();
-            var touch_time = now - _touch_start_time;
-            if(options.hold && !(options.hold && options.hold_timeout > touch_time)) {
-                return;
-            }
-            var is_double_tap = (function(){
-                if (_prev_tap_pos &&
-                    options.tap_double &&
-                    _prev_gesture == 'tap' &&
-                    (_touch_start_time - _prev_tap_end_time) < options.tap_max_interval)
-                {
-                    var x_distance = Math.abs(_prev_tap_pos[0].x - _pos.start[0].x);
-                    var y_distance = Math.abs(_prev_tap_pos[0].y - _pos.start[0].y);
-                    return (_prev_tap_pos && _pos.start && Math.max(x_distance, y_distance) < options.tap_double_distance);
-                }
-                return false;
-            })();
-            if(is_double_tap) {
-                _gesture = 'double_tap';
-                _prev_tap_end_time = null;
-                triggerEvent("doubletap", {
-                    originalEvent : event,
-                    position : _pos.start
-                });
-                cancelEvent(event);
-            }
-            else {
-                var x_distance = (_pos.move) ? Math.abs(_pos.move[0].x - _pos.start[0].x) : 0;
-                var y_distance = (_pos.move) ? Math.abs(_pos.move[0].y - _pos.start[0].y) : 0;
-                _distance = Math.max(x_distance, y_distance);
-                if(_distance < options.tap_max_distance) {
-                    _gesture = 'tap';
-                    _prev_tap_end_time = now;
-                    _prev_tap_pos = _pos.start;
-                    if(options.tap) {
-                        triggerEvent("tap", {
-                            originalEvent : event,
-                            position : _pos.start
-                        });
-                        cancelEvent(event);
-                    }
-                }
-            }
-        }
-    };
-    function handleEvents(event)
-    {
-        switch(event.type)
-        {
-            case 'mousedown':
-            case 'touchstart':
-                _pos.start = getXYfromEvent(event);
-                _touch_start_time = new Date().getTime();
-                _fingers = countFingers(event);
-                _first = true;
-                _event_start = event;
-                var box = element.getBoundingClientRect();
-                var clientTop = element.clientTop || document.body.clientTop || 0;
-                var clientLeft = element.clientLeft || document.body.clientLeft || 0;
-                var scrollTop = window.pageYOffset || element.scrollTop || document.body.scrollTop;
-                var scrollLeft = window.pageXOffset || element.scrollLeft || document.body.scrollLeft;
-                _offset = {
-                    top: box.top + scrollTop - clientTop,
-                    left: box.left + scrollLeft - clientLeft
-                };
-                _mousedown = true;
-                gestures.hold(event);
-                if(options.prevent_default) {
-                    cancelEvent(event);
-                }
-                break;
-            case 'mousemove':
-            case 'touchmove':
-                if(!_mousedown) {
-                    return false;
-                }
-                _event_move = event;
-                _pos.move = getXYfromEvent(event);
-                if(!gestures.transform(event)) {
-                    gestures.drag(event);
-                }
-                break;
-            case 'mouseup':
-            case 'mouseout':
-            case 'touchcancel':
-            case 'touchend':
-                if(!_mousedown || (_gesture != 'transform' && event.touches && event.touches.length > 0)) {
-                    return false;
-                }
-                _mousedown = false;
-                _event_end = event;
-                var dragging = _gesture == 'drag';
-                gestures.swipe(event);
-                if(dragging) {
-                    triggerEvent("dragend", {
-                        originalEvent : event,
-                        direction : _direction,
-                        distance : _distance,
-                        angle : _angle
-                    });
-                }
-                else if(_gesture == 'transform') {
-                    triggerEvent("transformend", {
-                        originalEvent : event,
-                        position : _pos.center,
-                        scale : calculateScale(_pos.start, _pos.move),
-                        rotation : calculateRotation(_pos.start, _pos.move)
-                    });
-                }
-                else {
-                    gestures.tap(_event_start);
-                }
-                _prev_gesture = _gesture;
-                triggerEvent("release", {
-                    originalEvent : event,
-                    gesture : _gesture
-                });
-                reset();
-                break;
-        }
-    }
-    if(_has_touch) {
-        addEvent(element, "touchstart touchmove touchend touchcancel", handleEvents);
-    }
-    else {
-        addEvent(element, "mouseup mousedown mousemove", handleEvents);
-        addEvent(element, "mouseout", function(event) {
-            if(!isInsideHammer(element, event.relatedTarget)) {
-                handleEvents(event);
-            }
-        });
-    }
-    function isInsideHammer(parent, child) {
-        if(!child && window.event && window.event.toElement){
-            child = window.event.toElement;
-        }
-        if(parent === child){
-            return true;
-        }
-        if(child){
-            var node = child.parentNode;
-            while(node !== null){
-                if(node === parent){
-                    return true;
-                };
-                node = node.parentNode;
-            }
-        }
-        return false;
-    }
-    function mergeObject(obj1, obj2) {
-        var output = {};
-        if(!obj2) {
-            return obj1;
-        }
-        for (var prop in obj1) {
-            if (prop in obj2) {
-                output[prop] = obj2[prop];
-            } else {
-                output[prop] = obj1[prop];
-            }
-        }
-        return output;
-    }
-    function isFunction( obj ){
-        return Object.prototype.toString.call( obj ) == "[object Function]";
-    }
-    function addEvent(element, types, callback) {
-        types = types.split(" ");
-        for(var t= 0,len=types.length; t<len; t++) {
-            if(element.addEventListener){
-                element.addEventListener(types[t], callback, false);
-            }
-            else if(document.attachEvent){
-                element.attachEvent("on"+ types[t], callback);
-            }
-        }
-    }
-}
  function __error(message, file, line) {
   throw new Error(message + "(" + file + ":" + line + ")");
  }
@@ -3143,215 +2677,6 @@ cubes.Cube = (function() {
   };
  };
 }());
-(function() {
-"use strict";
-cubes.Random = function(seed) {
- var MAX = 0xFFFF;
- var num = seed | 0;
- var mul = num;
- function next() {
-  return num = (mul * num) & MAX;
- }
- for(var i = 8; i--;) {
-  next();
- }
- this.next = next;
-};
-}());
-(function() {
-"use strict";
-cubes.Statemachine = function(canvas, cameraPos, cameraDir) {
- do { if(!(cameraPos instanceof Float32Array) && !("Float32Array".toLowerCase() === typeof cameraPos)) { __error("Objct " + "cameraPos" + " is not from type " + "Float32Array", "src/cubes.statemachine.js", 22); } } while(false);
- do { if(!(cameraDir instanceof Float32Array) && !("Float32Array".toLowerCase() === typeof cameraDir)) { __error("Objct " + "cameraDir" + " is not from type " + "Float32Array", "src/cubes.statemachine.js", 23); } } while(false);
- do { if(!(cameraPos.length === 3)) { __error("assertion failed: " + "cameraPos.length === 3" + " = " + (cameraPos.length === 3), "src/cubes.statemachine.js", 24); } } while(false);
- do { if(!(cameraDir.length === 3)) { __error("assertion failed: " + "cameraDir.length === 3" + " = " + (cameraDir.length === 3), "src/cubes.statemachine.js", 25); } } while(false);
- var speed = 2.0;
- var DRAGDIST = 100;
- var state = 0;
- var markedCube = null;
- var blingoffset = 0.0;
- var direction = vec3.create();
- var tmpvector = vec3.create();
- var tmpmatrix = mat4.create();
- var dragStartPosition = { x : 0, y : 0 };
- var diceSide = 0;
- function markCube(obj) {
-  do { if(typeof (obj . cube) === "undefined") { __error("No property " + "cube" + " in " + "obj", "src/cubes.statemachine.js", 40); } } while(false);
-  if(obj.cube !== null) {
-   do { if(!(obj.cube instanceof cubes.Cube) && !("cubes.Cube".toLowerCase() === typeof obj.cube)) { __error("Objct " + "obj.cube" + " is not from type " + "cubes.Cube", "src/cubes.statemachine.js", 42); } } while(false);
-   obj.cube.bling = 0.0;
-  }
-  if(markedCube !== null) {
-   markedCube.bling = 0.0;
-  }
-  markedCube = obj.cube;
-  do { if(typeof (obj . info) === "undefined") { __error("No property " + "info" + " in " + "obj", "src/cubes.statemachine.js", 51); } } while(false);
-  do { if(typeof (obj.info . time) === "undefined") { __error("No property " + "time" + " in " + "obj.info", "src/cubes.statemachine.js", 52); } } while(false);
-  markedTime = obj.time.total;
- }
- function hasCube(obj) {
-  do { if(typeof (obj . cube) === "undefined") { __error("No property " + "cube" + " in " + "obj", "src/cubes.statemachine.js", 58); } } while(false);
-  if(obj.cube !== null) {
-   do { if(!(obj.cube instanceof cubes.Cube) && !("cubes.Cube".toLowerCase() === typeof obj.cube)) { __error("Objct " + "obj.cube" + " is not from type " + "cubes.Cube", "src/cubes.statemachine.js", 60); } } while(false);
-   return true;
-  }
-  return false;
- }
- function transaction(trans, obj) {
-  switch(state) {
-   case 0:
-   state = stateNone(trans, obj);
-   break;
-   case 2:
-   state = stateCubeMarked(trans, obj);
-   break;
-   case 3:
-   state = stateCubeDrag(trans, obj);
-   break;
-   case 4:
-   state = stateCubeMove(trans, obj);
-   break;
-   case 1:
-   state = stateSkyDrag(trans, obj);
-   break;
-   default:
-   do { if(!(false && ("unknown transaction " + trans))) { __error("assertion failed: " + "false && (\"unknown transaction \" + trans)" + " = " + (false && ("unknown transaction " + trans)), "src/cubes.statemachine.js", 89); } } while(false);
-   break;
-  }
- }
- function stateNone(trans, obj) {
-  switch(trans) {
-   case 0:
-   if(hasCube(obj)) {
-    markCube(obj);
-    return 2;
-   }
-   break;
-   case 1:
-   case 2:
-   if(hasCube(obj)) {
-    markCube(obj);
-    return 3;
-   }
-   else {
-    return 1;
-   }
-  }
-  return 0;
- }
- function stateCubeMarked(trans, obj) {
-  switch(trans) {
-   case 0:
-   if(hasCube(obj)) {
-    if(markedCube === obj.cube) {
-     markedcube.bling = 0.0;
-     return 4;
-    }
-    markCube(obj);
-    return 2;
-   }
-   return 0;
-   break;
-   case 1:
-   case 2:
-   if(hasCube(obj)) {
-    if(obj.cube === markedCube) {
-     return 3;
-    }
-    markCube(obj);
-   }
-   return 2;
-   break;
-   case 4:
-   do { if(typeof (obj . info) === "undefined") { __error("No property " + "info" + " in " + "obj", "src/cubes.statemachine.js", 145); } } while(false);
-   markedCube.bling = (1.0 + Math.sin(markedTime - info.time.total) ) / 2.0;
-   return 2;
-   break;
-  }
-  return 2;
- }
- function stateCubeDrag(trans, obj) {
-  switch(trans) {
-   case 0:
-   return stateCubeMarked(0, obj);
-   break;
-   case 1:
-   return 3;
-   break;
-   case 3:
-   return 0;
-   break;
-  }
-  return 3;
- }
- function stateCubeMove(trans, obj) {
-  switch(trans, obj) {
-   case 4:
-   do { if(typeof (obj . info) === "undefined") { __error("No property " + "info" + " in " + "obj", "src/cubes.statemachine.js", 176); } } while(false);
-   var cube = markedCube;
-   var info = obj.info;
-   vec3.add(cube.vector, vec3.scale(direction, info.time.delta * speed, tmpvector));
-   movetime += info.time.delta * speed;
-   if(movetime >= 1) {
-    vec3.set(vec3.add(startpos, direction, tmpvector), cube.vector);
-    movetime = 0.0;
-    cube.bling = 0;
-    return 0;
-   }
-   break;
-  }
-  return 4;
- }
- function stateSkyDrag(trans, obj) {
-  switch(trans) {
-   case 1:
-   case 2:
-   var rot = mat4.identity(tmpmatrix);
-   var negDir = vec3.create(cameraDir);
-   vec3.scale(negDir, -1);
-   mat4.translate(rot, negDir);
-   mat4.rotateY(rot, (-2 * Math.PI * dragEvent.distanceX / canvas.width) / 50);
-   mat4.translate(rot, cameraDir);
-   mat4.multiplyVec3(rot, cameraPos);
-   return 1;
-   break;
-   case 0:
-   return stateNone(trans, obj);
-   break;
-   case 4:
-   break;
-   case 3:
-   return 0;
-   break;
-  }
-  return 1;
- }
- this.tap = function(info, obj) {
-  var oldstate = state;
-  transaction(0, obj);
-  console.log("DEBUG (" + "src/cubes.statemachine.js" + ":" + 230 + ")", "Tap",oldstate,"->",state );
- };
- this.dragStart = function(info, obj) {
-  var oldstate = state;
-  transaction(2, obj);
-  console.log("DEBUG (" + "src/cubes.statemachine.js" + ":" + 236 + ")", "DragStart",oldstate,"->",state );
- };
- this.drag = function(info, obj) {
-  var oldstate = state;
-  transaction(1, obj);
-  console.log("DEBUG (" + "src/cubes.statemachine.js" + ":" + 242 + ")", "Drag",oldstate,"->",state );
- };
- this.dragEnd = function(info, obj) {
-  var oldstate = state;
-  transaction(3, obj);
-  console.log("DEBUG (" + "src/cubes.statemachine.js" + ":" + 248 + ")", "DragEnd",oldstate,"->",state );
- };
- this.tick = function(info, obj) {
-  var oldstate = state;
-  transaction(4, obj);
- };
-};
-}());
 cubes.Map = {};
 cubes.Map.create = (function() {
 "use strict";
@@ -3379,318 +2704,99 @@ return function(image) {
 }());
 (function() {
 "use strict";
-var cube;
-var sky;
-var program;
-var borderprogram;
-var idprogram;
-var cubeBuffer;
-var skyBuffer;
-var borderBuffer;
-var canvas = document.getElementsByTagName("canvas")[0];
-var gl = null;
- gl = GLT.createContext(canvas);
-var projection = mat4.perspective(60, 4/3, 0.1, 1000);
-var cameraPos = vec3.create([1,1,6]);
-var cameraDir = vec3.create([0,0,0]);
-var cameraUp = vec3.create([0,1,0]);
-var camera = mat4.identity();
 var tmpmatrix = mat4.create();
-var cubetex = null;
-var skytex = null;
-var cubeNormals = [
- vec3.create([ 0, 0, 0]),
- vec3.create([ 1, 0, 0]),
- vec3.create([ 0, 1, 0]),
- vec3.create([ 0, 0, 1]),
- vec3.create([ 0, 0,-1]),
- vec3.create([ 0,-1, 0]),
- vec3.create([-1, 0, 0])
-];
-var cubeDragSides = [
- [ 0, 0, 0, 0],
- [ 2, 3, 4, 5],
- [ 0, 0, 0, 0],
- [ 2, 6, 1, 5],
- [ 2, 1, 6, 5],
- [ 0, 0, 0, 0],
- [ 2, 4, 3, 5],
-];
-var cubelist = [
-];
-var border = new Float32Array([
- -1, -1,
-  1, -1,
-  1, 1,
- -1, 1
-]);
-var tapped = false;
-var tapEvent = null;
-var dragged = false;
-var dragEvent = null;
-var eventPosition = { x : 0, y : 0 };
-function createTexture(img) {
- do { if(!(img)) { __error("assertion failed: " + "img" + " = " + (img), "src/main_old.js", 92); } } while(false);
- var tex = gl.createTexture();
- gl.bindTexture(GL_TEXTURE_2D, tex);
- gl.pixelStorei(GL_UNPACK_FLIP_Y_WEBGL, 1);
- gl.texImage2D(GL_TEXTURE_2D, 0, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, img);
- gl.texParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
- gl.texParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
- gl.bindTexture(GL_TEXTURE_2D, null);
- return tex;
-}
-function recalcCamera() {
- camera = mat4.lookAt(cameraPos, cameraDir, cameraUp);
-}
-function setup() {
+function start(files, gl) {
+ var projection = mat4.perspective(60, 4/3, 0.1, 1000);
+ var cameraPos = vec3.create([1,1,6]);
+ var cameraDir = vec3.create([0,0,0]);
+ var cameraUp = vec3.create([0,1,0]);
+ var camera = mat4.create();
+ function renderPlanes(info) {
+  var program = files.diffuseprogram;
+  var plane = files.plane;
+  var uModelviewprojection = gl.getUniformLocation(program, "uModelviewprojection");
+  var uTexture = gl.getUniformLocation(program, "uTexture");
+  var aVertex = gl.getAttribLocation(program, "aVertex");
+  var aTextureuv = gl.getAttribLocation(program, "aTextureuv");
+  var modelviewprojection = tmpmatrix;
+  gl.useProgram(program);
+  gl.bindBuffer(GL_ARRAY_BUFFER, plane.buffer);
+  gl.vertexAttribPointer(aVertex, 4, GL_FLOAT, false, plane.stride, plane.voffset);
+  gl.enableVertexAttribArray(aVertex);
+  gl.vertexAttribPointer(aTextureuv, 4, GL_FLOAT, false, plane.stride, plane.toffset);
+  gl.enableVertexAttribArray(aTextureuv);
+  gl.bindTexture(GL_TEXTURE_2D, files.texcube);
+  gl.uniform1i(uTexture, 0);
+  mat4.multiply(projection, camera, modelviewprojection);
+  gl.uniformMatrix4fv(uModelviewprojection, false, modelviewprojection);
+  gl.drawArrays(GL_TRIANGLES, 0, plane.numVertices);
+ }
+ function recalcCamera() {
+  mat4.lookAt(cameraPos, cameraDir, cameraUp, camera);
+ }
+ function update(info) {
+ }
+ function render(info) {
+  renderPlanes(info);
+ }
+ function gameloop(info) {
+  render(info);
+  update(info);
+  GLT.requestGameFrame(gameloop);
+ }
  gl.enable( GL_DEPTH_TEST );
  gl.enable( GL_SCISSOR_TEST );
  gl.enable( GL_CULL_FACE );
- gl.lineWidth(4.5);
- gl.clearColor(0,0,0,0);
- cubeBuffer = gl.createBuffer();
- gl.bindBuffer(GL_ARRAY_BUFFER, cubeBuffer);
- gl.bufferData(GL_ARRAY_BUFFER, cube.rawData, GL_STATIC_DRAW);
- skyBuffer = gl.createBuffer();
- gl.bindBuffer(GL_ARRAY_BUFFER, skyBuffer);
- gl.bufferData(GL_ARRAY_BUFFER, sky.rawData, GL_STATIC_DRAW);
- borderBuffer = gl.createBuffer();
- gl.bindBuffer(GL_ARRAY_BUFFER, borderBuffer);
- gl.bufferData(GL_ARRAY_BUFFER, border, GL_STATIC_DRAW);
- var hammer = new Hammer(canvas);
- hammer.ontap = function(ev) {
-  tapped = true;
-  tapEvent = ev;
-  var x = ev.position[0].x;
-  var y = canvas.height - ev.position[0].y;
-  eventPosition.x = x;
-  eventPosition.y = y;
- };
- hammer.ondrag = function(ev) {
-  dragged = true;
-  dragEvent = ev;
-  var x = ev.position.x;
-  var y = canvas.height - ev.position.y;
-  eventPosition.x = x;
-  eventPosition.y = y;
- };
-}
-function gameloop(info) {
- update(info);
- draw(info);
+ gl.clearColor(0,0,0,1);
+ files.cube.buffer = gl.createBuffer();
+ gl.bindBuffer(GL_ARRAY_BUFFER, files.cube.buffer);
+ gl.bufferData(GL_ARRAY_BUFFER, files.cube.rawData, GL_STATIC_DRAW);
+ files.plane.buffer = gl.createBuffer();
+ gl.bindBuffer(GL_ARRAY_BUFFER, files.plane.buffer);
+ gl.bufferData(GL_ARRAY_BUFFER, files.plane.rawData, GL_STATIC_DRAW);
+ recalcCamera();
  GLT.requestGameFrame(gameloop);
 }
-function update(info) {
- var r = 0;
- var g = 0;
- var b = 0;
- var a = 0;
- var side = 0;
- var selectedid = 0;
- var touchedTheSky = false;
- var touchedACube = false;
- if(tapped || dragged) {
-  gl.clearDepth(1);
-  gl.clear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-  drawCubes(idprogram);
-  var buf = new Uint8Array(4);
-  var x = eventPosition.x;
-  var y = eventPosition.y;
-  gl.readPixels(x, y, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, buf);
-  r = buf[0];
-  g = buf[1];
-  b = buf[2];
-  a = buf[3];
-  side = r;
-  selectedid = cubes.Id.fromColor(0,g,b).asNumber();
-  do { if(!(side >= 0 && side <= 6)) { __error("assertion failed: " + "side >= 0 && side <= 6" + " = " + (side >= 0 && side <= 6), "src/main_old.js", 190); } } while(false);
- }
- touchedTheSky = (selectedid === 0);
- touchedACube = !touchedTheSky;
- if(touchedACube && tapped) {
-  var normal = cubeNormals[side];
-  var cube = getCubeById(selectedid);
-  cube.tap(info, normal);
- }
- else if(touchedACube && dragged) {
-  var dir = 0;
-  if(Math.abs(dragEvent.distanceX) > Math.abs(dragEvent.distanceY)) {
-   if(dragEvent.distanceX > 0) {
-    dir = 2;
-   }
-   else {
-    dir = 1;
-   }
-  }
-  else {
-   if(dragEvent.distanceY > 0) {
-    dir = 3;
-   }
-   else {
-    dir = 0;
-   }
-  }
-  var normal = cubeNormals[ cubeDragSides[side][dir] ];
-  if(side === 2 || side === 5 || side === 0) {
-   console.error("ERROR (" + "src/main_old.js" + ":" + 225 + ")", "TODO: Implement top and bottom drag." );
-  }
-  else {
-   var cube = getCubeById(selectedid);
-   cube.tap(info, normal);
-  }
- }
- else if(touchedTheSky && dragged) {
-  var rot = mat4.identity(tmpmatrix);
-  var negDir = vec3.create(cameraDir);
-  vec3.scale(negDir, -1);
-  mat4.translate(rot, negDir);
-  mat4.rotateY(rot, (-2 * Math.PI * dragEvent.distanceX / canvas.width) / 50);
-  mat4.translate(rot, cameraDir);
-  mat4.multiplyVec3(rot, cameraPos);
-  recalcCamera();
- }
- tapped = false;
- dragged = false;
- for(var i = 0; i != cubelist.length; i++) {
-  var cube = cubelist[i];
-  cube.tick(info);
- }
-}
-function draw(info) {
- gl.disable( GL_DEPTH_TEST );
- gl.disable( GL_CULL_FACE );
- drawSky(program);
- gl.enable( GL_DEPTH_TEST );
- gl.enable( GL_CULL_FACE );
- gl.clearDepth(1);
- gl.clear(GL_DEPTH_BUFFER_BIT);
- var viewport = gl.getParameter(GL_VIEWPORT);
- var x = viewport[0];
- var y = viewport[1];
- var w = viewport[2];
- var h = viewport[3];
- gl.scissor(w - 180 - 15, 15, 180, 135);
- gl.viewport(w - 180 - 15, 15, 180, 135);
- drawBorder(borderprogram);
- drawCubes(program);
- gl.clearDepth(0);
- gl.clear(GL_DEPTH_BUFFER_BIT);
- gl.scissor(x,y,w,h);
- gl.viewport(x,y,w,h);
- drawCubes(program);
-}
-function getCubeById(id) {
- for(var i = 0; i != cubelist.length; i++) {
-  var object = cubelist[i];
-  if(object.id.asNumber() === id) {
-   return object;
-  }
- }
- console.error("ERROR (" + "src/main_old.js" + ":" + 292 + ")", "id", id, "not found." );
- return null;
-}
-function drawCubes(program) {
- gl.useProgram(program);
- var uModelviewprojection = gl.getUniformLocation(program, "uModelviewprojection");
- var uIdColor = gl.getUniformLocation(program, "uIdColor");
- var uTexture = gl.getUniformLocation(program, "uTexture");
- var uBling = gl.getUniformLocation(program, "uBling");
- var aVertex = gl.getAttribLocation(program, "aVertex");
- var aTextureuv = gl.getAttribLocation(program, "aTextureuv");
- var aNormal = gl.getAttribLocation(program, "aNormal");
- var modelviewprojection = tmpmatrix;
- gl.bindBuffer(GL_ARRAY_BUFFER, cubeBuffer);
- gl.vertexAttribPointer(aVertex, 4, GL_FLOAT, false, cube.stride, cube.voffset);
- gl.enableVertexAttribArray(aVertex);
- if(aTextureuv !== -1) {
-  gl.vertexAttribPointer(aTextureuv, 4, GL_FLOAT, false, cube.stride, cube.toffset);
-  gl.enableVertexAttribArray(aTextureuv);
- }
- if(aNormal !== -1) {
-  gl.vertexAttribPointer(aNormal, 4, GL_FLOAT, false, cube.stride, cube.noffset);
-  gl.enableVertexAttribArray(aNormal);
- }
- if(uTexture) {
-  gl.bindTexture(GL_TEXTURE_2D, cubetex);
-  gl.uniform1i(uTexture, 0);
- }
- for(var i = 0; i != cubelist.length; i++) {
-  var object = cubelist[i];
-  if(uIdColor) {
-   gl.uniform3fv(uIdColor, object.id.asColor());
-  }
-  if(uBling) {
-   gl.uniform1f(uBling, object.bling);
-  }
-  mat4.multiply(projection, camera, modelviewprojection);
-  mat4.translate(modelviewprojection, object.vector);
-  gl.uniformMatrix4fv(uModelviewprojection, false, modelviewprojection);
-  gl.drawArrays(GL_TRIANGLES, 0, cube.numVertices);
- }
-}
-function drawSky(program) {
- gl.useProgram(program);
- var uModelviewprojection = gl.getUniformLocation(program, "uModelviewprojection");
- var uTexture = gl.getUniformLocation(program, "uTexture");
- var uBling = gl.getUniformLocation(program, "uBling");
- var aVertex = gl.getAttribLocation(program, "aVertex");
- var aTextureuv = gl.getAttribLocation(program, "aTextureuv");
- var modelviewprojection = tmpmatrix;
- do { if(!(uModelviewprojection)) { __error("assertion failed: " + "uModelviewprojection" + " = " + (uModelviewprojection), "src/main_old.js", 361); } } while(false);
- do { if(!(uTexture)) { __error("assertion failed: " + "uTexture" + " = " + (uTexture), "src/main_old.js", 362); } } while(false);
- do { if(!(aTextureuv !== -1)) { __error("assertion failed: " + "aTextureuv !== -1" + " = " + (aTextureuv !== -1), "src/main_old.js", 363); } } while(false);
- do { if(!(aVertex !== -1)) { __error("assertion failed: " + "aVertex !== -1" + " = " + (aVertex !== -1), "src/main_old.js", 364); } } while(false);
- gl.bindBuffer(GL_ARRAY_BUFFER, skyBuffer);
- gl.vertexAttribPointer(aVertex, 4, GL_FLOAT, false, sky.stride, sky.voffset);
- gl.enableVertexAttribArray(aVertex);
- gl.vertexAttribPointer(aTextureuv, 4, GL_FLOAT, false, sky.stride, sky.toffset);
- gl.enableVertexAttribArray(aTextureuv);
- gl.bindTexture(GL_TEXTURE_2D, skytex);
- gl.uniform1i(uTexture, 0);
- mat4.multiply(projection, camera, modelviewprojection);
- mat4.translate(modelviewprojection, cameraPos);
- gl.uniformMatrix4fv(uModelviewprojection, false, modelviewprojection);
- gl.uniform1f(uBling, 0);
- gl.drawArrays(GL_TRIANGLES, 0, sky.numVertices);
-}
-function drawBorder(program) {
- gl.useProgram(program);
- var aVertex = gl.getAttribLocation(program, "aVertex");
- do { if(!(aVertex !== -1)) { __error("assertion failed: " + "aVertex !== -1" + " = " + (aVertex !== -1), "src/main_old.js", 391); } } while(false);
- gl.bindBuffer(GL_ARRAY_BUFFER, borderBuffer);
- gl.vertexAttribPointer(aVertex, 2, GL_FLOAT, false, 0, 0);
- gl.enableVertexAttribArray(aVertex);
- gl.drawArrays(GL_LINE_LOOP, 0, 4);
-}
 GLT.loadmanager.loadFiles({
- "files" : ["cube.obj", "diffuse.shader", "id.shader", "cube.png", "skybox.obj", "skybox2.png", "border.shader", "map1.json", "map.gif"],
- "error" : function(file, err) {
-  console.error("ERROR (" + "src/main_old.js" + ":" + 404 + ")", file, err );
+ "files" : {
+  cube : "cube.obj",
+  plane : "plane.obj",
+  diffuse : "diffuse.shader",
+  id : "id.shader",
+  icube : "cube.png",
+  skybox : "skybox.obj",
+  iskybox : "skybox2.png",
+  border : "border.shader",
+  imap : "map.gif"
+ },
+ "error" : function(err) {
+  console.error("ERROR (" + "src/main.js" + ":" + 107 + ")", err );
  },
  "finished" : function(files) {
-  cube = files["cube.obj"];
-  sky = files["skybox.obj"];
-  program = GLT.shader.compileProgram(gl,files["diffuse.shader"]);
-  idprogram = GLT.shader.compileProgram(gl,files["id.shader"]);
-  borderprogram = GLT.shader.compileProgram(gl,files["border.shader"]);
-  cubetex = createTexture(files["cube.png"]);
-  skytex = createTexture(files["skybox2.png"]);
-  var map = files["map1.json"];
-  cubes.Map(files["map.gif"]);
-  var idgen = new cubes.Id.Generator();
-  for(var i = 0; i != map.cubes.length; i++) {
-   cubelist.push( new cubes.Cube(map.cubes[i].position, idgen.next()) );
+  function createTexture(gl, img) {
+   do { if(!(img)) { __error("assertion failed: " + "img" + " = " + (img), "src/main.js", 111); } } while(false);
+   var tex = gl.createTexture();
+   gl.bindTexture(GL_TEXTURE_2D, tex);
+   gl.pixelStorei(GL_UNPACK_FLIP_Y_WEBGL, 1);
+   gl.texImage2D(GL_TEXTURE_2D, 0, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, img);
+   gl.texParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+   gl.texParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+   gl.bindTexture(GL_TEXTURE_2D, null);
+   return tex;
   }
-  cameraDir[0] = map.grid.width >> 1;
-  cameraDir[1] = map.grid.height >> 1;
-  cameraDir[2] = map.grid.depth >> 1;
-  vec3.set(cameraDir, cameraPos);
-  cameraPos[2] += map.grid.depth;
-  setup();
-  recalcCamera();
-  GLT.requestGameFrame(gameloop);
+  var canvas = document.getElementsByTagName("canvas")[0];
+  var gl = GLT.createContext(canvas);
+  if(gl) {
+   files.texcube = createTexture(gl, files.icube);
+   files.texskybox = createTexture(gl, files.iskybox);
+   files.map = cubes.Map.create(files.imap);
+   files.idprogram = GLT.shader.compileProgram(gl, files.id);
+   files.diffuseprogram = GLT.shader.compileProgram(gl, files.diffuse);
+   start(files, gl);
+  }
+  else {
+   alert("WebGL Not supported");
+  }
  }
 });
- console.log("DEBUG. Build:", "Aug 24 2012", "14:20:40");
 }());
