@@ -20,22 +20,18 @@
 "use strict"; 
 
 var cube; 
+var sphere; 
 var sky; 
 var program; 
 var borderprogram; 
 var idprogram; 
 var cubeBuffer; 
+var sphereBuffer; 
 var skyBuffer; 
 var borderBuffer; 
 
 var canvas = document.getElementsByTagName("canvas")[0]; 
-var gl = null; 
-
-#ifdef DEBUG 
-	gl = GLT.createContext(canvas); 
-#else 
-	gl = GLT.createContext(canvas); 
-#endif 
+var gl = GLT.createContext(canvas); 
 
 var projection = mat4.perspective(60, 4/3, 0.1, 1000); 
 var cameraPos  = vec3.create([1,1,6]); 
@@ -114,6 +110,10 @@ function setup() {
 	cubeBuffer = gl.createBuffer(); 
 	gl.bindBuffer(GL_ARRAY_BUFFER, cubeBuffer); 
 	gl.bufferData(GL_ARRAY_BUFFER, cube.rawData, GL_STATIC_DRAW);
+
+	sphereBuffer = gl.createBuffer(); 
+	gl.bindBuffer(GL_ARRAY_BUFFER, sphereBuffer); 
+	gl.bufferData(GL_ARRAY_BUFFER, sphere.rawData, GL_STATIC_DRAW);
 
 	skyBuffer = gl.createBuffer(); 
 	gl.bindBuffer(GL_ARRAY_BUFFER, skyBuffer); 
@@ -278,6 +278,7 @@ function draw(info) {
 	gl.viewport(x,y,w,h);  
 
 	drawCubes(program); 
+	drawSphere(program); 
 } 
 
 function getCubeById(id) {
@@ -343,7 +344,42 @@ function drawCubes(program) {
 		gl.uniformMatrix4fv(uModelviewprojection, false, modelviewprojection); 
 
 		gl.drawArrays(GL_TRIANGLES, 0, cube.numVertices); 
+	}	
+}
+
+function drawSphere(program) {
+	gl.useProgram(program); 
+
+	var uModelviewprojection = gl.getUniformLocation(program, "uModelviewprojection"); 
+	var uTexture   = gl.getUniformLocation(program, "uTexture"); 	
+
+	var aVertex    = gl.getAttribLocation(program, "aVertex"); 
+	var aTextureuv = gl.getAttribLocation(program, "aTextureuv"); 
+
+	var modelviewprojection = tmpmatrix; 
+
+	gl.bindBuffer(GL_ARRAY_BUFFER, sphereBuffer); 
+
+	gl.vertexAttribPointer(aVertex, 4, GL_FLOAT, false, sphere.stride, sphere.voffset); 
+	gl.enableVertexAttribArray(aVertex); 
+
+	if(aTextureuv !== -1) {
+		gl.vertexAttribPointer(aTextureuv, 4, GL_FLOAT, false, sphere.stride, sphere.toffset); 
+		gl.enableVertexAttribArray(aTextureuv); 
 	}
+
+	if(uTexture) {
+		gl.bindTexture(GL_TEXTURE_2D, cubetex); 
+		gl.uniform1i(uTexture, 0); 
+	}
+
+	mat4.multiply(projection, camera, modelviewprojection); 
+	//mat4.translate(modelviewprojection, object.vector); 
+
+	gl.uniformMatrix4fv(uModelviewprojection, false, modelviewprojection); 
+
+	gl.drawArrays(GL_TRIANGLES, 0, sphere.numVertices); 
+
 }
 
 function drawSky(program) {
@@ -398,13 +434,14 @@ function drawBorder(program) {
 }
 
 GLT.loadmanager.loadFiles({
-	"files" : ["cube.obj", "diffuse.shader", "id.shader", "cube.png", "skybox.obj", "skybox2.png", "border.shader", "map1.json"], 
+	"files" : ["cube.obj", "sphere.obj", "diffuse.shader", "id.shader", "cube.png", "skybox.obj", "skybox2.png", "border.shader", "map1.json"], 
 	"error" : function(file, err) {
 		derr(file, err); 
 	}, 
 	"finished" : function(files) {
 		cube = files["cube.obj"]; 
 		sky  = files["skybox.obj"]; 
+		sphere = files["sphere.obj"]; 
 		program = GLT.shader.compileProgram(gl,files["diffuse.shader"]);
 		idprogram = GLT.shader.compileProgram(gl,files["id.shader"]);
 		borderprogram = GLT.shader.compileProgram(gl,files["border.shader"]);
