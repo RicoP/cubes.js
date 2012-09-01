@@ -17,9 +17,6 @@
 #define PREVIEW_HEIGHT 135
 #define PREVIEW_BORDER 15
 
-(function() {
-"use strict"; 
-
 var cube; 
 var sphere; 
 var sky; 
@@ -207,6 +204,17 @@ function update(info) {
 	if(tapped) {
 		console.log( getClickDirection(cameraPos, cameraDir) ); 		
 	} 
+
+	if(dragged) {
+		var disx = dragEvent.distanceX; 
+		var disy = dragEvent.distanceY; 
+
+		mat4.identity(tmpmatrix); 
+		mat4.rotateY(tmpmatrix, disx / 1000); 		
+		mat4.rotateX(tmpmatrix, disy / 1000); 		
+		mat4.multiplyVec3(tmpmatrix, cameraPos); 
+		recalcCamera(); 
+	}
 
 	tapped = false; 
 	dragged = false; 
@@ -505,8 +513,6 @@ GLT.loadmanager.loadFiles({
 #else
 	console.log("DEBUG. Build:", __DATE__, __TIME__); 
 #endif 
-
-}());
 
 #undef PREVIEW_WIDTH  
 #undef PREVIEW_HEIGHT 
