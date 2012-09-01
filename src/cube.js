@@ -3,15 +3,14 @@
 
 #include <glmatrix.js> 
 #include "debug.js" 
-#include "cubes.js" 
-#include "cubes.id.js" 
+#include "id.js" 
 #include "assert.js" 
 
 #define STATE_NONE   0 
 #define STATE_MOVE   1
 #define STATE_MARKED 2
 
-cubes.Cube = (function() { 
+var Cube = (function() { 
 	var tmpvector  = vec3.create();
 
 	function Statemachine(cube) {		
@@ -87,7 +86,7 @@ cubes.Cube = (function() {
 		checkprop(position, x); 
 		checkprop(position, y); 
 		checkprop(position, z); 
-		checkclass(id, cubes.Id); 
+		checkclass(id, Id); 
 
 		var vect = vec3.create([position.x, position.y, position.z]);
 

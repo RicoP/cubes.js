@@ -3033,10 +3033,8 @@ function Hammer(element, options, undefined)
  function __error(message, file, line) {
   throw new Error(message + "(" + file + ":" + line + ")");
  }
-var cubes = {};
-(function() {
-"use strict";
-cubes.Id = function(id) {
+function Id(id) {
+ "use strict";
  this.asNumber = function() {
   return id;
  };
@@ -3048,24 +3046,25 @@ cubes.Id = function(id) {
   return [r,g,b];
  };
 };
-cubes.Id.fromColor = function (r,g,b) {
+Id.fromColor = function (r,g,b) {
+ "use strict";
  var id = 0;
  id += b >> 1;
  id += (g >> 1) * 128;
  id += (r >> 1) * (128 * 128);
- return new cubes.Id(id);
+ return new Id(id);
 };
-cubes.Id.Generator = function() {
+Id.Generator = function() {
+ "use strict";
  var id = 1;
  this.reset = function() {
   id = 1;
  };
  this.next = function() {
-  return new cubes.Id(id++);
+  return new Id(id++);
  };
 }
-}());
-cubes.Cube = (function() {
+var Cube = (function() {
  var tmpvector = vec3.create();
  function Statemachine(cube) {
   "use strict";
@@ -3094,14 +3093,14 @@ cubes.Cube = (function() {
     }
     break;
     default:
-    console.error("ERROR (" + "src/cubes.cube.js" + ":" + 52 + ")", "unknow state.", state );
+    console.error("ERROR (" + "src/cube.js" + ":" + 51 + ")", "unknow state.", state );
     break;
    }
   };
   this.tap = function(time, dir) {
-   do { if(!(time.delta instanceof Number) && !("Number".toLowerCase() === typeof time.delta)) { __error("Objct " + "time.delta" + " is not from type " + "Number", "src/cubes.cube.js", 58); } } while(false);
-   do { if(!(dir instanceof Float32Array) && !("Float32Array".toLowerCase() === typeof dir)) { __error("Objct " + "dir" + " is not from type " + "Float32Array", "src/cubes.cube.js", 59); } } while(false);
-   do { if(!(Math.abs((vec3.length(dir) - 1.0)) < 0.0001)) { __error("assertion failed: " + "Math.abs((vec3.length(dir) - 1.0)) < 0.0001" + " = " + (Math.abs((vec3.length(dir) - 1.0)) < 0.0001), "src/cubes.cube.js", 60); } } while(false);
+   do { if(!(time.delta instanceof Number) && !("Number".toLowerCase() === typeof time.delta)) { __error("Objct " + "time.delta" + " is not from type " + "Number", "src/cube.js", 57); } } while(false);
+   do { if(!(dir instanceof Float32Array) && !("Float32Array".toLowerCase() === typeof dir)) { __error("Objct " + "dir" + " is not from type " + "Float32Array", "src/cube.js", 58); } } while(false);
+   do { if(!(Math.abs((vec3.length(dir) - 1.0)) < 0.0001)) { __error("assertion failed: " + "Math.abs((vec3.length(dir) - 1.0)) < 0.0001" + " = " + (Math.abs((vec3.length(dir) - 1.0)) < 0.0001), "src/cube.js", 59); } } while(false);
    switch(state) {
     case 0:
     state = 2;
@@ -3117,16 +3116,16 @@ cubes.Cube = (function() {
     state = 1;
     break;
     default:
-    console.error("ERROR (" + "src/cubes.cube.js" + ":" + 80 + ")", "unknow state.", state );
+    console.error("ERROR (" + "src/cube.js" + ":" + 79 + ")", "unknow state.", state );
     break;
    }
   };
  }
  return function(position, id) {
-  do { if(typeof (position . x) === "undefined") { __error("No property " + "x" + " in " + "position", "src/cubes.cube.js", 87); } } while(false);
-  do { if(typeof (position . y) === "undefined") { __error("No property " + "y" + " in " + "position", "src/cubes.cube.js", 88); } } while(false);
-  do { if(typeof (position . z) === "undefined") { __error("No property " + "z" + " in " + "position", "src/cubes.cube.js", 89); } } while(false);
-  do { if(!(id instanceof cubes.Id) && !("cubes.Id".toLowerCase() === typeof id)) { __error("Objct " + "id" + " is not from type " + "cubes.Id", "src/cubes.cube.js", 90); } } while(false);
+  do { if(typeof (position . x) === "undefined") { __error("No property " + "x" + " in " + "position", "src/cube.js", 86); } } while(false);
+  do { if(typeof (position . y) === "undefined") { __error("No property " + "y" + " in " + "position", "src/cube.js", 87); } } while(false);
+  do { if(typeof (position . z) === "undefined") { __error("No property " + "z" + " in " + "position", "src/cube.js", 88); } } while(false);
+  do { if(!(id instanceof Id) && !("Id".toLowerCase() === typeof id)) { __error("Objct " + "id" + " is not from type " + "Id", "src/cube.js", 89); } } while(false);
   var vect = vec3.create([position.x, position.y, position.z]);
   this.grid = [position.x, position.y, position.z];
   this.id = id;
@@ -3143,7 +3142,7 @@ cubes.Cube = (function() {
 }());
 (function() {
 "use strict";
-cubes.Random = function(seed) {
+function Random(seed) {
  var MAX = 0xFFFF;
  var num = seed | 0;
  var mul = num;
@@ -3158,11 +3157,11 @@ cubes.Random = function(seed) {
 }());
 (function() {
 "use strict";
-cubes.Statemachine = function(canvas, cameraPos, cameraDir) {
- do { if(!(cameraPos instanceof Float32Array) && !("Float32Array".toLowerCase() === typeof cameraPos)) { __error("Objct " + "cameraPos" + " is not from type " + "Float32Array", "src/cubes.statemachine.js", 22); } } while(false);
- do { if(!(cameraDir instanceof Float32Array) && !("Float32Array".toLowerCase() === typeof cameraDir)) { __error("Objct " + "cameraDir" + " is not from type " + "Float32Array", "src/cubes.statemachine.js", 23); } } while(false);
- do { if(!(cameraPos.length === 3)) { __error("assertion failed: " + "cameraPos.length === 3" + " = " + (cameraPos.length === 3), "src/cubes.statemachine.js", 24); } } while(false);
- do { if(!(cameraDir.length === 3)) { __error("assertion failed: " + "cameraDir.length === 3" + " = " + (cameraDir.length === 3), "src/cubes.statemachine.js", 25); } } while(false);
+function Statemachine(canvas, cameraPos, cameraDir) {
+ do { if(!(cameraPos instanceof Float32Array) && !("Float32Array".toLowerCase() === typeof cameraPos)) { __error("Objct " + "cameraPos" + " is not from type " + "Float32Array", "src/statemachine.js", 21); } } while(false);
+ do { if(!(cameraDir instanceof Float32Array) && !("Float32Array".toLowerCase() === typeof cameraDir)) { __error("Objct " + "cameraDir" + " is not from type " + "Float32Array", "src/statemachine.js", 22); } } while(false);
+ do { if(!(cameraPos.length === 3)) { __error("assertion failed: " + "cameraPos.length === 3" + " = " + (cameraPos.length === 3), "src/statemachine.js", 23); } } while(false);
+ do { if(!(cameraDir.length === 3)) { __error("assertion failed: " + "cameraDir.length === 3" + " = " + (cameraDir.length === 3), "src/statemachine.js", 24); } } while(false);
  var speed = 2.0;
  var DRAGDIST = 100;
  var state = 0;
@@ -3174,23 +3173,23 @@ cubes.Statemachine = function(canvas, cameraPos, cameraDir) {
  var dragStartPosition = { x : 0, y : 0 };
  var diceSide = 0;
  function markCube(obj) {
-  do { if(typeof (obj . cube) === "undefined") { __error("No property " + "cube" + " in " + "obj", "src/cubes.statemachine.js", 40); } } while(false);
+  do { if(typeof (obj . cube) === "undefined") { __error("No property " + "cube" + " in " + "obj", "src/statemachine.js", 39); } } while(false);
   if(obj.cube !== null) {
-   do { if(!(obj.cube instanceof cubes.Cube) && !("cubes.Cube".toLowerCase() === typeof obj.cube)) { __error("Objct " + "obj.cube" + " is not from type " + "cubes.Cube", "src/cubes.statemachine.js", 42); } } while(false);
+   do { if(!(obj.cube instanceof Cube) && !("Cube".toLowerCase() === typeof obj.cube)) { __error("Objct " + "obj.cube" + " is not from type " + "Cube", "src/statemachine.js", 41); } } while(false);
    obj.cube.bling = 0.0;
   }
   if(markedCube !== null) {
    markedCube.bling = 0.0;
   }
   markedCube = obj.cube;
-  do { if(typeof (obj . info) === "undefined") { __error("No property " + "info" + " in " + "obj", "src/cubes.statemachine.js", 51); } } while(false);
-  do { if(typeof (obj.info . time) === "undefined") { __error("No property " + "time" + " in " + "obj.info", "src/cubes.statemachine.js", 52); } } while(false);
+  do { if(typeof (obj . info) === "undefined") { __error("No property " + "info" + " in " + "obj", "src/statemachine.js", 50); } } while(false);
+  do { if(typeof (obj.info . time) === "undefined") { __error("No property " + "time" + " in " + "obj.info", "src/statemachine.js", 51); } } while(false);
   markedTime = obj.time.total;
  }
  function hasCube(obj) {
-  do { if(typeof (obj . cube) === "undefined") { __error("No property " + "cube" + " in " + "obj", "src/cubes.statemachine.js", 58); } } while(false);
+  do { if(typeof (obj . cube) === "undefined") { __error("No property " + "cube" + " in " + "obj", "src/statemachine.js", 57); } } while(false);
   if(obj.cube !== null) {
-   do { if(!(obj.cube instanceof cubes.Cube) && !("cubes.Cube".toLowerCase() === typeof obj.cube)) { __error("Objct " + "obj.cube" + " is not from type " + "cubes.Cube", "src/cubes.statemachine.js", 60); } } while(false);
+   do { if(!(obj.cube instanceof Cube) && !("Cube".toLowerCase() === typeof obj.cube)) { __error("Objct " + "obj.cube" + " is not from type " + "Cube", "src/statemachine.js", 59); } } while(false);
    return true;
   }
   return false;
@@ -3213,7 +3212,7 @@ cubes.Statemachine = function(canvas, cameraPos, cameraDir) {
    state = stateSkyDrag(trans, obj);
    break;
    default:
-   do { if(!(false && ("unknown transaction " + trans))) { __error("assertion failed: " + "false && (\"unknown transaction \" + trans)" + " = " + (false && ("unknown transaction " + trans)), "src/cubes.statemachine.js", 89); } } while(false);
+   do { if(!(false && ("unknown transaction " + trans))) { __error("assertion failed: " + "false && (\"unknown transaction \" + trans)" + " = " + (false && ("unknown transaction " + trans)), "src/statemachine.js", 88); } } while(false);
    break;
   }
  }
@@ -3261,7 +3260,7 @@ cubes.Statemachine = function(canvas, cameraPos, cameraDir) {
    return 2;
    break;
    case 4:
-   do { if(typeof (obj . info) === "undefined") { __error("No property " + "info" + " in " + "obj", "src/cubes.statemachine.js", 145); } } while(false);
+   do { if(typeof (obj . info) === "undefined") { __error("No property " + "info" + " in " + "obj", "src/statemachine.js", 144); } } while(false);
    markedCube.bling = (1.0 + Math.sin(markedTime - info.time.total) ) / 2.0;
    return 2;
    break;
@@ -3285,7 +3284,7 @@ cubes.Statemachine = function(canvas, cameraPos, cameraDir) {
  function stateCubeMove(trans, obj) {
   switch(trans, obj) {
    case 4:
-   do { if(typeof (obj . info) === "undefined") { __error("No property " + "info" + " in " + "obj", "src/cubes.statemachine.js", 176); } } while(false);
+   do { if(typeof (obj . info) === "undefined") { __error("No property " + "info" + " in " + "obj", "src/statemachine.js", 175); } } while(false);
    var cube = markedCube;
    var info = obj.info;
    vec3.add(cube.vector, vec3.scale(direction, info.time.delta * speed, tmpvector));
@@ -3327,22 +3326,22 @@ cubes.Statemachine = function(canvas, cameraPos, cameraDir) {
  this.tap = function(info, obj) {
   var oldstate = state;
   transaction(0, obj);
-  console.log("DEBUG (" + "src/cubes.statemachine.js" + ":" + 230 + ")", "Tap",oldstate,"->",state );
+  console.log("DEBUG (" + "src/statemachine.js" + ":" + 229 + ")", "Tap",oldstate,"->",state );
  };
  this.dragStart = function(info, obj) {
   var oldstate = state;
   transaction(2, obj);
-  console.log("DEBUG (" + "src/cubes.statemachine.js" + ":" + 236 + ")", "DragStart",oldstate,"->",state );
+  console.log("DEBUG (" + "src/statemachine.js" + ":" + 235 + ")", "DragStart",oldstate,"->",state );
  };
  this.drag = function(info, obj) {
   var oldstate = state;
   transaction(1, obj);
-  console.log("DEBUG (" + "src/cubes.statemachine.js" + ":" + 242 + ")", "Drag",oldstate,"->",state );
+  console.log("DEBUG (" + "src/statemachine.js" + ":" + 241 + ")", "Drag",oldstate,"->",state );
  };
  this.dragEnd = function(info, obj) {
   var oldstate = state;
   transaction(3, obj);
-  console.log("DEBUG (" + "src/cubes.statemachine.js" + ":" + 248 + ")", "DragEnd",oldstate,"->",state );
+  console.log("DEBUG (" + "src/statemachine.js" + ":" + 247 + ")", "DragEnd",oldstate,"->",state );
  };
  this.tick = function(info, obj) {
   var oldstate = state;
@@ -3365,8 +3364,8 @@ var borderBuffer;
 var canvas = document.getElementsByTagName("canvas")[0];
 var gl = GLT.createContext(canvas);
 var projection = mat4.perspective(60, 4/3, 0.1, 1000);
-var cameraPos = vec3.create([1,1,6]);
-var cameraDir = vec3.create([0,0,0]);
+var cameraPos = vec3.create();
+var cameraDir = vec3.create();
 var cameraUp = vec3.create([0,1,0]);
 var camera = mat4.identity();
 var tmpmatrix = mat4.create();
@@ -3404,7 +3403,7 @@ var dragged = false;
 var dragEvent = null;
 var eventPosition = { x : 0, y : 0 };
 function createTexture(img) {
- do { if(!(img)) { __error("assertion failed: " + "img" + " = " + (img), "src/main.js", 87); } } while(false);
+ do { if(!(img)) { __error("assertion failed: " + "img" + " = " + (img), "src/main.js", 88); } } while(false);
  var tex = gl.createTexture();
  gl.bindTexture(GL_TEXTURE_2D, tex);
  gl.pixelStorei(GL_UNPACK_FLIP_Y_WEBGL, 1);
@@ -3458,6 +3457,41 @@ function gameloop(info) {
  draw(info);
  GLT.requestGameFrame(gameloop);
 }
+var getClickDirection = (function() {
+ var vectorNormalsXPlus = vec3.create([1,0,0]);
+ var vectorNormalsXMinus = vec3.create([-1,0,0]);
+ var vectorNormalsYPlus = vec3.create([0,1,0]);
+ var vectorNormalsYMinus = vec3.create([0,-1,0]);
+ var vectorNormalsZPlus = vec3.create([0,0,1]);
+ var vectorNormalsZMinus = vec3.create([0,0,-1]);
+ var vectorNormals = [
+  vectorNormalsXPlus,
+  vectorNormalsXMinus,
+  vectorNormalsYPlus,
+  vectorNormalsYMinus,
+  vectorNormalsZPlus,
+  vectorNormalsZMinus
+ ];
+ var cam = vec3.create();
+ var div = vec3.create();
+ return function(camPos, camDir) {
+  vec3.subtract(camPos, camDir, cam);
+  console.log("Pos", camPos, "dir", camDir);
+  vec3.normalize(cam);
+  var lastLength = 99999;
+  var lastIndex = -1;
+  for(var i = 0; i !== 6; i++) {
+   var current = vectorNormals[i];
+   vec3.subtract(cam, current, div);
+   var length = vec3.length(div);
+   if(lastLength > length) {
+    lastLength = length;
+    lastIndex = i;
+   }
+  }
+  return vectorNormals[[1,0,3,2,5,4][lastIndex]];
+ };
+}());
 function update(info) {
  var r = 0;
  var g = 0;
@@ -3467,65 +3501,8 @@ function update(info) {
  var selectedid = 0;
  var touchedTheSky = false;
  var touchedACube = false;
- if(tapped || dragged) {
-  gl.clearDepth(1);
-  gl.clear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-  drawCubes(idprogram);
-  var buf = new Uint8Array(4);
-  var x = eventPosition.x;
-  var y = eventPosition.y;
-  gl.readPixels(x, y, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, buf);
-  r = buf[0];
-  g = buf[1];
-  b = buf[2];
-  a = buf[3];
-  side = r;
-  selectedid = cubes.Id.fromColor(0,g,b).asNumber();
-  do { if(!(side >= 0 && side <= 6)) { __error("assertion failed: " + "side >= 0 && side <= 6" + " = " + (side >= 0 && side <= 6), "src/main.js", 189); } } while(false);
- }
- touchedTheSky = (selectedid === 0);
- touchedACube = !touchedTheSky;
- if(touchedACube && tapped) {
-  var normal = cubeNormals[side];
-  var cube = getCubeById(selectedid);
-  cube.tap(info, normal);
- }
- else if(touchedACube && dragged) {
-  var dir = 0;
-  if(Math.abs(dragEvent.distanceX) > Math.abs(dragEvent.distanceY)) {
-   if(dragEvent.distanceX > 0) {
-    dir = 2;
-   }
-   else {
-    dir = 1;
-   }
-  }
-  else {
-   if(dragEvent.distanceY > 0) {
-    dir = 3;
-   }
-   else {
-    dir = 0;
-   }
-  }
-  var normal = cubeNormals[ cubeDragSides[side][dir] ];
-  if(side === 2 || side === 5 || side === 0) {
-   console.error("ERROR (" + "src/main.js" + ":" + 224 + ")", "TODO: Implement top and bottom drag." );
-  }
-  else {
-   var cube = getCubeById(selectedid);
-   cube.tap(info, normal);
-  }
- }
- else if(touchedTheSky && dragged) {
-  var rot = mat4.identity(tmpmatrix);
-  var negDir = vec3.create(cameraDir);
-  vec3.scale(negDir, -1);
-  mat4.translate(rot, negDir);
-  mat4.rotateY(rot, (-2 * Math.PI * dragEvent.distanceX / canvas.width) / 50);
-  mat4.translate(rot, cameraDir);
-  mat4.multiplyVec3(rot, cameraPos);
-  recalcCamera();
+ if(tapped) {
+  console.log( getClickDirection(cameraPos, cameraDir) );
  }
  tapped = false;
  dragged = false;
@@ -3537,7 +3514,6 @@ function update(info) {
 function draw(info) {
  gl.disable( GL_DEPTH_TEST );
  gl.disable( GL_CULL_FACE );
- drawSky(program);
  gl.enable( GL_DEPTH_TEST );
  gl.enable( GL_CULL_FACE );
  gl.clearDepth(1);
@@ -3565,7 +3541,7 @@ function getCubeById(id) {
    return object;
   }
  }
- console.error("ERROR (" + "src/main.js" + ":" + 292 + ")", "id", id, "not found." );
+ console.error("ERROR (" + "src/main.js" + ":" + 269 + ")", "id", id, "not found." );
  return null;
 }
 function drawCubes(program) {
@@ -3633,14 +3609,13 @@ function drawSky(program) {
  gl.useProgram(program);
  var uModelviewprojection = gl.getUniformLocation(program, "uModelviewprojection");
  var uTexture = gl.getUniformLocation(program, "uTexture");
- var uBling = gl.getUniformLocation(program, "uBling");
  var aVertex = gl.getAttribLocation(program, "aVertex");
  var aTextureuv = gl.getAttribLocation(program, "aTextureuv");
  var modelviewprojection = tmpmatrix;
- do { if(!(uModelviewprojection)) { __error("assertion failed: " + "uModelviewprojection" + " = " + (uModelviewprojection), "src/main.js", 396); } } while(false);
- do { if(!(uTexture)) { __error("assertion failed: " + "uTexture" + " = " + (uTexture), "src/main.js", 397); } } while(false);
- do { if(!(aTextureuv !== -1)) { __error("assertion failed: " + "aTextureuv !== -1" + " = " + (aTextureuv !== -1), "src/main.js", 398); } } while(false);
- do { if(!(aVertex !== -1)) { __error("assertion failed: " + "aVertex !== -1" + " = " + (aVertex !== -1), "src/main.js", 399); } } while(false);
+ do { if(!(uModelviewprojection)) { __error("assertion failed: " + "uModelviewprojection" + " = " + (uModelviewprojection), "src/main.js", 372); } } while(false);
+ do { if(!(uTexture)) { __error("assertion failed: " + "uTexture" + " = " + (uTexture), "src/main.js", 373); } } while(false);
+ do { if(!(aTextureuv !== -1)) { __error("assertion failed: " + "aTextureuv !== -1" + " = " + (aTextureuv !== -1), "src/main.js", 374); } } while(false);
+ do { if(!(aVertex !== -1)) { __error("assertion failed: " + "aVertex !== -1" + " = " + (aVertex !== -1), "src/main.js", 375); } } while(false);
  gl.bindBuffer(GL_ARRAY_BUFFER, skyBuffer);
  gl.vertexAttribPointer(aVertex, 4, GL_FLOAT, false, sky.stride, sky.voffset);
  gl.enableVertexAttribArray(aVertex);
@@ -3651,46 +3626,46 @@ function drawSky(program) {
  mat4.multiply(projection, camera, modelviewprojection);
  mat4.translate(modelviewprojection, cameraPos);
  gl.uniformMatrix4fv(uModelviewprojection, false, modelviewprojection);
- gl.uniform1f(uBling, 0);
  gl.drawArrays(GL_TRIANGLES, 0, sky.numVertices);
 }
 function drawBorder(program) {
  gl.useProgram(program);
  var aVertex = gl.getAttribLocation(program, "aVertex");
- do { if(!(aVertex !== -1)) { __error("assertion failed: " + "aVertex !== -1" + " = " + (aVertex !== -1), "src/main.js", 426); } } while(false);
+ do { if(!(aVertex !== -1)) { __error("assertion failed: " + "aVertex !== -1" + " = " + (aVertex !== -1), "src/main.js", 401); } } while(false);
  gl.bindBuffer(GL_ARRAY_BUFFER, borderBuffer);
  gl.vertexAttribPointer(aVertex, 2, GL_FLOAT, false, 0, 0);
  gl.enableVertexAttribArray(aVertex);
  gl.drawArrays(GL_LINE_LOOP, 0, 4);
 }
 GLT.loadmanager.loadFiles({
- "files" : ["cube.obj", "sphere.obj", "diffuse.shader", "id.shader", "cube.png", "skybox.obj", "skybox2.png", "border.shader", "map1.json"],
+ "files" : ["cube.obj", "sphere.obj", "diffuse.shader", "id.shader", "cube.png", "skybox3.obj", "skybox.png", "border.shader", "map1.json"],
  "error" : function(file, err) {
-  console.error("ERROR (" + "src/main.js" + ":" + 439 + ")", file, err );
+  console.error("ERROR (" + "src/main.js" + ":" + 414 + ")", file, err );
  },
  "finished" : function(files) {
   cube = files["cube.obj"];
-  sky = files["skybox.obj"];
+  sky = files["skybox3.obj"];
   sphere = files["sphere.obj"];
   program = GLT.shader.compileProgram(gl,files["diffuse.shader"]);
   idprogram = GLT.shader.compileProgram(gl,files["id.shader"]);
   borderprogram = GLT.shader.compileProgram(gl,files["border.shader"]);
   cubetex = createTexture(files["cube.png"]);
-  skytex = createTexture(files["skybox2.png"]);
-  var map = files["map1.json"];
-  var idgen = new cubes.Id.Generator();
-  for(var i = 0; i != map.cubes.length; i++) {
-   cubelist.push( new cubes.Cube(map.cubes[i].position, idgen.next()) );
+  skytex = createTexture(files["skybox.png"]);
+  var mapdata = files["map1.json"];
+  var idgen = new Id.Generator();
+  for(var i = 0; i != mapdata.cubes.length; i++) {
+   var cubepos = mapdata.cubes[i];
+   cubelist.push( new Cube({ x : cubepos[0], y : cubepos[1], z : cubepos[2] }, idgen.next()) );
   }
-  cameraDir[0] = map.grid.width >> 1;
-  cameraDir[1] = map.grid.height >> 1;
-  cameraDir[2] = map.grid.depth >> 1;
+  cameraDir[0] = 8;
+  cameraDir[1] = 8;
+  cameraDir[2] = 8;
   vec3.set(cameraDir, cameraPos);
-  cameraPos[2] += map.grid.depth;
+  cameraPos[0] += 2;
   setup();
   recalcCamera();
   GLT.requestGameFrame(gameloop);
  }
 });
- console.log("DEBUG. Build:", "Aug 24 2012", "21:01:15");
+ console.log("DEBUG. Build:", "Sep  1 2012", "13:48:14");
 }());

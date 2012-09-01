@@ -7,10 +7,10 @@
 #include <hammer.js>  
 #include "debug.js" 
 #include "assert.js"
-#include "cubes.id.js"
-#include "cubes.cube.js"
-#include "cubes.random.js" 
-#include "cubes.statemachine.js" 
+#include "id.js"
+#include "cube.js"
+#include "random.js" 
+#include "statemachine.js" 
 
 #define PREVIEW_WIDTH 180
 #define PREVIEW_HEIGHT 135
@@ -34,8 +34,8 @@ var canvas = document.getElementsByTagName("canvas")[0];
 var gl = GLT.createContext(canvas); 
 
 var projection = mat4.perspective(60, 4/3, 0.1, 1000); 
-var cameraPos  = vec3.create([1,1,6]); 
-var cameraDir  = vec3.create([0,0,0]); 
+var cameraPos  = vec3.create(); 
+var cameraDir  = vec3.create(); 
 var cameraUp   = vec3.create([0,1,0]); 
 var camera     = mat4.identity();  
 
@@ -53,6 +53,7 @@ var cubeNormals = [
 	vec3.create([ 0,-1, 0]), //5 -y
 	vec3.create([-1, 0, 0])  //6 -x
 ];
+
 
 var cubeDragSides = [
 	//U  L  R  D
@@ -158,6 +159,52 @@ function gameloop(info) {
 	GLT.requestGameFrame(gameloop); 
 } 
 
+var getClickDirection = (function() {
+	var vectorNormalsXPlus = vec3.create([1,0,0]); 
+	var vectorNormalsXMinus = vec3.create([-1,0,0]); 
+
+	var vectorNormalsYPlus = vec3.create([0,1,0]); 
+	var vectorNormalsYMinus = vec3.create([0,-1,0]); 
+
+	var vectorNormalsZPlus = vec3.create([0,0,1]); 
+	var vectorNormalsZMinus = vec3.create([0,0,-1]); 
+
+	var vectorNormals = [
+		vectorNormalsXPlus,
+		vectorNormalsXMinus,	
+		vectorNormalsYPlus,
+		vectorNormalsYMinus,	
+		vectorNormalsZPlus,
+		vectorNormalsZMinus
+	]; 
+
+	var cam = vec3.create(); 
+	var div = vec3.create(); 
+
+	return function(camPos, camDir) {
+		vec3.subtract(camPos, camDir, cam); 
+		console.log("Pos", camPos, "dir", camDir); 
+		vec3.normalize(cam); 
+
+		var lastLength = 99999; 
+		var lastIndex = -1;
+
+		for(var i = 0; i !== 6; i++) {
+			var current = vectorNormals[i]; 
+			vec3.subtract(cam, current, div); 
+			var length = vec3.length(div); 
+			if(lastLength > length) {
+				lastLength = length; 
+				lastIndex = i; 
+			}
+		} 	
+		
+		//return opposite direction 
+		//so map 0->1, 2->3, 4->5, 1->0, 3->2, 5->4
+		return vectorNormals[[1,0,3,2,5,4][lastIndex]];
+	}; 
+}()); 
+
 function update(info) {
 	var r = 0; 
 	var g = 0; 
@@ -168,80 +215,10 @@ function update(info) {
 	var touchedTheSky = false; 
 	var touchedACube  = false; 
 
-	if(tapped || dragged) {
-		gl.clearDepth(1); 
-		gl.clear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT); 
-		drawCubes(idprogram); 
+	if(tapped) {
+		console.log( getClickDirection(cameraPos, cameraDir) ); 		
+	} 
 
-		var buf = new Uint8Array(4); 
-		var x = eventPosition.x; 
-		var y = eventPosition.y; 
-		
-		gl.readPixels(x, y, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, buf); 
-		r = buf[0]; 
-		g = buf[1]; 
-		b = buf[2]; 
-		a = buf[3]; 
-
-		side = r; 
-		selectedid = cubes.Id.fromColor(0,g,b).asNumber(); 
-
-		assert(side >= 0 && side <= 6); 
-	}
-
-	touchedTheSky = (selectedid  === 0); 
-	touchedACube  = !touchedTheSky; 
-
-	if(touchedACube && tapped) { 
-		var normal = cubeNormals[side];
-			
-		var cube = getCubeById(selectedid); 
-		cube.tap(info, normal); 
-	}
-	else if(touchedACube && dragged) { 
-		var dir = 0; 
-
-		if(Math.abs(dragEvent.distanceX) > Math.abs(dragEvent.distanceY)) {
-			if(dragEvent.distanceX > 0) {
-				dir = 2; 
-			}
-			else {
-				dir = 1; 
-			}
-		}
-		else {
-			if(dragEvent.distanceY > 0) {
-				dir = 3; 
-			}
-			else {
-				dir = 0; 
-			}
-
-		}
-		var normal = cubeNormals[ cubeDragSides[side][dir] ]; 
-
-		if(side === 2 || side === 5 || side === 0) { 
-			derr("TODO: Implement top and bottom drag."); 
-		}
-		else {
-			var cube = getCubeById(selectedid); 
-			cube.tap(info, normal); 
-		}
-	}
-	else if(touchedTheSky && dragged) {		
-		var rot = mat4.identity(tmpmatrix); 
-		var negDir = vec3.create(cameraDir); 
-		vec3.scale(negDir, -1); 
-
-		mat4.translate(rot, negDir); 
-		mat4.rotateY(rot, (-2 * Math.PI * dragEvent.distanceX / canvas.width) / 50); 
-		mat4.translate(rot, cameraDir); 
-
-		mat4.multiplyVec3(rot, cameraPos); 
-
-		recalcCamera(); 
-	}
-	
 	tapped = false; 
 	dragged = false; 
 
@@ -254,7 +231,7 @@ function update(info) {
 function draw(info) {
 	gl.disable( GL_DEPTH_TEST ); 
 	gl.disable( GL_CULL_FACE ); 
-	drawSky(program); 
+	//drawSky(program); 
 	gl.enable( GL_DEPTH_TEST ); 
 	gl.enable( GL_CULL_FACE ); 
 
@@ -387,7 +364,6 @@ function drawSky(program) {
 
 	var uModelviewprojection = gl.getUniformLocation(program, "uModelviewprojection"); 
 	var uTexture   = gl.getUniformLocation(program, "uTexture"); 	
-	var uBling     = gl.getUniformLocation(program, "uBling");   	
 	var aVertex    = gl.getAttribLocation(program, "aVertex"); 
 	var aTextureuv = gl.getAttribLocation(program, "aTextureuv"); 
 
@@ -413,7 +389,6 @@ function drawSky(program) {
 	mat4.translate(modelviewprojection, cameraPos); 
 
 	gl.uniformMatrix4fv(uModelviewprojection, false, modelviewprojection); 
-	gl.uniform1f(uBling, 0); 
 
 	gl.drawArrays(GL_TRIANGLES, 0, sky.numVertices); 
 }
@@ -434,33 +409,35 @@ function drawBorder(program) {
 }
 
 GLT.loadmanager.loadFiles({
-	"files" : ["cube.obj", "sphere.obj", "diffuse.shader", "id.shader", "cube.png", "skybox.obj", "skybox2.png", "border.shader", "map1.json"], 
+	"files" : ["cube.obj", "sphere.obj", "diffuse.shader", "id.shader", "cube.png", "skybox3.obj", "skybox.png", "border.shader", "map1.json"], 
 	"error" : function(file, err) {
 		derr(file, err); 
 	}, 
 	"finished" : function(files) {
 		cube = files["cube.obj"]; 
-		sky  = files["skybox.obj"]; 
+		sky  = files["skybox3.obj"]; 
 		sphere = files["sphere.obj"]; 
 		program = GLT.shader.compileProgram(gl,files["diffuse.shader"]);
 		idprogram = GLT.shader.compileProgram(gl,files["id.shader"]);
 		borderprogram = GLT.shader.compileProgram(gl,files["border.shader"]);
 		cubetex = createTexture(files["cube.png"]);
-		skytex = createTexture(files["skybox2.png"]);
-		var map = files["map1.json"]; 
+		skytex = createTexture(files["skybox.png"]);
+		var mapdata = files["map1.json"]; 
 
-		var idgen = new cubes.Id.Generator(); 
+		var idgen = new Id.Generator(); 
 
-		for(var i = 0; i != map.cubes.length; i++) {
-			cubelist.push( new cubes.Cube(map.cubes[i].position, idgen.next()) ); 
+		for(var i = 0; i != mapdata.cubes.length; i++) {
+			var cubepos = mapdata.cubes[i]; 
+			cubelist.push( new Cube({ x : cubepos[0], y : cubepos[1], z : cubepos[2] }, idgen.next()) );
+			//cubelist.push( new Cube(map.cubes[i].position, idgen.next()) ); 
 		}
 
-		cameraDir[0] = map.grid.width  >> 1; 
-		cameraDir[1] = map.grid.height >> 1; 
-		cameraDir[2] = map.grid.depth  >> 1; 
+		cameraDir[0] = 8;
+		cameraDir[1] = 8;
+		cameraDir[2] = 8;
 
 		vec3.set(cameraDir, cameraPos); 
-		cameraPos[2] += map.grid.depth; 
+		cameraPos[0] += 2; 
 		
 
 

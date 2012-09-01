@@ -1,5 +1,4 @@
-#include "cubes.js" 
-#include "cubes.cube.js" 
+#include "cube.js" 
 #include "debug.js" 
 #include "assert.js" 
 
@@ -18,7 +17,7 @@
 (function() { 
 "use strict";  
 
-cubes.Statemachine = function(canvas, cameraPos, cameraDir) {
+function Statemachine(canvas, cameraPos, cameraDir) {
 	checkclass(cameraPos, Float32Array); 
 	checkclass(cameraDir, Float32Array); 
 	assert(cameraPos.length === 3); 
@@ -39,7 +38,7 @@ cubes.Statemachine = function(canvas, cameraPos, cameraDir) {
 	function markCube(obj) {
 		checkprop(obj, cube); 
 		if(obj.cube !== null) {
-			checkclass(obj.cube, cubes.Cube); 
+			checkclass(obj.cube, Cube); 
 			obj.cube.bling = 0.0; 
 		}
 
@@ -57,7 +56,7 @@ cubes.Statemachine = function(canvas, cameraPos, cameraDir) {
 	function hasCube(obj) {
 		checkprop(obj, cube); 
 		if(obj.cube !== null) {
-			checkclass(obj.cube, cubes.Cube); 
+			checkclass(obj.cube, Cube); 
 			return true; 
 		}
 		return false; 

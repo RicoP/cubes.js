@@ -1,12 +1,8 @@
 #ifndef CUBES_ID_JS
 #define CUBES_ID_JS
 
-#include "cubes.js" 
-
-(function() {
-"use strict"; 
-
-cubes.Id = function(id) {
+function Id(id) {
+	"use strict"; 
 	this.asNumber = function() {
 		return id; 
 	};
@@ -21,27 +17,28 @@ cubes.Id = function(id) {
 	};
 };
 
-cubes.Id.fromColor = function (r,g,b) {
+Id.fromColor = function (r,g,b) {
+	"use strict"; 
 	var id = 0; 
 	id += b >> 1; 
 	id += (g >> 1) * 128; 
 	id += (r >> 1) * (128 * 128); 
 
-	return new cubes.Id(id); 
+	return new Id(id); 
 };
 
 
-cubes.Id.Generator = function() {
+Id.Generator = function() {
+	"use strict"; 
 	var id = 1; 
 	this.reset = function() {
 		id = 1; 
 	};
 
 	this.next = function() {
-		return new cubes.Id(id++); 
+		return new Id(id++); 
 	};
 }
 
-}());
 
 #endif 

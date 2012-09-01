@@ -1,9 +1,10 @@
-#include "cubes.js" 
+#ifndef RANDOM_JS
+#define RANDOM_JS 
 
 (function() {
 "use strict"; 
 
-cubes.Random = function(seed) {
+function Random(seed) {
 	var MAX = 0xFFFF; 
 	var num = seed | 0; 
 	var mul = num; 
@@ -20,3 +21,5 @@ cubes.Random = function(seed) {
 };
 
 }()); 
+
+#endif 
