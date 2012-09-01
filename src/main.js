@@ -422,8 +422,8 @@ GLT.loadmanager.loadFiles({
 		borderprogram = GLT.shader.compileProgram(gl,files["border.shader"]);
 		cubetex = createTexture(files["cube.png"]);
 		skytex = createTexture(files["skybox.png"]);
-		var mapdata = files["map1.json"]; 
 
+		var mapdata = files["map1.json"]; 
 		var idgen = new Id.Generator(); 
 
 		for(var i = 0; i != mapdata.cubes.length; i++) {
