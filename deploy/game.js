@@ -3664,19 +3664,19 @@ function drawBorder(program) {
  gl.drawArrays(GL_LINE_LOOP, 0, 4);
 }
 GLT.loadmanager.loadFiles({
- "files" : ["cube.obj", "sphere.obj", "diffuse.shader", "id.shader", "cube.png", "skybox.obj", "skybox2.png", "border.shader", "map1.json"],
+ "files" : ["cube.obj", "sphere.obj", "diffuse.shader", "id.shader", "cube.png", "skybox3.obj", "skybox.png", "border.shader", "map1.json"],
  "error" : function(file, err) {
   console.error("ERROR (" + "src/main.js" + ":" + 439 + ")", file, err );
  },
  "finished" : function(files) {
   cube = files["cube.obj"];
-  sky = files["skybox.obj"];
+  sky = files["skybox3.obj"];
   sphere = files["sphere.obj"];
   program = GLT.shader.compileProgram(gl,files["diffuse.shader"]);
   idprogram = GLT.shader.compileProgram(gl,files["id.shader"]);
   borderprogram = GLT.shader.compileProgram(gl,files["border.shader"]);
   cubetex = createTexture(files["cube.png"]);
-  skytex = createTexture(files["skybox2.png"]);
+  skytex = createTexture(files["skybox.png"]);
   var map = files["map1.json"];
   var idgen = new cubes.Id.Generator();
   for(var i = 0; i != map.cubes.length; i++) {
@@ -3692,5 +3692,5 @@ GLT.loadmanager.loadFiles({
   GLT.requestGameFrame(gameloop);
  }
 });
- console.log("DEBUG. Build:", "Aug 24 2012", "21:01:15");
+ console.log("DEBUG. Build:", "Sep  1 2012", "13:56:10");
 }());
