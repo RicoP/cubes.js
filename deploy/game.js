@@ -3349,6 +3349,106 @@ function Statemachine(canvas, cameraPos, cameraDir) {
  };
 };
 }());
+do { if(!(64 === 16 * 4)) { __error("assertion failed: " + "CUBE_WIDTH === FACE_WIDTH * 4" + " = " + (64 === 16 * 4), "src/funkycube.js", 8); } } while(false);
+var Funkycube;
+!function() {
+"use strict";
+ function Point(x,y) {
+  this.x = x;
+  this.y = y;
+  this.toString = function() {
+   return "[" + x + ", " + y + "]";
+  };
+ }
+ Funkycube = function() {
+  var canvas = document.createElement("canvas");
+  canvas.width = canvas.height = 64;
+  var ctx = canvas.getContext("2d");
+  function getCanvasCoordinate(face, x, y) {
+   do { if(!(face >= 0 && face <= 5)) { __error("assertion failed: " + "face >= 0 && face <= 5" + " = " + (face >= 0 && face <= 5), "src/funkycube.js", 52); } } while(false);
+   if(x < 0) {
+    switch(face) {
+     case 0:
+     return getCanvasCoordinate(1, y, -x-1);
+     case 1:
+     return getCanvasCoordinate(5, -x-1, 16 - 1 - y);
+     case 2:
+     return getCanvasCoordinate(1, x + 16, y);
+     case 3:
+     return getCanvasCoordinate(2, x + 16, y);
+     case 4:
+     return getCanvasCoordinate(1, 16 - 1 - y, 16 + x);
+     case 5:
+     return getCanvasCoordinate(1, -x-1 ,16 - 1 - y);
+     default: throw new RangeError();
+    }
+   }
+   if(y < 0) {
+    switch(face) {
+     case 0:
+     return getCanvasCoordinate(5, x, 16 + y);
+     case 1:
+     return getCanvasCoordinate(0, -y-1 ,x);
+     case 2:
+     return getCanvasCoordinate(0, x, 16 + y);
+     case 3:
+     return getCanvasCoordinate(0, 16 + y, 16 - 1 - x);
+     case 4:
+     return getCanvasCoordinate(2, x, 16 + y);
+     case 5:
+     return getCanvasCoordinate(4, x, 16 + y);
+     default: throw new RangeError();
+    }
+   }
+   if(x >= 16) {
+    switch(face) {
+     case 0:
+     return getCanvasCoordinate(3, 16 - 1 - y, x - 16);
+     case 1:
+     return getCanvasCoordinate(2, x - 16, y);
+     case 2:
+     return getCanvasCoordinate(3, x - 16, y);
+     case 3:
+     return getCanvasCoordinate(5, 2*16 -1 - x, 16 - 1 - y);
+     case 4:
+     return getCanvasCoordinate(3, y, 2*16 -1 - x);
+     case 5:
+     return getCanvasCoordinate(3, 2*16 -1 - x, 16 - 1 - y);
+     default: throw new RangeError();
+    }
+   }
+   if(y >= 16) {
+    switch(face) {
+     case 0:
+     return getCanvasCoordinate(2, x, y - 16);
+     case 1:
+     return getCanvasCoordinate(4, y - 16, 16 - 1 - x);
+     case 2:
+     return getCanvasCoordinate(4, x, y - 16);
+     case 3:
+     return getCanvasCoordinate(4, 2*16 -1 - y ,x);
+     case 4:
+     return getCanvasCoordinate(5, x, y - 16);
+     case 5:
+     return getCanvasCoordinate(0, x, y - 16);
+     default: throw new RangeError();
+    }
+   }
+   switch(face) {
+    case 0: return new Point(x + 16 , y);
+    case 1: return new Point(x , y + 16);
+    case 2: return new Point(x + 16 , y + 16);
+    case 3: return new Point(x + 16*2, y + 16);
+    case 4: return new Point(x + 16 , y + 16*2);
+    case 5: return new Point(x + 16 , y + 16*3);
+    default: throw new RangeError();
+   }
+  }
+  this.getCanvasCoordinate = getCanvasCoordinate;
+  this.canvas = canvas;
+  this.ctx = ctx;
+ };
+}();
 (function() {
 "use strict";
 var cube;
@@ -3361,6 +3461,7 @@ var cubeBuffer;
 var sphereBuffer;
 var skyBuffer;
 var borderBuffer;
+var funkycube = new Funkycube();
 var canvas = document.getElementsByTagName("canvas")[0];
 var gl = GLT.createContext(canvas);
 var projection = mat4.perspective(60, 4/3, 0.1, 1000);
@@ -3402,17 +3503,6 @@ var tapEvent = null;
 var dragged = false;
 var dragEvent = null;
 var eventPosition = { x : 0, y : 0 };
-function createTexture(img) {
- do { if(!(img)) { __error("assertion failed: " + "img" + " = " + (img), "src/main.js", 88); } } while(false);
- var tex = gl.createTexture();
- gl.bindTexture(GL_TEXTURE_2D, tex);
- gl.pixelStorei(GL_UNPACK_FLIP_Y_WEBGL, 1);
- gl.texImage2D(GL_TEXTURE_2D, 0, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, img);
- gl.texParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
- gl.texParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
- gl.bindTexture(GL_TEXTURE_2D, null);
- return tex;
-}
 function recalcCamera() {
  camera = mat4.lookAt(cameraPos, cameraDir, cameraUp);
 }
@@ -3542,7 +3632,7 @@ function getCubeById(id) {
    return object;
   }
  }
- console.error("ERROR (" + "src/main.js" + ":" + 269 + ")", "id", id, "not found." );
+ console.error("ERROR (" + "src/main.js" + ":" + 258 + ")", "id", id, "not found." );
  return null;
 }
 function drawCubes(program) {
@@ -3613,10 +3703,10 @@ function drawSky(program) {
  var aVertex = gl.getAttribLocation(program, "aVertex");
  var aTextureuv = gl.getAttribLocation(program, "aTextureuv");
  var modelviewprojection = tmpmatrix;
- do { if(!(uModelviewprojection)) { __error("assertion failed: " + "uModelviewprojection" + " = " + (uModelviewprojection), "src/main.js", 372); } } while(false);
- do { if(!(uTexture)) { __error("assertion failed: " + "uTexture" + " = " + (uTexture), "src/main.js", 373); } } while(false);
- do { if(!(aTextureuv !== -1)) { __error("assertion failed: " + "aTextureuv !== -1" + " = " + (aTextureuv !== -1), "src/main.js", 374); } } while(false);
- do { if(!(aVertex !== -1)) { __error("assertion failed: " + "aVertex !== -1" + " = " + (aVertex !== -1), "src/main.js", 375); } } while(false);
+ do { if(!(uModelviewprojection)) { __error("assertion failed: " + "uModelviewprojection" + " = " + (uModelviewprojection), "src/main.js", 361); } } while(false);
+ do { if(!(uTexture)) { __error("assertion failed: " + "uTexture" + " = " + (uTexture), "src/main.js", 362); } } while(false);
+ do { if(!(aTextureuv !== -1)) { __error("assertion failed: " + "aTextureuv !== -1" + " = " + (aTextureuv !== -1), "src/main.js", 363); } } while(false);
+ do { if(!(aVertex !== -1)) { __error("assertion failed: " + "aVertex !== -1" + " = " + (aVertex !== -1), "src/main.js", 364); } } while(false);
  gl.bindBuffer(GL_ARRAY_BUFFER, skyBuffer);
  gl.vertexAttribPointer(aVertex, 4, GL_FLOAT, false, sky.stride, sky.voffset);
  gl.enableVertexAttribArray(aVertex);
@@ -3632,16 +3722,30 @@ function drawSky(program) {
 function drawBorder(program) {
  gl.useProgram(program);
  var aVertex = gl.getAttribLocation(program, "aVertex");
- do { if(!(aVertex !== -1)) { __error("assertion failed: " + "aVertex !== -1" + " = " + (aVertex !== -1), "src/main.js", 401); } } while(false);
+ do { if(!(aVertex !== -1)) { __error("assertion failed: " + "aVertex !== -1" + " = " + (aVertex !== -1), "src/main.js", 390); } } while(false);
  gl.bindBuffer(GL_ARRAY_BUFFER, borderBuffer);
  gl.vertexAttribPointer(aVertex, 2, GL_FLOAT, false, 0, 0);
  gl.enableVertexAttribArray(aVertex);
  gl.drawArrays(GL_LINE_LOOP, 0, 4);
 }
+function setCanvasForTexture(canvas, text) {
+ gl.bindTexture(gl.TEXTURE_2D, text);
+ gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+ gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, canvas);
+ gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+ gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+}
+function createTexture(img) {
+ do { if(!(img)) { __error("assertion failed: " + "img" + " = " + (img), "src/main.js", 410); } } while(false);
+ var tex = gl.createTexture();
+ setCanvasForTexture(img, tex);
+ gl.bindTexture(GL_TEXTURE_2D, null);
+ return tex;
+}
 GLT.loadmanager.loadFiles({
- "files" : ["cube.obj", "sphere.obj", "diffuse.shader", "id.shader", "cube.png", "skybox3.obj", "skybox.png", "border.shader", "map1.json"],
+ "files" : ["cube.obj", "sphere.obj", "diffuse.shader", "id.shader", "cube.png", "skybox3.obj", "border.shader", "map1.json"],
  "error" : function(file, err) {
-  console.error("ERROR (" + "src/main.js" + ":" + 414 + ")", file, err );
+  console.error("ERROR (" + "src/main.js" + ":" + 423 + ")", file, err );
  },
  "finished" : function(files) {
   cube = files["cube.obj"];
@@ -3651,7 +3755,44 @@ GLT.loadmanager.loadFiles({
   idprogram = GLT.shader.compileProgram(gl,files["id.shader"]);
   borderprogram = GLT.shader.compileProgram(gl,files["border.shader"]);
   cubetex = createTexture(files["cube.png"]);
-  skytex = createTexture(files["skybox.png"]);
+  skytex = createTexture( funkycube.canvas );
+  var MAX = 10;
+  var dotsposx = new Int32Array(MAX);
+  var dotsposy = new Int32Array(MAX);
+  var dotsdir = new Int32Array(MAX);
+  var dotsface = new Int32Array(MAX);
+  for(var i = 0; i!==MAX; i++) {
+   dotsposx[i] = (Math.random() * 16) | 0;
+   dotsposy[i] = (Math.random() * 16) | 0;
+   dotsdir[i] = (Math.random() * 2) | 0;
+   dotsface[i] = (Math.random() * 6) | 0;
+  }
+  setInterval(function() {
+   funkycube.ctx.beginPath();
+   funkycube.ctx.fillStyle = "#000000";
+   funkycube.ctx.globalAlpha = 0.2;
+   funkycube.ctx.rect(0,0,64,64);
+   funkycube.ctx.fill();
+   funkycube.ctx.globalAlpha = 1;
+   for(var i = 0; i !== MAX; i++) {
+    var posx = dotsposx[i];
+    var posy = dotsposy[i];
+    var dir = dotsdir[i];
+    var face = dotsface[i];
+    var posincanvas = funkycube.getCanvasCoordinate(face, posx, posy);
+    funkycube.ctx.beginPath();
+    funkycube.ctx.fillStyle = "#FF0000";
+    funkycube.ctx.rect(posincanvas.x,posincanvas.y, 1, 1);
+    funkycube.ctx.fill();
+    if(dir) {
+     dotsposx[i]++;
+    }
+    else {
+     dotsposy[i]++;
+    }
+   }
+   setCanvasForTexture(funkycube.canvas, skytex);
+  }, 100);
   var mapdata = files["map1.json"];
   var idgen = new Id.Generator();
   for(var i = 0; i != mapdata.cubes.length; i++) {
@@ -3662,11 +3803,11 @@ GLT.loadmanager.loadFiles({
   cameraDir[1] = 8;
   cameraDir[2] = 8;
   vec3.set(cameraDir, cameraPos);
-  cameraPos[0] += 2;
+  cameraPos[0] += 20;
   setup();
   recalcCamera();
   GLT.requestGameFrame(gameloop);
  }
 });
- console.log("DEBUG. Build:", "Sep  1 2012", "14:13:44");
+ console.log("DEBUG. Build:", "Sep  1 2012", "15:06:28");
 }());

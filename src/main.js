@@ -11,6 +11,7 @@
 #include "cube.js"
 #include "random.js" 
 #include "statemachine.js" 
+#include "funkycube.js" 
 
 #define PREVIEW_WIDTH 180
 #define PREVIEW_HEIGHT 135
@@ -29,6 +30,7 @@ var cubeBuffer;
 var sphereBuffer; 
 var skyBuffer; 
 var borderBuffer; 
+var funkycube = new Funkycube(); 
 
 var canvas = document.getElementsByTagName("canvas")[0]; 
 var gl = GLT.createContext(canvas); 
@@ -83,19 +85,6 @@ var tapEvent = null;
 var dragged = false; 
 var dragEvent = null; 
 var eventPosition = { x : 0, y : 0 }; 
-
-function createTexture(img) {
-	assert(img); 
-
-	var tex = gl.createTexture(); 
-	gl.bindTexture(GL_TEXTURE_2D, tex); 
-	gl.pixelStorei(GL_UNPACK_FLIP_Y_WEBGL, 1); 
-	gl.texImage2D(GL_TEXTURE_2D, 0, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, img); 
-	gl.texParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST); 
-	gl.texParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST); 
-	gl.bindTexture(GL_TEXTURE_2D, null); 		
-	return tex; 
-}
 
 function recalcCamera() {
 	camera = mat4.lookAt(cameraPos, cameraDir, cameraUp); 
@@ -408,8 +397,28 @@ function drawBorder(program) {
 	gl.drawArrays(GL_LINE_LOOP, 0, 4); 
 }
 
+function setCanvasForTexture(canvas, text) {
+	gl.bindTexture(gl.TEXTURE_2D, text);
+	gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+	gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, canvas);
+
+	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+}
+
+function createTexture(img) {
+	assert(img); 
+
+	var tex = gl.createTexture(); 
+
+	setCanvasForTexture(img, tex); 
+
+	gl.bindTexture(GL_TEXTURE_2D, null); 		
+	return tex; 
+}
+
 GLT.loadmanager.loadFiles({
-	"files" : ["cube.obj", "sphere.obj", "diffuse.shader", "id.shader", "cube.png", "skybox3.obj", "skybox.png", "border.shader", "map1.json"], 
+	"files" : ["cube.obj", "sphere.obj", "diffuse.shader", "id.shader", "cube.png", "skybox3.obj", "border.shader", "map1.json"], 
 	"error" : function(file, err) {
 		derr(file, err); 
 	}, 
@@ -421,7 +430,53 @@ GLT.loadmanager.loadFiles({
 		idprogram = GLT.shader.compileProgram(gl,files["id.shader"]);
 		borderprogram = GLT.shader.compileProgram(gl,files["border.shader"]);
 		cubetex = createTexture(files["cube.png"]);
-		skytex = createTexture(files["skybox.png"]);
+		skytex = createTexture( funkycube.canvas );
+
+		var MAX = 10; 
+
+		var dotsposx = new Int32Array(MAX); 
+		var dotsposy = new Int32Array(MAX); 
+		var dotsdir  = new Int32Array(MAX); 
+		var dotsface = new Int32Array(MAX); 
+
+		for(var i = 0; i!==MAX; i++) {
+			dotsposx[i] = (Math.random() * 16) | 0; //[0..15]
+			dotsposy[i] = (Math.random() * 16) | 0; //[0..15]
+			dotsdir[i]  = (Math.random() * 2) | 0;  //[0..1]
+			dotsface[i] = (Math.random() * 6) | 0; //[0..5]
+		}
+
+		setInterval(function() {
+			funkycube.ctx.beginPath();
+			funkycube.ctx.fillStyle = "#000000";
+			funkycube.ctx.globalAlpha = 0.2; 
+			funkycube.ctx.rect(0,0,64,64);        
+			funkycube.ctx.fill();
+			funkycube.ctx.globalAlpha = 1; 
+
+			//Draw Dots
+			for(var i = 0; i !== MAX; i++) {
+				var posx = dotsposx[i]; 
+				var posy = dotsposy[i]; 
+				var dir = dotsdir[i]; 
+				var face = dotsface[i]; 
+				var posincanvas = funkycube.getCanvasCoordinate(face, posx, posy); 
+
+				funkycube.ctx.beginPath();
+				funkycube.ctx.fillStyle = "#FF0000"; 
+				funkycube.ctx.rect(posincanvas.x,posincanvas.y, 1, 1); 
+				funkycube.ctx.fill();
+
+				if(dir) {
+					dotsposx[i]++; 
+				}
+				else {			
+					dotsposy[i]++; 
+				}
+			}
+
+			setCanvasForTexture(funkycube.canvas, skytex); 	
+		}, 100); 
 
 		var mapdata = files["map1.json"]; 
 		var idgen = new Id.Generator(); 
@@ -437,9 +492,7 @@ GLT.loadmanager.loadFiles({
 		cameraDir[2] = 8;
 
 		vec3.set(cameraDir, cameraPos); 
-		cameraPos[0] += 2; 
-		
-
+		cameraPos[0] += 20; 	
 
 		setup(); 
 		recalcCamera(); 
