@@ -3514,6 +3514,7 @@ function update(info) {
 function draw(info) {
  gl.disable( GL_DEPTH_TEST );
  gl.disable( GL_CULL_FACE );
+ drawSky(program);
  gl.enable( GL_DEPTH_TEST );
  gl.enable( GL_CULL_FACE );
  gl.clearDepth(1);
@@ -3667,5 +3668,5 @@ GLT.loadmanager.loadFiles({
   GLT.requestGameFrame(gameloop);
  }
 });
- console.log("DEBUG. Build:", "Sep  1 2012", "14:03:51");
+ console.log("DEBUG. Build:", "Sep  1 2012", "14:13:44");
 }());

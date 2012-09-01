@@ -1,6 +1,6 @@
 #ifndef FUNKYCUBE_JS
 #define FUNKYCUBE_JS
-#include <assert.js> 
+#include "assert.js" 
 
 #define CUBE_WIDTH 64
 #define FACE_WIDTH 16 

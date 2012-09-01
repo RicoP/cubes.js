@@ -231,7 +231,7 @@ function update(info) {
 function draw(info) {
 	gl.disable( GL_DEPTH_TEST ); 
 	gl.disable( GL_CULL_FACE ); 
-	//drawSky(program); 
+	drawSky(program); 
 	gl.enable( GL_DEPTH_TEST ); 
 	gl.enable( GL_CULL_FACE ); 
 
