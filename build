@@ -1,6 +1,2 @@
 #/bin/sh
 cpp entry.js -P -undef -nostdinc -Wtrigraphs -fdollars-in-identifiers -I include -I gltoolbox.js/src > deploy/game.js
-cd deploy
-cat game.js | uglifyjs > game.min.js
-gzip --fast -fc game.min.js > game.min.js.gz
-

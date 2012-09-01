@@ -3816,4 +3816,4 @@ GLT.loadmanager.loadFiles({
   GLT.requestGameFrame(gameloop);
  }
 });
- console.log("DEBUG. Build:", "Sep  1 2012", "16:56:53");
+ console.log("DEBUG. Build:", "Sep  1 2012", "17:00:08");
