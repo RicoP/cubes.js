@@ -9,6 +9,7 @@
 #include "assert.js"
 #include "id.js"
 #include "cube.js"
+#include "sphere.js"
 #include "random.js" 
 #include "statemachine.js" 
 #include "funkycube.js" 
@@ -18,6 +19,7 @@
 #define PREVIEW_BORDER 15
 
 var cube; 
+var sphereData; 
 var sphere; 
 var sky; 
 var program; 
@@ -31,9 +33,6 @@ var funkycube = new Funkycube();
 
 var canvas = document.getElementsByTagName("canvas")[0]; 
 var gl = GLT.createContext(canvas); 
-
-var sphereOrigin   = vec3.create(); 
-var spherePosition = vec3.create(); 
 
 var projection = mat4.perspective(60, 4/3, 0.1, 1000); 
 var cameraPos  = vec3.create(); 
@@ -128,7 +127,7 @@ function setup() {
 
 	sphereBuffer = gl.createBuffer(); 
 	gl.bindBuffer(GL_ARRAY_BUFFER, sphereBuffer); 
-	gl.bufferData(GL_ARRAY_BUFFER, sphere.rawData, GL_STATIC_DRAW);
+	gl.bufferData(GL_ARRAY_BUFFER, sphereData.rawData, GL_STATIC_DRAW);
 
 	skyBuffer = gl.createBuffer(); 
 	gl.bindBuffer(GL_ARRAY_BUFFER, skyBuffer); 
@@ -229,8 +228,8 @@ function update(info) {
 	} 
 
 	if(dragged) {
-		var disx = dragEvent.distanceX * 2 * Math.PI / canvas.width / 10; 
-		var disy = dragEvent.distanceY * 2 * Math.PI / canvas.height / 10; 
+		var disx = dragEvent.distanceX * 2 * Math.PI / canvas.width / -20; 
+		var disy = dragEvent.distanceY * 2 * Math.PI / canvas.height / 20; 
 		dlog(disx, disy); 
 		spinHorz(disx); 
 		spinVert(disy); 
@@ -355,11 +354,11 @@ function drawSphere(program) {
 
 	gl.bindBuffer(GL_ARRAY_BUFFER, sphereBuffer); 
 
-	gl.vertexAttribPointer(aVertex, 4, GL_FLOAT, false, sphere.stride, sphere.voffset); 
+	gl.vertexAttribPointer(aVertex, 4, GL_FLOAT, false, sphereData.stride, sphereData.voffset); 
 	gl.enableVertexAttribArray(aVertex); 
 
 	if(aTextureuv !== -1) {
-		gl.vertexAttribPointer(aTextureuv, 4, GL_FLOAT, false, sphere.stride, sphere.toffset); 
+		gl.vertexAttribPointer(aTextureuv, 4, GL_FLOAT, false, sphereData.stride, sphereData.toffset); 
 		gl.enableVertexAttribArray(aTextureuv); 
 	}
 
@@ -369,13 +368,11 @@ function drawSphere(program) {
 	}
 
 	mat4.multiply(projection, camera, modelviewprojection); 
-	var pos = vec3.create(sphereOrigin); 
-	vec3.add(pos, spherePosition); 
-	mat4.translate(modelviewprojection, pos); 
+	mat4.translate(modelviewprojection, sphere.position); 
 
 	gl.uniformMatrix4fv(uModelviewprojection, false, modelviewprojection); 
 
-	gl.drawArrays(GL_TRIANGLES, 0, sphere.numVertices); 
+	gl.drawArrays(GL_TRIANGLES, 0, sphereData.numVertices); 
 
 }
 
@@ -457,7 +454,7 @@ GLT.loadmanager.loadFiles({
 	"finished" : function(files) {
 		cube = files["cube.obj"]; 
 		sky  = files["skybox3.obj"]; 
-		sphere = files["sphere.obj"]; 
+		sphereData = files["sphere.obj"]; 
 		program = GLT.shader.compileProgram(gl,files["diffuse.shader"]);
 		idprogram = GLT.shader.compileProgram(gl,files["id.shader"]);
 		borderprogram = GLT.shader.compileProgram(gl,files["border.shader"]);
@@ -523,11 +520,7 @@ GLT.loadmanager.loadFiles({
 		cameraDir[1] = 8;
 		cameraDir[2] = 8;
 
-		sphereOrigin[0] = cameraDir[0]; 
-		sphereOrigin[1] = cameraDir[1]; 
-		sphereOrigin[2] = cameraDir[2]; 
-
-		spherePosition[0] = 10; 
+		sphere = new Sphere({ x : cameraDir[0], y : cameraDir[1], z : cameraDir[2] }); 
 
 		vec3.set(cameraDir, cameraPos); 
 		cameraPos[0] = 0; 	

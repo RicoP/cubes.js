@@ -27,13 +27,13 @@
 		}                                                                        \
 	} while(false)
 
-
-
+	#define assertNew() assert(this !== window) 
 
 #else 
 	#define assert(x)
 	#define checkprop(obj, prop)
 	#define checkclass(obj, type)
+	#define assertNew() 
 
 #endif 
 
