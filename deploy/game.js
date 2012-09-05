@@ -3462,6 +3462,8 @@ var borderBuffer;
 var funkycube = new Funkycube();
 var canvas = document.getElementsByTagName("canvas")[0];
 var gl = GLT.createContext(canvas);
+var sphereOrigin = vec3.create();
+var spherePosition = vec3.create();
 var projection = mat4.perspective(60, 4/3, 0.1, 1000);
 var cameraPos = vec3.create();
 var cameraDir = vec3.create();
@@ -3470,6 +3472,12 @@ var camera = mat4.identity();
 var tmpmatrix = mat4.create();
 var cubetex = null;
 var skytex = null;
+var asisX = vec3.create([1,0,0]);
+var asisY = vec3.create([0,1,0]);
+var asisZ = vec3.create([0,0,1]);
+var cameraRotX = 0;
+var cameraRotY = 0;
+var cameraRotZ = 0;
 var cubeNormals = [
  vec3.create([ 0, 0, 0]),
  vec3.create([ 1, 0, 0]),
@@ -3502,7 +3510,22 @@ var dragged = false;
 var dragEvent = null;
 var eventPosition = { x : 0, y : 0 };
 function recalcCamera() {
- camera = mat4.lookAt(cameraPos, cameraDir, cameraUp);
+ var cameraWorldPos = tmpmatrix;
+ vec3.add(cameraDir, cameraPos, cameraWorldPos);
+ mat4.lookAt(cameraWorldPos, cameraDir, cameraUp, camera);
+}
+function spinHorz(angle) {
+ var q = quat4.fromAngleAxis(angle, cameraUp);
+ quat4.multiplyVec3(q, cameraPos);
+ recalcCamera();
+}
+function spinVert(angle) {
+ var tmpvec = tmpmatrix;
+ var camHorz = vec3.normalize( vec3.cross(cameraUp, cameraPos, tmpvec) );
+ var q = quat4.fromAngleAxis(angle, camHorz);
+ quat4.multiplyVec3(q, cameraPos);
+ vec3.normalize( vec3.cross( cameraPos, camHorz, cameraUp ) );
+ recalcCamera();
 }
 function setup() {
  gl.enable( GL_DEPTH_TEST );
@@ -3546,25 +3569,22 @@ function gameloop(info) {
  GLT.requestGameFrame(gameloop);
 }
 var getClickDirection = (function() {
- var vectorNormalsXPlus = vec3.create([1,0,0]);
- var vectorNormalsXMinus = vec3.create([-1,0,0]);
- var vectorNormalsYPlus = vec3.create([0,1,0]);
- var vectorNormalsYMinus = vec3.create([0,-1,0]);
- var vectorNormalsZPlus = vec3.create([0,0,1]);
- var vectorNormalsZMinus = vec3.create([0,0,-1]);
+ var asisXMinus = vec3.create([-1,0,0]);
+ var asisYMinus = vec3.create([0,-1,0]);
+ var asisZMinus = vec3.create([0,0,-1]);
  var vectorNormals = [
-  vectorNormalsXPlus,
-  vectorNormalsXMinus,
-  vectorNormalsYPlus,
-  vectorNormalsYMinus,
-  vectorNormalsZPlus,
-  vectorNormalsZMinus
+  asisX,
+  asisXMinus,
+  asisY,
+  asisYMinus,
+  asisZ,
+  asisZMinus
  ];
  var cam = vec3.create();
  var div = vec3.create();
  return function(camPos, camDir) {
   vec3.subtract(camPos, camDir, cam);
-  console.log("Pos", camPos, "dir", camDir);
+  console.log("DEBUG (" + "src/main.js" + ":" + 195 + ")", "Pos", camPos, "dir", camDir );
   vec3.normalize(cam);
   var lastLength = 99999;
   var lastIndex = -1;
@@ -3590,16 +3610,14 @@ function update(info) {
  var touchedTheSky = false;
  var touchedACube = false;
  if(tapped) {
-  console.log( getClickDirection(cameraPos, cameraDir) );
+  console.log("DEBUG (" + "src/main.js" + ":" + 228 + ")", getClickDirection(cameraPos, cameraDir) );
  }
  if(dragged) {
-  var disx = dragEvent.distanceX;
-  var disy = dragEvent.distanceY;
-  mat4.identity(tmpmatrix);
-  mat4.rotateY(tmpmatrix, disx / 1000);
-  mat4.rotateX(tmpmatrix, disy / 1000);
-  mat4.multiplyVec3(tmpmatrix, cameraPos);
-  recalcCamera();
+  var disx = dragEvent.distanceX * 2 * Math.PI / canvas.width / 10;
+  var disy = dragEvent.distanceY * 2 * Math.PI / canvas.height / 10;
+  console.log("DEBUG (" + "src/main.js" + ":" + 234 + ")", disx, disy );
+  spinHorz(disx);
+  spinVert(disy);
  }
  tapped = false;
  dragged = false;
@@ -3639,7 +3657,7 @@ function getCubeById(id) {
    return object;
   }
  }
- console.error("ERROR (" + "src/main.js" + ":" + 266 + ")", "id", id, "not found." );
+ console.error("ERROR (" + "src/main.js" + ":" + 287 + ")", "id", id, "not found." );
  return null;
 }
 function drawCubes(program) {
@@ -3700,6 +3718,9 @@ function drawSphere(program) {
   gl.uniform1i(uTexture, 0);
  }
  mat4.multiply(projection, camera, modelviewprojection);
+ var pos = vec3.create(sphereOrigin);
+ vec3.add(pos, spherePosition);
+ mat4.translate(modelviewprojection, pos);
  gl.uniformMatrix4fv(uModelviewprojection, false, modelviewprojection);
  gl.drawArrays(GL_TRIANGLES, 0, sphere.numVertices);
 }
@@ -3710,10 +3731,10 @@ function drawSky(program) {
  var aVertex = gl.getAttribLocation(program, "aVertex");
  var aTextureuv = gl.getAttribLocation(program, "aTextureuv");
  var modelviewprojection = tmpmatrix;
- do { if(!(uModelviewprojection)) { __error("assertion failed: " + "uModelviewprojection" + " = " + (uModelviewprojection), "src/main.js", 369); } } while(false);
- do { if(!(uTexture)) { __error("assertion failed: " + "uTexture" + " = " + (uTexture), "src/main.js", 370); } } while(false);
- do { if(!(aTextureuv !== -1)) { __error("assertion failed: " + "aTextureuv !== -1" + " = " + (aTextureuv !== -1), "src/main.js", 371); } } while(false);
- do { if(!(aVertex !== -1)) { __error("assertion failed: " + "aVertex !== -1" + " = " + (aVertex !== -1), "src/main.js", 372); } } while(false);
+ do { if(!(uModelviewprojection)) { __error("assertion failed: " + "uModelviewprojection" + " = " + (uModelviewprojection), "src/main.js", 392); } } while(false);
+ do { if(!(uTexture)) { __error("assertion failed: " + "uTexture" + " = " + (uTexture), "src/main.js", 393); } } while(false);
+ do { if(!(aTextureuv !== -1)) { __error("assertion failed: " + "aTextureuv !== -1" + " = " + (aTextureuv !== -1), "src/main.js", 394); } } while(false);
+ do { if(!(aVertex !== -1)) { __error("assertion failed: " + "aVertex !== -1" + " = " + (aVertex !== -1), "src/main.js", 395); } } while(false);
  gl.bindBuffer(GL_ARRAY_BUFFER, skyBuffer);
  gl.vertexAttribPointer(aVertex, 4, GL_FLOAT, false, sky.stride, sky.voffset);
  gl.enableVertexAttribArray(aVertex);
@@ -3722,6 +3743,7 @@ function drawSky(program) {
  gl.bindTexture(GL_TEXTURE_2D, skytex);
  gl.uniform1i(uTexture, 0);
  mat4.multiply(projection, camera, modelviewprojection);
+ mat4.translate(modelviewprojection, cameraDir);
  mat4.translate(modelviewprojection, cameraPos);
  gl.uniformMatrix4fv(uModelviewprojection, false, modelviewprojection);
  gl.drawArrays(GL_TRIANGLES, 0, sky.numVertices);
@@ -3729,7 +3751,7 @@ function drawSky(program) {
 function drawBorder(program) {
  gl.useProgram(program);
  var aVertex = gl.getAttribLocation(program, "aVertex");
- do { if(!(aVertex !== -1)) { __error("assertion failed: " + "aVertex !== -1" + " = " + (aVertex !== -1), "src/main.js", 398); } } while(false);
+ do { if(!(aVertex !== -1)) { __error("assertion failed: " + "aVertex !== -1" + " = " + (aVertex !== -1), "src/main.js", 422); } } while(false);
  gl.bindBuffer(GL_ARRAY_BUFFER, borderBuffer);
  gl.vertexAttribPointer(aVertex, 2, GL_FLOAT, false, 0, 0);
  gl.enableVertexAttribArray(aVertex);
@@ -3743,7 +3765,7 @@ function setCanvasForTexture(canvas, text) {
  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
 }
 function createTexture(img) {
- do { if(!(img)) { __error("assertion failed: " + "img" + " = " + (img), "src/main.js", 418); } } while(false);
+ do { if(!(img)) { __error("assertion failed: " + "img" + " = " + (img), "src/main.js", 442); } } while(false);
  var tex = gl.createTexture();
  setCanvasForTexture(img, tex);
  gl.bindTexture(GL_TEXTURE_2D, null);
@@ -3752,7 +3774,7 @@ function createTexture(img) {
 GLT.loadmanager.loadFiles({
  "files" : ["cube.obj", "sphere.obj", "diffuse.shader", "id.shader", "cube.png", "skybox3.obj", "border.shader", "map1.json"],
  "error" : function(file, err) {
-  console.error("ERROR (" + "src/main.js" + ":" + 431 + ")", file, err );
+  console.error("ERROR (" + "src/main.js" + ":" + 455 + ")", file, err );
  },
  "finished" : function(files) {
   cube = files["cube.obj"];
@@ -3768,7 +3790,7 @@ GLT.loadmanager.loadFiles({
   var dotsposy = new Int32Array(MAX);
   var dotsdir = new Int32Array(MAX);
   var dotsface = new Int32Array(MAX);
-  for(var i = 0; i!==MAX; i++) {
+  for(var i = 0; i !== MAX; i++) {
    dotsposx[i] = (Math.random() * 16) | 0;
    dotsposy[i] = (Math.random() * 16) | 0;
    dotsdir[i] = (Math.random() * 2) | 0;
@@ -3809,11 +3831,17 @@ GLT.loadmanager.loadFiles({
   cameraDir[0] = 8;
   cameraDir[1] = 8;
   cameraDir[2] = 8;
+  sphereOrigin[0] = cameraDir[0];
+  sphereOrigin[1] = cameraDir[1];
+  sphereOrigin[2] = cameraDir[2];
+  spherePosition[0] = 10;
   vec3.set(cameraDir, cameraPos);
-  cameraPos[0] += 20;
+  cameraPos[0] = 0;
+  cameraPos[1] = 0;
+  cameraPos[2] = 20;
   setup();
   recalcCamera();
   GLT.requestGameFrame(gameloop);
  }
 });
- console.log("DEBUG. Build:", "Sep  1 2012", "19:12:16");
+console.log("DEBUG (" + "src/main.js" + ":" + 545 + ")", "DEBUG Build:", "Sep  5 2012", "16:29:16" );

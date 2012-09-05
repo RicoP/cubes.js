@@ -32,6 +32,9 @@ var funkycube = new Funkycube();
 var canvas = document.getElementsByTagName("canvas")[0]; 
 var gl = GLT.createContext(canvas); 
 
+var sphereOrigin   = vec3.create(); 
+var spherePosition = vec3.create(); 
+
 var projection = mat4.perspective(60, 4/3, 0.1, 1000); 
 var cameraPos  = vec3.create(); 
 var cameraDir  = vec3.create(); 
@@ -42,6 +45,14 @@ var tmpmatrix = mat4.create();
 
 var cubetex = null; 
 var skytex = null; 
+
+var asisX = vec3.create([1,0,0]); 
+var asisY = vec3.create([0,1,0]); 
+var asisZ = vec3.create([0,0,1]); 
+
+var cameraRotX = 0; 
+var cameraRotY = 0; 
+var cameraRotZ = 0; 
 
 var cubeNormals = [
 	vec3.create([ 0, 0, 0]), //None 
@@ -84,7 +95,24 @@ var dragEvent = null;
 var eventPosition = { x : 0, y : 0 }; 
 
 function recalcCamera() {
-	camera = mat4.lookAt(cameraPos, cameraDir, cameraUp); 
+	var cameraWorldPos = tmpmatrix; 
+	vec3.add(cameraDir, cameraPos, cameraWorldPos); 
+	mat4.lookAt(cameraWorldPos, cameraDir, cameraUp, camera); 
+}
+
+function spinHorz(angle) { 
+	var q = quat4.fromAngleAxis(angle, cameraUp); 
+	quat4.multiplyVec3(q, cameraPos); 
+	recalcCamera(); 
+}
+
+function spinVert(angle) { 
+	var tmpvec = tmpmatrix; 
+	var camHorz = vec3.normalize( vec3.cross(cameraUp, cameraPos, tmpvec) ); 
+	var q = quat4.fromAngleAxis(angle, camHorz); 
+	quat4.multiplyVec3(q, cameraPos); 
+	vec3.normalize( vec3.cross( cameraPos, camHorz, cameraUp ) ); 
+	recalcCamera(); 
 }
 
 function setup() {
@@ -146,22 +174,17 @@ function gameloop(info) {
 } 
 
 var getClickDirection = (function() {
-	var vectorNormalsXPlus = vec3.create([1,0,0]); 
-	var vectorNormalsXMinus = vec3.create([-1,0,0]); 
-
-	var vectorNormalsYPlus = vec3.create([0,1,0]); 
-	var vectorNormalsYMinus = vec3.create([0,-1,0]); 
-
-	var vectorNormalsZPlus = vec3.create([0,0,1]); 
-	var vectorNormalsZMinus = vec3.create([0,0,-1]); 
+	var asisXMinus = vec3.create([-1,0,0]); 
+	var asisYMinus = vec3.create([0,-1,0]); 
+	var asisZMinus = vec3.create([0,0,-1]); 
 
 	var vectorNormals = [
-		vectorNormalsXPlus,
-		vectorNormalsXMinus,	
-		vectorNormalsYPlus,
-		vectorNormalsYMinus,	
-		vectorNormalsZPlus,
-		vectorNormalsZMinus
+		asisX,
+		asisXMinus,	
+		asisY,
+		asisYMinus,	
+		asisZ,
+		asisZMinus
 	]; 
 
 	var cam = vec3.create(); 
@@ -169,7 +192,7 @@ var getClickDirection = (function() {
 
 	return function(camPos, camDir) {
 		vec3.subtract(camPos, camDir, cam); 
-		console.log("Pos", camPos, "dir", camDir); 
+		dlog("Pos", camPos, "dir", camDir); 
 		vec3.normalize(cam); 
 
 		var lastLength = 99999; 
@@ -202,22 +225,20 @@ function update(info) {
 	var touchedACube  = false; 
 
 	if(tapped) {
-		console.log( getClickDirection(cameraPos, cameraDir) ); 		
+		dlog( getClickDirection(cameraPos, cameraDir) ); 		
 	} 
 
 	if(dragged) {
-		var disx = dragEvent.distanceX; 
-		var disy = dragEvent.distanceY; 
-
-		mat4.identity(tmpmatrix); 
-		mat4.rotateY(tmpmatrix, disx / 1000); 		
-		mat4.rotateX(tmpmatrix, disy / 1000); 		
-		mat4.multiplyVec3(tmpmatrix, cameraPos); 
-		recalcCamera(); 
+		var disx = dragEvent.distanceX * 2 * Math.PI / canvas.width / 10; 
+		var disy = dragEvent.distanceY * 2 * Math.PI / canvas.height / 10; 
+		dlog(disx, disy); 
+		spinHorz(disx); 
+		spinVert(disy); 
 	}
 
+
 	tapped = false; 
-	dragged = false; 
+	dragged = false; 	
 
 	for(var i = 0; i != cubelist.length; i++) {
 		var cube = cubelist[i]; 
@@ -348,7 +369,9 @@ function drawSphere(program) {
 	}
 
 	mat4.multiply(projection, camera, modelviewprojection); 
-	//mat4.translate(modelviewprojection, object.vector); 
+	var pos = vec3.create(sphereOrigin); 
+	vec3.add(pos, spherePosition); 
+	mat4.translate(modelviewprojection, pos); 
 
 	gl.uniformMatrix4fv(uModelviewprojection, false, modelviewprojection); 
 
@@ -383,6 +406,7 @@ function drawSky(program) {
 	gl.uniform1i(uTexture, 0); 
 
 	mat4.multiply(projection, camera, modelviewprojection); 
+	mat4.translate(modelviewprojection, cameraDir); 
 	mat4.translate(modelviewprojection, cameraPos); 
 
 	gl.uniformMatrix4fv(uModelviewprojection, false, modelviewprojection); 
@@ -447,11 +471,11 @@ GLT.loadmanager.loadFiles({
 		var dotsdir  = new Int32Array(MAX); 
 		var dotsface = new Int32Array(MAX); 
 
-		for(var i = 0; i!==MAX; i++) {
+		for(var i = 0; i !== MAX; i++) {
 			dotsposx[i] = (Math.random() * 16) | 0; //[0..15]
 			dotsposy[i] = (Math.random() * 16) | 0; //[0..15]
 			dotsdir[i]  = (Math.random() * 2) | 0;  //[0..1]
-			dotsface[i] = (Math.random() * 6) | 0; //[0..5]
+			dotsface[i] = (Math.random() * 6) | 0;  //[0..5]
 		}
 
 		setInterval(function() {
@@ -499,20 +523,26 @@ GLT.loadmanager.loadFiles({
 		cameraDir[1] = 8;
 		cameraDir[2] = 8;
 
+		sphereOrigin[0] = cameraDir[0]; 
+		sphereOrigin[1] = cameraDir[1]; 
+		sphereOrigin[2] = cameraDir[2]; 
+
+		spherePosition[0] = 10; 
+
 		vec3.set(cameraDir, cameraPos); 
-		cameraPos[0] += 20; 	
+		cameraPos[0] = 0; 	
+		cameraPos[1] = 0;  	
+		cameraPos[2] = 20; 	
 
 		setup(); 
 		recalcCamera(); 
+
+		//(new GLT.Gameloop(gameloop)).start(); 
 		GLT.requestGameFrame(gameloop); 
 	}
 });
-
-#ifdef RELEASE 
-	console.log("RELEASE. Build:", __DATE__, __TIME__); 
-#else
-	console.log("DEBUG. Build:", __DATE__, __TIME__); 
-#endif 
+	
+dlog("DEBUG Build:", __DATE__, __TIME__); 
 
 #undef PREVIEW_WIDTH  
 #undef PREVIEW_HEIGHT 
