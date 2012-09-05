@@ -189,9 +189,9 @@ var getClickDirection = (function() {
 	var cam = vec3.create(); 
 	var div = vec3.create(); 
 
-	return function(camPos, camDir) {
-		vec3.subtract(camPos, camDir, cam); 
-		dlog("Pos", camPos, "dir", camDir); 
+	return function(camPos) {
+		vec3.set(camPos, cam); 
+		dlog("Pos", camPos); 
 		vec3.normalize(cam); 
 
 		var lastLength = 99999; 
@@ -224,7 +224,9 @@ function update(info) {
 	var touchedACube  = false; 
 
 	if(tapped) {
-		dlog( getClickDirection(cameraPos, cameraDir) ); 		
+		var dir = getClickDirection(cameraPos);
+		dlog( dir ); 		
+		sphere.tap(info, dir); 		
 	} 
 
 	if(dragged) {
@@ -239,10 +241,7 @@ function update(info) {
 	tapped = false; 
 	dragged = false; 	
 
-	for(var i = 0; i != cubelist.length; i++) {
-		var cube = cubelist[i]; 
-		cube.tick(info); 
-	}
+	sphere.tick(info); 
 }
 
 function draw(info) {
