@@ -3610,7 +3610,7 @@ Map.create = function (seed, DIMENSION) {
   do { if(typeof (position . z) === "undefined") { __error("No property " + "z" + " in " + "position", "src/map.js", 103); } } while(false);
   var type = iterationsLeft === 1 ? Map.GOAL : Map.CUBE;
   var dir = rand.next() % 6;
-  var steps = 3 + rand.next() % 6;
+  var steps = 3 + rand.next() % (DIMENSION - 3);
   if(iterationsLeft === 0) return true;
   if(attempt >= MAX_ATTEMPTS) return false;
   if(dir === directionICameFrom || dir === getOppositeDirection(directionICameFrom)) {
@@ -4012,12 +4012,16 @@ GLT.loadmanager.loadFiles({
    }
    setCanvasForTexture(funkycube.canvas, skytex);
   }, 100);
-  var mapdata = files["map1.json"];
+  var mapdata = Map.create(1337, 16);
   var idgen = new Id.Generator();
-  for(var i = 0; i != mapdata.cubes.length; i++) {
-   var cubepos = mapdata.cubes[i];
-   cubelist.push( new Cube({ x : cubepos[0], y : cubepos[1], z : cubepos[2] }, idgen.next()) );
-  }
+  for(var x = 0; x !== 16; x++)
+   for(var y = 0; y !== 16; y++)
+    for(var z = 0; z !== 16; z++) {
+     var obj = mapdata.getObject(x,y,z);
+     if(obj === Map.CUBE) {
+      cubelist.push( new Cube({x : x, y : y, z : z}, idgen.next()) );
+     }
+    }
   cameraDir[0] = 8;
   cameraDir[1] = 8;
   cameraDir[2] = 8;
@@ -4031,4 +4035,4 @@ GLT.loadmanager.loadFiles({
   GLT.requestGameFrame(gameloop);
  }
 });
-console.log("DEBUG (" + "src/main.js" + ":" + 537 + ")", "DEBUG Build:", "Sep  6 2012", "15:40:00" );
+console.log("DEBUG (" + "src/main.js" + ":" + 540 + ")", "DEBUG Build:", "Sep  6 2012", "16:19:40" );

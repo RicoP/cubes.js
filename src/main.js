@@ -506,14 +506,17 @@ GLT.loadmanager.loadFiles({
 			setCanvasForTexture(funkycube.canvas, skytex); 	
 		}, 100); 
 
-		var mapdata = files["map1.json"]; 
+		var mapdata = Map.create(1337, 16);  
 		var idgen = new Id.Generator(); 
 
-		for(var i = 0; i != mapdata.cubes.length; i++) {
-			var cubepos = mapdata.cubes[i]; 
-			cubelist.push( new Cube({ x : cubepos[0], y : cubepos[1], z : cubepos[2] }, idgen.next()) );
-			//cubelist.push( new Cube(map.cubes[i].position, idgen.next()) ); 
-		}
+		for(var x = 0; x !== 16; x++) 
+			for(var y = 0; y !== 16; y++) 
+				for(var z = 0; z !== 16; z++) {
+					var obj = mapdata.getObject(x,y,z); 
+					if(obj === Map.CUBE) { 
+						cubelist.push( new Cube({x : x, y : y, z : z}, idgen.next()) ); 
+					}
+				}
 
 		cameraDir[0] = 8;
 		cameraDir[1] = 8;

@@ -104,7 +104,7 @@ Map.create = function (seed, DIMENSION) {
 
 		var type = iterationsLeft === 1 ? Map.GOAL : Map.CUBE; 
 		var dir = rand.next() % 6; 
-		var steps = 3 + rand.next() % 6; 
+		var steps = 3 + rand.next() % (DIMENSION - 3); 
 
 		//Enough iterations. OK
 		if(iterationsLeft === 0) return true; 
