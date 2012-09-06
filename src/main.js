@@ -13,6 +13,7 @@
 #include "random.js" 
 #include "statemachine.js" 
 #include "funkycube.js" 
+#include "map.js" 
 
 #define PREVIEW_WIDTH 180
 #define PREVIEW_HEIGHT 135
@@ -232,7 +233,6 @@ function update(info) {
 	if(dragged) {
 		var disx = dragEvent.distanceX * 2 * Math.PI / canvas.width / -20; 
 		var disy = dragEvent.distanceY * 2 * Math.PI / canvas.height / 20; 
-		dlog(disx, disy); 
 		spinHorz(disx); 
 		spinVert(disy); 
 	}
