@@ -3,8 +3,7 @@
 
 #include "assert.js" 
 
-// http://en.wikipedia.org/wiki/Complementary-multiply-with-carry#Complementary-multiply-with-carry_generators
-
+//http://en.wikipedia.org/wiki/Complementary-multiply-with-carry#Implementation
 function Random(x) {
 	"use strict"; 	
 	assert(x === (x|0));
