@@ -119,7 +119,7 @@ Map.create = function (seed, DIMENSION) {
 
 		if(!nothingInBetween(position, dir, steps)) {
 			//Try next attempt with next random numbers
-			return fillRec(rand, position, iterationsLeft, attempt+1, dir);
+			return fillRec(rand, position, iterationsLeft, attempt+1, directionICameFrom);
 		}
 
 		var newObjectCoords = getCoords(position, dir, steps); 
@@ -139,10 +139,12 @@ Map.create = function (seed, DIMENSION) {
 
 	function fill(seed) {
 		var rand; 
+		var iterations = 0; 
 		do { 
 			rand = new Random(seed++); 
 			clearField(); 
 			set(startingPosition.x, startingPosition.y, startingPosition.z, Map.START); 
+			iterations = 5 + (rand.next() % 8);
 		} while(!fillRec(rand, startingPosition, 13, 0, -1)); 
 	}
 

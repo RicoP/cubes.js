@@ -138,6 +138,10 @@ function setup() {
 	
 	var path = new Float32Array( 3 * map.path.length ); 
 	var j = 0; 
+	path[j++] = map.startingPosition.x;
+	path[j++] = map.startingPosition.y;
+	path[j++] = map.startingPosition.z;
+
 	for(var i = 0; i !== map.path.length; i++) {
 		path[j++] = map.path[i].x;
 		path[j++] = map.path[i].y;
@@ -509,7 +513,7 @@ GLT.loadmanager.loadFiles({
 			setCanvasForTexture(funkycube.canvas, skytex); 	
 		}, 100); 
 
-		map = Map.create(1337, 16);  
+		map = Map.create(49, 16);  
 		var idgen = new Id.Generator(); 
 
 		for(var x = 0; x !== 16; x++) 
