@@ -118,10 +118,11 @@ function spinVert(angle) {
 
 function setup() {
 	gl.enable( GL_DEPTH_TEST ); 
-	gl.enable( GL_SCISSOR_TEST ); 
+	//gl.enable( GL_SCISSOR_TEST ); 
 	gl.enable( GL_CULL_FACE ); 
 	gl.lineWidth(4.5); 
 	gl.clearColor(0,0,0,0); 
+	gl.viewport(0,0,canvas.width, canvas.height);  
 
 	cubeBuffer = gl.createBuffer(); 
 	gl.bindBuffer(GL_ARRAY_BUFFER, cubeBuffer); 
@@ -255,29 +256,11 @@ function update(info) {
 
 function draw(info) {
 	gl.disable( GL_DEPTH_TEST ); 
-	gl.disable( GL_CULL_FACE ); 
 	drawSky(program); 
 	gl.enable( GL_DEPTH_TEST ); 
-	gl.enable( GL_CULL_FACE ); 
 
-	gl.clearDepth(1); 
 	gl.clear(GL_DEPTH_BUFFER_BIT); 
-	var viewport = gl.getParameter(GL_VIEWPORT); 
-	var x = viewport[0]; 
-	var y = viewport[1]; 
-	var w = viewport[2]; 
-	var h = viewport[3]; 
-
-	gl.scissor(w - PREVIEW_WIDTH - PREVIEW_BORDER, PREVIEW_BORDER, PREVIEW_WIDTH, PREVIEW_HEIGHT); 
-	gl.viewport(w - PREVIEW_WIDTH - PREVIEW_BORDER, PREVIEW_BORDER, PREVIEW_WIDTH, PREVIEW_HEIGHT); 
-	drawCubes(program); 
-
-	gl.clearDepth(0); 
-	gl.clear(GL_DEPTH_BUFFER_BIT); 
-
-	gl.scissor(x,y,w,h);  
-	gl.viewport(x,y,w,h);  
-
+		
 	drawCubes(program); 
 	drawSphere(program); 
 	drawPath(borderprogram, map.path); 
