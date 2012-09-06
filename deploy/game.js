@@ -3203,7 +3203,7 @@ var Sphere = (function() {
 }());
 function Random(x) {
  "use strict";
- do { if(!(x === (x|0))) { __error("assertion failed: " + "x === (x|0)" + " = " + (x === (x|0)), "src/random.js", 10); } } while(false);
+ do { if(!(x === (x|0))) { __error("assertion failed: " + "x === (x|0)" + " = " + (x === (x|0)), "src/random.js", 9); } } while(false);
  var MAX = 0xFFFF;
  var Q = new Uint32Array(4096);
  var c = 362436;
@@ -4035,4 +4035,4 @@ GLT.loadmanager.loadFiles({
   GLT.requestGameFrame(gameloop);
  }
 });
-console.log("DEBUG (" + "src/main.js" + ":" + 543 + ")", "DEBUG Build:", "Sep  6 2012", "18:02:29" );
+console.log("DEBUG (" + "src/main.js" + ":" + 543 + ")", "DEBUG Build:", "Sep  6 2012", "18:14:58" );
