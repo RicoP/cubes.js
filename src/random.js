@@ -1,25 +1,47 @@
 #ifndef RANDOM_JS
 #define RANDOM_JS 
 
-(function() {
-"use strict"; 
+#include "assert.js" 
 
-function Random(seed) {
+// http://en.wikipedia.org/wiki/Complementary-multiply-with-carry#Complementary-multiply-with-carry_generators
+
+function Random(x) {
+	"use strict"; 	
+	assert(x === (x|0));
+
 	var MAX = 0xFFFF; 
-	var num = seed | 0; 
-	var mul = num; 
+	var Q = new Uint32Array(4096); 
+	var c = 362436; 
+	var PHI = 0x9e3779b9; 
 
-	function next() {
-		return num = (mul * num) & MAX;
-	}
+	Q[0] = x; 
+	Q[1] = x + PHI; 
+	Q[2] = x + PHI + PHI;
 
-	for(var i = 8; i--;) {
-		next(); 
-	}
+	for (var j = 3; j < 4096; j++)
+		Q[j] = Q[j - 3] ^ Q[j - 2] ^ PHI ^ j;
+		
+	var i = 4095;
 
-	this.next = next; 
+	this.next = function() {
+		var t, a = 18782;
+		var x, r = 0xfffffffe;
+		i = (i + 1) & 4095;
+		t = a * Q[i] + c;
+		c = (t >> 32);
+		x = t + c;
+		if (x < c) {
+			x++;
+			c++;
+		}
+
+		var ret = Q[i] = r - x;
+		if(ret < 0) {
+			return (-ret) % MAX; 
+		}
+	
+		return ret % MAX; 
+	};
 };
-
-}()); 
 
 #endif 
