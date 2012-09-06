@@ -2,11 +2,13 @@
 precision highp float;
 #endif
 
+uniform mat4 uModelviewprojection; 
+
 #ifdef VERTEX
-attribute vec2 aVertex;
+attribute vec3 aVertex;
 
 void main() {
-	gl_Position = vec4(aVertex, 0.0, 1.0);  
+	gl_Position = uModelviewprojection * vec4(aVertex, 1.0);  
 }
 #endif
 

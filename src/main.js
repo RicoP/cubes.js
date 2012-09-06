@@ -30,6 +30,7 @@ var cubeBuffer;
 var sphereBuffer; 
 var skyBuffer; 
 var borderBuffer; 
+var map; 
 var funkycube = new Funkycube(); 
 
 var canvas = document.getElementsByTagName("canvas")[0]; 
@@ -133,10 +134,18 @@ function setup() {
 	skyBuffer = gl.createBuffer(); 
 	gl.bindBuffer(GL_ARRAY_BUFFER, skyBuffer); 
 	gl.bufferData(GL_ARRAY_BUFFER, sky.rawData, GL_STATIC_DRAW);
+	
+	var path = new Float32Array( 3 * map.path.length ); 
+	var j = 0; 
+	for(var i = 0; i !== map.path.length; i++) {
+		path[j++] = map.path[i].x;
+		path[j++] = map.path[i].y;
+		path[j++] = map.path[i].z;
+	}
 
-	borderBuffer = gl.createBuffer(); 
-	gl.bindBuffer(GL_ARRAY_BUFFER, borderBuffer); 
-	gl.bufferData(GL_ARRAY_BUFFER, border, GL_STATIC_DRAW); 
+	pathBuffer = gl.createBuffer(); 
+	gl.bindBuffer(GL_ARRAY_BUFFER, pathBuffer); 
+	gl.bufferData(GL_ARRAY_BUFFER, path, GL_STATIC_DRAW); 
 
 	var hammer = new Hammer(canvas); 
 	/*var events = ["ondragstart", "ondrag", "ondraged", "onswipe", "ontap", "ondoubletap", "onhold", "ontransformstart", "ontransform", "ontransformed"]; 
@@ -261,7 +270,6 @@ function draw(info) {
 
 	gl.scissor(w - PREVIEW_WIDTH - PREVIEW_BORDER, PREVIEW_BORDER, PREVIEW_WIDTH, PREVIEW_HEIGHT); 
 	gl.viewport(w - PREVIEW_WIDTH - PREVIEW_BORDER, PREVIEW_BORDER, PREVIEW_WIDTH, PREVIEW_HEIGHT); 
-	drawBorder(borderprogram); 
 	drawCubes(program); 
 
 	gl.clearDepth(0); 
@@ -272,6 +280,7 @@ function draw(info) {
 
 	drawCubes(program); 
 	drawSphere(program); 
+	drawPath(borderprogram, map.path); 
 } 
 
 function getCubeById(id) {
@@ -410,19 +419,30 @@ function drawSky(program) {
 	gl.drawArrays(GL_TRIANGLES, 0, sky.numVertices); 
 }
 
-function drawBorder(program) {
+function drawPath(program, path) {
 	gl.useProgram(program); 
 
-	var aVertex    = gl.getAttribLocation(program, "aVertex"); 
+	var aVertex = gl.getAttribLocation(program, "aVertex"); 
+	var uModelviewprojection = gl.getUniformLocation(program, "uModelviewprojection"); 
+	var modelviewprojection = tmpmatrix; 
 	
 	assert(aVertex    !== -1); 
+	assert(uModelviewprojection !== -1); 
 
-	gl.bindBuffer(GL_ARRAY_BUFFER, borderBuffer); 
+	gl.bindBuffer(GL_ARRAY_BUFFER, pathBuffer); 
 
-	gl.vertexAttribPointer(aVertex, 2, GL_FLOAT, false, 0, 0); 
+	gl.vertexAttribPointer(aVertex, 3, GL_FLOAT, false, 0, 0); 
 	gl.enableVertexAttribArray(aVertex); 
+
+
+	mat4.multiply(projection, camera, modelviewprojection); 
+	//mat4.translate(modelviewprojection, object.vector); 
+
+	gl.uniformMatrix4fv(uModelviewprojection, false, modelviewprojection); 
 	
-	gl.drawArrays(GL_LINE_LOOP, 0, 4); 
+	for(var i = 0; i !== map.path.length - 1; i++) { 
+		gl.drawArrays(GL_LINES, i, 2); 
+	}
 }
 
 function setCanvasForTexture(canvas, text) {
@@ -506,13 +526,13 @@ GLT.loadmanager.loadFiles({
 			setCanvasForTexture(funkycube.canvas, skytex); 	
 		}, 100); 
 
-		var mapdata = Map.create(1337, 16);  
+		map = Map.create(1337, 16);  
 		var idgen = new Id.Generator(); 
 
 		for(var x = 0; x !== 16; x++) 
 			for(var y = 0; y !== 16; y++) 
 				for(var z = 0; z !== 16; z++) {
-					var obj = mapdata.getObject(x,y,z); 
+					var obj = map.getObject(x,y,z); 
 					if(obj === Map.CUBE) { 
 						cubelist.push( new Cube({x : x, y : y, z : z}, idgen.next()) ); 
 					}

@@ -3655,6 +3655,7 @@ var cubeBuffer;
 var sphereBuffer;
 var skyBuffer;
 var borderBuffer;
+var map;
 var funkycube = new Funkycube();
 var canvas = document.getElementsByTagName("canvas")[0];
 var gl = GLT.createContext(canvas);
@@ -3736,9 +3737,16 @@ function setup() {
  skyBuffer = gl.createBuffer();
  gl.bindBuffer(GL_ARRAY_BUFFER, skyBuffer);
  gl.bufferData(GL_ARRAY_BUFFER, sky.rawData, GL_STATIC_DRAW);
- borderBuffer = gl.createBuffer();
- gl.bindBuffer(GL_ARRAY_BUFFER, borderBuffer);
- gl.bufferData(GL_ARRAY_BUFFER, border, GL_STATIC_DRAW);
+ var path = new Float32Array( 3 * map.path.length );
+ var j = 0;
+ for(var i = 0; i !== map.path.length; i++) {
+  path[j++] = map.path[i].x;
+  path[j++] = map.path[i].y;
+  path[j++] = map.path[i].z;
+ }
+ pathBuffer = gl.createBuffer();
+ gl.bindBuffer(GL_ARRAY_BUFFER, pathBuffer);
+ gl.bufferData(GL_ARRAY_BUFFER, path, GL_STATIC_DRAW);
  var hammer = new Hammer(canvas);
  hammer.ontap = function(ev) {
   tapped = true;
@@ -3778,7 +3786,7 @@ var getClickDirection = (function() {
  var div = vec3.create();
  return function(camPos) {
   vec3.set(camPos, cam);
-  console.log("DEBUG (" + "src/main.js" + ":" + 195 + ")", "Pos", camPos );
+  console.log("DEBUG (" + "src/main.js" + ":" + 204 + ")", "Pos", camPos );
   vec3.normalize(cam);
   var lastLength = 99999;
   var lastIndex = -1;
@@ -3805,7 +3813,7 @@ function update(info) {
  var touchedACube = false;
  if(tapped) {
   var dir = getClickDirection(cameraPos);
-  console.log("DEBUG (" + "src/main.js" + ":" + 229 + ")", dir );
+  console.log("DEBUG (" + "src/main.js" + ":" + 238 + ")", dir );
   sphere.tap(info, dir);
  }
  if(dragged) {
@@ -3833,7 +3841,6 @@ function draw(info) {
  var h = viewport[3];
  gl.scissor(w - 180 - 15, 15, 180, 135);
  gl.viewport(w - 180 - 15, 15, 180, 135);
- drawBorder(borderprogram);
  drawCubes(program);
  gl.clearDepth(0);
  gl.clear(GL_DEPTH_BUFFER_BIT);
@@ -3841,6 +3848,7 @@ function draw(info) {
  gl.viewport(x,y,w,h);
  drawCubes(program);
  drawSphere(program);
+ drawPath(borderprogram, map.path);
 }
 function getCubeById(id) {
  for(var i = 0; i != cubelist.length; i++) {
@@ -3849,7 +3857,7 @@ function getCubeById(id) {
    return object;
   }
  }
- console.error("ERROR (" + "src/main.js" + ":" + 285 + ")", "id", id, "not found." );
+ console.error("ERROR (" + "src/main.js" + ":" + 294 + ")", "id", id, "not found." );
  return null;
 }
 function drawCubes(program) {
@@ -3921,10 +3929,10 @@ function drawSky(program) {
  var aVertex = gl.getAttribLocation(program, "aVertex");
  var aTextureuv = gl.getAttribLocation(program, "aTextureuv");
  var modelviewprojection = tmpmatrix;
- do { if(!(uModelviewprojection)) { __error("assertion failed: " + "uModelviewprojection" + " = " + (uModelviewprojection), "src/main.js", 388); } } while(false);
- do { if(!(uTexture)) { __error("assertion failed: " + "uTexture" + " = " + (uTexture), "src/main.js", 389); } } while(false);
- do { if(!(aTextureuv !== -1)) { __error("assertion failed: " + "aTextureuv !== -1" + " = " + (aTextureuv !== -1), "src/main.js", 390); } } while(false);
- do { if(!(aVertex !== -1)) { __error("assertion failed: " + "aVertex !== -1" + " = " + (aVertex !== -1), "src/main.js", 391); } } while(false);
+ do { if(!(uModelviewprojection)) { __error("assertion failed: " + "uModelviewprojection" + " = " + (uModelviewprojection), "src/main.js", 397); } } while(false);
+ do { if(!(uTexture)) { __error("assertion failed: " + "uTexture" + " = " + (uTexture), "src/main.js", 398); } } while(false);
+ do { if(!(aTextureuv !== -1)) { __error("assertion failed: " + "aTextureuv !== -1" + " = " + (aTextureuv !== -1), "src/main.js", 399); } } while(false);
+ do { if(!(aVertex !== -1)) { __error("assertion failed: " + "aVertex !== -1" + " = " + (aVertex !== -1), "src/main.js", 400); } } while(false);
  gl.bindBuffer(GL_ARRAY_BUFFER, skyBuffer);
  gl.vertexAttribPointer(aVertex, 4, GL_FLOAT, false, sky.stride, sky.voffset);
  gl.enableVertexAttribArray(aVertex);
@@ -3938,14 +3946,21 @@ function drawSky(program) {
  gl.uniformMatrix4fv(uModelviewprojection, false, modelviewprojection);
  gl.drawArrays(GL_TRIANGLES, 0, sky.numVertices);
 }
-function drawBorder(program) {
+function drawPath(program, path) {
  gl.useProgram(program);
  var aVertex = gl.getAttribLocation(program, "aVertex");
- do { if(!(aVertex !== -1)) { __error("assertion failed: " + "aVertex !== -1" + " = " + (aVertex !== -1), "src/main.js", 418); } } while(false);
- gl.bindBuffer(GL_ARRAY_BUFFER, borderBuffer);
- gl.vertexAttribPointer(aVertex, 2, GL_FLOAT, false, 0, 0);
+ var uModelviewprojection = gl.getUniformLocation(program, "uModelviewprojection");
+ var modelviewprojection = tmpmatrix;
+ do { if(!(aVertex !== -1)) { __error("assertion failed: " + "aVertex !== -1" + " = " + (aVertex !== -1), "src/main.js", 429); } } while(false);
+ do { if(!(uModelviewprojection !== -1)) { __error("assertion failed: " + "uModelviewprojection !== -1" + " = " + (uModelviewprojection !== -1), "src/main.js", 430); } } while(false);
+ gl.bindBuffer(GL_ARRAY_BUFFER, pathBuffer);
+ gl.vertexAttribPointer(aVertex, 3, GL_FLOAT, false, 0, 0);
  gl.enableVertexAttribArray(aVertex);
- gl.drawArrays(GL_LINE_LOOP, 0, 4);
+ mat4.multiply(projection, camera, modelviewprojection);
+ gl.uniformMatrix4fv(uModelviewprojection, false, modelviewprojection);
+ for(var i = 0; i !== map.path.length - 1; i++) {
+  gl.drawArrays(GL_LINES, i, 2);
+ }
 }
 function setCanvasForTexture(canvas, text) {
  gl.bindTexture(gl.TEXTURE_2D, text);
@@ -3955,7 +3970,7 @@ function setCanvasForTexture(canvas, text) {
  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
 }
 function createTexture(img) {
- do { if(!(img)) { __error("assertion failed: " + "img" + " = " + (img), "src/main.js", 438); } } while(false);
+ do { if(!(img)) { __error("assertion failed: " + "img" + " = " + (img), "src/main.js", 458); } } while(false);
  var tex = gl.createTexture();
  setCanvasForTexture(img, tex);
  gl.bindTexture(GL_TEXTURE_2D, null);
@@ -3964,7 +3979,7 @@ function createTexture(img) {
 GLT.loadmanager.loadFiles({
  "files" : ["cube.obj", "sphere.obj", "diffuse.shader", "id.shader", "cube.png", "skybox3.obj", "border.shader", "map1.json"],
  "error" : function(file, err) {
-  console.error("ERROR (" + "src/main.js" + ":" + 451 + ")", file, err );
+  console.error("ERROR (" + "src/main.js" + ":" + 471 + ")", file, err );
  },
  "finished" : function(files) {
   cube = files["cube.obj"];
@@ -4012,12 +4027,12 @@ GLT.loadmanager.loadFiles({
    }
    setCanvasForTexture(funkycube.canvas, skytex);
   }, 100);
-  var mapdata = Map.create(1337, 16);
+  map = Map.create(1337, 16);
   var idgen = new Id.Generator();
   for(var x = 0; x !== 16; x++)
    for(var y = 0; y !== 16; y++)
     for(var z = 0; z !== 16; z++) {
-     var obj = mapdata.getObject(x,y,z);
+     var obj = map.getObject(x,y,z);
      if(obj === Map.CUBE) {
       cubelist.push( new Cube({x : x, y : y, z : z}, idgen.next()) );
      }
@@ -4035,4 +4050,4 @@ GLT.loadmanager.loadFiles({
   GLT.requestGameFrame(gameloop);
  }
 });
-console.log("DEBUG (" + "src/main.js" + ":" + 540 + ")", "DEBUG Build:", "Sep  6 2012", "16:19:40" );
+console.log("DEBUG (" + "src/main.js" + ":" + 560 + ")", "DEBUG Build:", "Sep  6 2012", "17:29:55" );
