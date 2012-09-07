@@ -1,17 +1,14 @@
 #include <glconstants.js> 
-#include <glmatrix.js> 
 #include <glt.createcontext.js>  
 #include <glt.requestgameframe.js>  
 #include <glt.loadmanager.js>  
 #include <glt.shader.js>  
 #include <hammer.js>  
 #include "debug.js" 
+#include "math.js" 
 #include "assert.js"
-#include "id.js"
-#include "cube.js"
 #include "sphere.js"
 #include "random.js" 
-#include "statemachine.js" 
 #include "funkycube.js" 
 #include "map.js" 
 
@@ -25,7 +22,6 @@ var sphere;
 var sky; 
 var program; 
 var borderprogram; 
-var idprogram; 
 var cubeBuffer; 
 var sphereBuffer; 
 var skyBuffer; 
@@ -36,33 +32,33 @@ var funkycube = new Funkycube();
 var canvas = document.getElementsByTagName("canvas")[0]; 
 var gl = GLT.createContext(canvas); 
 
-var projection = mat4.perspective(60, 4/3, 0.1, 1000); 
-var cameraPos  = vec3.create(); 
-var cameraDir  = vec3.create(); 
-var cameraUp   = vec3.create([0,1,0]); 
-var camera     = mat4.identity();  
+var projection = mat4perspective(60, 4/3, 0.1, 1000); 
+var cameraPos  = vec3create(); 
+var cameraDir  = vec3create(); 
+var cameraUp   = vec3create([0,1,0]); 
+var camera     = mat4identity();  
 
-var tmpmatrix = mat4.create();  
+var tmpmatrix = mat4create();  
 
 var cubetex = null; 
 var skytex = null; 
 
-var asisX = vec3.create([1,0,0]); 
-var asisY = vec3.create([0,1,0]); 
-var asisZ = vec3.create([0,0,1]); 
+var asisX = vec3create([1,0,0]); 
+var asisY = vec3create([0,1,0]); 
+var asisZ = vec3create([0,0,1]); 
 
 var cameraRotX = 0; 
 var cameraRotY = 0; 
 var cameraRotZ = 0; 
 
 var cubeNormals = [
-	vec3.create([ 0, 0, 0]), //None 
-	vec3.create([ 1, 0, 0]), //1 +x
-	vec3.create([ 0, 1, 0]), //2 +y
-	vec3.create([ 0, 0, 1]), //3 +z
-	vec3.create([ 0, 0,-1]), //4 -z
-	vec3.create([ 0,-1, 0]), //5 -y
-	vec3.create([-1, 0, 0])  //6 -x
+	vec3create([ 0, 0, 0]), //None 
+	vec3create([ 1, 0, 0]), //1 +x
+	vec3create([ 0, 1, 0]), //2 +y
+	vec3create([ 0, 0, 1]), //3 +z
+	vec3create([ 0, 0,-1]), //4 -z
+	vec3create([ 0,-1, 0]), //5 -y
+	vec3create([-1, 0, 0])  //6 -x
 ];
 
 
@@ -78,8 +74,6 @@ var cubeDragSides = [
 ];
 
 var cubelist = [
-	//new cubes.Cube({ x : 0, y : 0, z : 0 }, idgen.next()), 
-	//new cubes.Cube({ x : 0, y : 0, z : 1 }, idgen.next()) 
 ];
 
 var border = new Float32Array([
@@ -97,22 +91,22 @@ var eventPosition = { x : 0, y : 0 };
 
 function recalcCamera() {
 	var cameraWorldPos = tmpmatrix; 
-	vec3.add(cameraDir, cameraPos, cameraWorldPos); 
-	mat4.lookAt(cameraWorldPos, cameraDir, cameraUp, camera); 
+	vec3add(cameraDir, cameraPos, cameraWorldPos); 
+	mat4lookAt(cameraWorldPos, cameraDir, cameraUp, camera); 
 }
 
 function spinHorz(angle) { 
-	var q = quat4.fromAngleAxis(angle, cameraUp); 
-	quat4.multiplyVec3(q, cameraPos); 
+	var q = quat4fromAngleAxis(angle, cameraUp); 
+	quat4multiplyVec3(q, cameraPos); 
 	recalcCamera(); 
 }
 
 function spinVert(angle) { 
 	var tmpvec = tmpmatrix; 
-	var camHorz = vec3.normalize( vec3.cross(cameraUp, cameraPos, tmpvec) ); 
-	var q = quat4.fromAngleAxis(angle, camHorz); 
-	quat4.multiplyVec3(q, cameraPos); 
-	vec3.normalize( vec3.cross( cameraPos, camHorz, cameraUp ) ); 
+	var camHorz = vec3normalize( vec3cross(cameraUp, cameraPos, tmpvec) ); 
+	var q = quat4fromAngleAxis(angle, camHorz); 
+	quat4multiplyVec3(q, cameraPos); 
+	vec3normalize( vec3cross( cameraPos, camHorz, cameraUp ) ); 
 	recalcCamera(); 
 }
 
@@ -188,9 +182,9 @@ function gameloop(info) {
 } 
 
 var getClickDirection = (function() {
-	var asisXMinus = vec3.create([-1,0,0]); 
-	var asisYMinus = vec3.create([0,-1,0]); 
-	var asisZMinus = vec3.create([0,0,-1]); 
+	var asisXMinus = vec3create([-1,0,0]); 
+	var asisYMinus = vec3create([0,-1,0]); 
+	var asisZMinus = vec3create([0,0,-1]); 
 
 	var vectorNormals = [
 		asisX,
@@ -201,21 +195,21 @@ var getClickDirection = (function() {
 		asisZMinus
 	]; 
 
-	var cam = vec3.create(); 
-	var div = vec3.create(); 
+	var cam = vec3create(); 
+	var div = vec3create(); 
 
 	return function(camPos) {
-		vec3.set(camPos, cam); 
+		vec3set(camPos, cam); 
 		dlog("Pos", camPos); 
-		vec3.normalize(cam); 
+		vec3normalize(cam); 
 
 		var lastLength = 99999; 
 		var lastIndex = -1;
 
 		for(var i = 0; i !== 6; i++) {
 			var current = vectorNormals[i]; 
-			vec3.subtract(cam, current, div); 
-			var length = vec3.length(div); 
+			vec3subtract(cam, current, div); 
+			var length = vec3length(div); 
 			if(lastLength > length) {
 				lastLength = length; 
 				lastIndex = i; 
@@ -270,25 +264,11 @@ function draw(info) {
 	drawPath(borderprogram, map.path); 
 } 
 
-function getCubeById(id) {
-	for(var i = 0; i != cubelist.length; i++) {
-		var object = cubelist[i]; 		
-		if(object.id.asNumber() === id) { 
-			return object; 
-		}
-	}
-
-	derr("id", id, "not found."); 
-	return null; 
-}
-
 function drawCubes(program) {
 	gl.useProgram(program); 
 
 	var uModelviewprojection = gl.getUniformLocation(program, "uModelviewprojection"); 
-	var uIdColor   = gl.getUniformLocation(program, "uIdColor"); 
 	var uTexture   = gl.getUniformLocation(program, "uTexture"); 	
-	var uBling     = gl.getUniformLocation(program, "uBling");   	
 
 	var aVertex    = gl.getAttribLocation(program, "aVertex"); 
 	var aTextureuv = gl.getAttribLocation(program, "aTextureuv"); 
@@ -319,16 +299,8 @@ function drawCubes(program) {
 	for(var i = 0; i != cubelist.length; i++) { 
 		var object = cubelist[i]; 
 
-		if(uIdColor) {
-			gl.uniform3fv(uIdColor, object.id.asColor()); 
-		}
-
-		if(uBling) {
-			gl.uniform1f(uBling, object.bling); 
-		}
-
-		mat4.multiply(projection, camera, modelviewprojection); 
-		mat4.translate(modelviewprojection, object.vector); 
+		mat4multiply(projection, camera, modelviewprojection); 
+		mat4translate(modelviewprojection, object.vector); 
 
 		gl.uniformMatrix4fv(uModelviewprojection, false, modelviewprojection); 
 
@@ -362,8 +334,8 @@ function drawSphere(program) {
 		gl.uniform1i(uTexture, 0); 
 	}
 
-	mat4.multiply(projection, camera, modelviewprojection); 
-	mat4.translate(modelviewprojection, sphere.position); 
+	mat4multiply(projection, camera, modelviewprojection); 
+	mat4translate(modelviewprojection, sphere.position); 
 
 	gl.uniformMatrix4fv(uModelviewprojection, false, modelviewprojection); 
 
@@ -397,9 +369,9 @@ function drawSky(program) {
 	gl.bindTexture(GL_TEXTURE_2D, skytex); 
 	gl.uniform1i(uTexture, 0); 
 
-	mat4.multiply(projection, camera, modelviewprojection); 
-	mat4.translate(modelviewprojection, cameraDir); 
-	mat4.translate(modelviewprojection, cameraPos); 
+	mat4multiply(projection, camera, modelviewprojection); 
+	mat4translate(modelviewprojection, cameraDir); 
+	mat4translate(modelviewprojection, cameraPos); 
 
 	gl.uniformMatrix4fv(uModelviewprojection, false, modelviewprojection); 
 
@@ -422,8 +394,8 @@ function drawPath(program, path) {
 	gl.enableVertexAttribArray(aVertex); 
 
 
-	mat4.multiply(projection, camera, modelviewprojection); 
-	//mat4.translate(modelviewprojection, object.vector); 
+	mat4multiply(projection, camera, modelviewprojection); 
+	//mat4translate(modelviewprojection, object.vector); 
 
 	gl.uniformMatrix4fv(uModelviewprojection, false, modelviewprojection); 
 	
@@ -453,7 +425,7 @@ function createTexture(img) {
 }
 
 GLT.loadmanager.loadFiles({
-	"files" : ["cube.obj", "sphere.obj", "diffuse.shader", "id.shader", "cube.png", "skybox3.obj", "border.shader", "map1.json"], 
+	"files" : ["cube.obj", "sphere.obj", "diffuse.shader", "cube.png", "skybox3.obj", "border.shader", "map1.json"], 
 	"error" : function(file, err) {
 		derr(file, err); 
 	}, 
@@ -462,7 +434,6 @@ GLT.loadmanager.loadFiles({
 		sky  = files["skybox3.obj"]; 
 		sphereData = files["sphere.obj"]; 
 		program = GLT.shader.compileProgram(gl,files["diffuse.shader"]);
-		idprogram = GLT.shader.compileProgram(gl,files["id.shader"]);
 		borderprogram = GLT.shader.compileProgram(gl,files["border.shader"]);
 		cubetex = createTexture(files["cube.png"]);
 		skytex = createTexture( funkycube.canvas );
@@ -514,14 +485,13 @@ GLT.loadmanager.loadFiles({
 		}, 100); 
 
 		map = Map.create(49, 16);  
-		var idgen = new Id.Generator(); 
 
 		for(var x = 0; x !== 16; x++) 
 			for(var y = 0; y !== 16; y++) 
 				for(var z = 0; z !== 16; z++) {
 					var obj = map.getObject(x,y,z); 
 					if(obj === Map.CUBE) { 
-						cubelist.push( new Cube({x : x, y : y, z : z}, idgen.next()) ); 
+						cubelist.push( { vector : vec3create([x,y,z])} ); 
 					}
 				}
 
@@ -531,7 +501,7 @@ GLT.loadmanager.loadFiles({
 
 		sphere = new Sphere({ x : cameraDir[0], y : cameraDir[1], z : cameraDir[2] }); 
 
-		vec3.set(cameraDir, cameraPos); 
+		vec3set(cameraDir, cameraPos); 
 		cameraPos[0] = 0; 	
 		cameraPos[1] = 0;  	
 		cameraPos[2] = 20; 	

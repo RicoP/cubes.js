@@ -12,7 +12,7 @@ var Map = {
 	"GOAL" : 3
 }; 
 
-Map.create = function (seed, DIMENSION) {
+Map.create = function (seed, dimension) {
 	var MAX_ATTEMPTS = 16; 
 	var X_PLUS = 0; 
 	var X_MINUS = 1; 
@@ -30,16 +30,16 @@ Map.create = function (seed, DIMENSION) {
 	directions[Z_MINUS] = [0,0,-1];
 
 	var field; // Array3
-	var startingPosition = { x : (DIMENSION/2) | 0, y : (DIMENSION/2) | 0, z : (DIMENSION/2) | 0 };  
+	var startingPosition = { x : (dimension/2) | 0, y : (dimension/2) | 0, z : (dimension/2) | 0 };  
 	var path = []; 
 
 	function clearField() { 
 		field = []; 
-		for(var x = DIMENSION; x--;) {
+		for(var x = dimension; x--;) {
 			field[x] = []; 
-			for(var y = DIMENSION; y--;) {
+			for(var y = dimension; y--;) {
 				field[x][y] = []; 
-				for(var z = DIMENSION; z--;) {
+				for(var z = dimension; z--;) {
 					field[x][y][z] = Map.AIR; 
 				}
 			}
@@ -61,7 +61,7 @@ Map.create = function (seed, DIMENSION) {
 	}
 
 	function get(x,y,z) {
-		if(x<0 || y<0 || z<0 || x>= DIMENSION || y>=DIMENSION || z>=DIMENSION) {
+		if(x<0 || y<0 || z<0 || x>= dimension || y>=dimension || z>=dimension) {
 			return Map.OUT_OF_BOUNDS; 
 		}
 		return field[x][y][z]; 
@@ -104,7 +104,7 @@ Map.create = function (seed, DIMENSION) {
 
 		var type = iterationsLeft === 1 ? Map.GOAL : Map.CUBE; 
 		var dir = rand.next() % 6; 
-		var steps = 3 + rand.next() % (DIMENSION - 3); 
+		var steps = 3 + rand.next() % (dimension - 3); 
 
 		//Enough iterations. OK
 		if(iterationsLeft === 0) return true; 
@@ -145,7 +145,7 @@ Map.create = function (seed, DIMENSION) {
 			clearField(); 
 			set(startingPosition.x, startingPosition.y, startingPosition.z, Map.START); 
 			iterations = 5 + (rand.next() % 8);
-		} while(!fillRec(rand, startingPosition, 13, 0, -1)); 
+		} while(!fillRec(rand, startingPosition, iterations, 0, -1)); 
 	}
 
 	fill(seed); 
