@@ -2139,13 +2139,13 @@ function createTexture(img) {
  return tex;
 }
 GLT.loadmanager.loadFiles({
- "files" : ["cube.obj", "sphere.obj", "diffuse.shader", "cube.png", "skybox3.obj", "border.shader", "map1.json"],
+ "files" : ["cube.obj", "sphere.obj", "diffuse.shader", "cube.png", "skybox.obj", "border.shader"],
  "error" : function(file, err) {
   console.error("ERROR (" + "src/main.js" + ":" + 430 + ")", file, err );
  },
  "finished" : function(files) {
   cube = files["cube.obj"];
-  sky = files["skybox3.obj"];
+  sky = files["skybox.obj"];
   sphereData = files["sphere.obj"];
   program = GLT.shader.compileProgram(gl,files["diffuse.shader"]);
   borderprogram = GLT.shader.compileProgram(gl,files["border.shader"]);
@@ -2210,4 +2210,4 @@ GLT.loadmanager.loadFiles({
   GLT.requestGameFrame(gameloop);
  }
 });
-console.log("DEBUG (" + "src/main.js" + ":" + 517 + ")", "DEBUG Build:", "Sep  7 2012", "10:20:32" );
+console.log("DEBUG (" + "src/main.js" + ":" + 517 + ")", "DEBUG Build:", "Sep  7 2012", "11:20:49" );

@@ -425,13 +425,13 @@ function createTexture(img) {
 }
 
 GLT.loadmanager.loadFiles({
-	"files" : ["cube.obj", "sphere.obj", "diffuse.shader", "cube.png", "skybox3.obj", "border.shader", "map1.json"], 
+	"files" : ["cube.obj", "sphere.obj", "diffuse.shader", "cube.png", "skybox.obj", "border.shader"], 
 	"error" : function(file, err) {
 		derr(file, err); 
 	}, 
 	"finished" : function(files) {
 		cube = files["cube.obj"]; 
-		sky  = files["skybox3.obj"]; 
+		sky  = files["skybox.obj"]; 
 		sphereData = files["sphere.obj"]; 
 		program = GLT.shader.compileProgram(gl,files["diffuse.shader"]);
 		borderprogram = GLT.shader.compileProgram(gl,files["border.shader"]);
