@@ -484,7 +484,9 @@ GLT.loadmanager.loadFiles({
 			setCanvasForTexture(funkycube.canvas, skytex); 	
 		}, 100); 
 
-		map = Map.create(49, 16);  
+		var seed = (0xFFFF * Math.random()) & 0xFFFF; 
+		dlog("SEED", seed); 
+		map = Map.create(seed);  
 
 		for(var x = 0; x !== 16; x++) 
 			for(var y = 0; y !== 16; y++) 
@@ -495,9 +497,9 @@ GLT.loadmanager.loadFiles({
 					}
 				}
 
-		cameraDir[0] = 8;
-		cameraDir[1] = 8;
-		cameraDir[2] = 8;
+		cameraDir[0] = map.startingPosition.x;
+		cameraDir[1] = map.startingPosition.x;
+		cameraDir[2] = map.startingPosition.x;
 
 		sphere = new Sphere({ x : cameraDir[0], y : cameraDir[1], z : cameraDir[2] }); 
 

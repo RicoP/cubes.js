@@ -12,7 +12,9 @@ var Map = {
 	"GOAL" : 3
 }; 
 
-Map.create = function (seed, dimension) {
+Map.create = function (seed) {
+	"use strict"; 
+
 	var MAX_ATTEMPTS = 16; 
 	var X_PLUS = 0; 
 	var X_MINUS = 1; 
@@ -30,7 +32,8 @@ Map.create = function (seed, dimension) {
 	directions[Z_MINUS] = [0,0,-1];
 
 	var field; // Array3
-	var startingPosition = { x : (dimension/2) | 0, y : (dimension/2) | 0, z : (dimension/2) | 0 };  
+	var dimension = 0; 
+	var startingPosition = null;
 	var path = []; 
 
 	function clearField() { 
@@ -142,6 +145,8 @@ Map.create = function (seed, dimension) {
 		var iterations = 0; 
 		do { 
 			rand = new Random(seed++); 
+			dimension = (rand.next() % 8 + 4) * 2; 
+			startingPosition  = { x : (dimension/2) | 0, y : (dimension/2) | 0, z : (dimension/2) | 0 };  
 			clearField(); 
 			set(startingPosition.x, startingPosition.y, startingPosition.z, Map.START); 
 			iterations = 5 + (rand.next() % 8);
