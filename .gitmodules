@@ -10,3 +10,6 @@
 [submodule "hammer.js"]
 	path = hammer.js
 	url = git://github.com/EightMedia/hammer.js.git
+[submodule "jsfxr"]
+	path = jsfxr
+	url = git://github.com/grumdrig/jsfxr.git

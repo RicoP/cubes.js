@@ -4,6 +4,7 @@
 #include <glt.loadmanager.js>  
 #include <glt.shader.js>  
 #include <hammer.js>  
+#include <jsfxr.js> 
 #include "debug.js" 
 #include "math.js" 
 #include "assert.js"
@@ -12,14 +13,12 @@
 #include "funkycube.js" 
 #include "map.js" 
 
-#define PREVIEW_WIDTH 180
-#define PREVIEW_HEIGHT 135
-#define PREVIEW_BORDER 15
-
 var cube; 
 var sphereData; 
 var sphere; 
 var sky; 
+var goal; 
+var goalBuffer; 
 var program; 
 var borderprogram; 
 var cubeBuffer; 
@@ -32,7 +31,7 @@ var funkycube = new Funkycube();
 var canvas = document.getElementsByTagName("canvas")[0]; 
 var gl = GLT.createContext(canvas); 
 
-var projection = mat4perspective(60, 4/3, 0.1, 1000); 
+var projection = mat4perspective(60, canvas.width / canvas.height, 0.1, 1000); 
 var cameraPos  = vec3create(); 
 var cameraDir  = vec3create(); 
 var cameraUp   = vec3create([0,1,0]); 
@@ -73,15 +72,8 @@ var cubeDragSides = [
 	[ 2, 4, 3, 5], //6 -x
 ];
 
-var cubelist = [
-];
-
-var border = new Float32Array([
-	-1, -1, 
-	 1, -1, 
-	 1,  1, 
-	-1,  1 
-]); 
+var cubelist = [];
+var goalpos = vec3create(); 
 
 var tapped = false; 
 var tapEvent = null; 
@@ -129,6 +121,10 @@ function setup() {
 	skyBuffer = gl.createBuffer(); 
 	gl.bindBuffer(GL_ARRAY_BUFFER, skyBuffer); 
 	gl.bufferData(GL_ARRAY_BUFFER, sky.rawData, GL_STATIC_DRAW);
+
+	goalBuffer = gl.createBuffer(); 
+	gl.bindBuffer(GL_ARRAY_BUFFER, goalBuffer); 
+	gl.bufferData(GL_ARRAY_BUFFER, goal.rawData, GL_STATIC_DRAW); 
 	
 	var path = new Float32Array( 3 * map.path.length ); 
 	var j = 0; 
@@ -261,6 +257,7 @@ function draw(info) {
 		
 	drawCubes(program); 
 	drawSphere(program); 
+	drawGoal(program); 
 	drawPath(borderprogram, map.path); 
 } 
 
@@ -340,7 +337,40 @@ function drawSphere(program) {
 	gl.uniformMatrix4fv(uModelviewprojection, false, modelviewprojection); 
 
 	gl.drawArrays(GL_TRIANGLES, 0, sphereData.numVertices); 
+}
 
+function drawGoal(program) {
+	gl.useProgram(program); 
+
+	var uModelviewprojection = gl.getUniformLocation(program, "uModelviewprojection"); 
+	var uTexture   = gl.getUniformLocation(program, "uTexture"); 	
+
+	var aVertex    = gl.getAttribLocation(program, "aVertex"); 
+	var aTextureuv = gl.getAttribLocation(program, "aTextureuv"); 
+
+	var modelviewprojection = tmpmatrix; 
+
+	gl.bindBuffer(GL_ARRAY_BUFFER, goalBuffer); 
+
+	gl.vertexAttribPointer(aVertex, 4, GL_FLOAT, false, goal.stride, goal.voffset); 
+	gl.enableVertexAttribArray(aVertex); 
+
+	if(aTextureuv !== -1) {
+		gl.vertexAttribPointer(aTextureuv, 4, GL_FLOAT, false, goal.stride, goal.toffset); 
+		gl.enableVertexAttribArray(aTextureuv); 
+	}
+
+	if(uTexture) {
+		gl.bindTexture(GL_TEXTURE_2D, cubetex); 
+		gl.uniform1i(uTexture, 0); 
+	}
+
+	mat4multiply(projection, camera, modelviewprojection); 
+	mat4translate(modelviewprojection, goalpos); 
+
+	gl.uniformMatrix4fv(uModelviewprojection, false, modelviewprojection); 
+
+	gl.drawArrays(GL_TRIANGLES, 0, goal.numVertices); 
 }
 
 function drawSky(program) {
@@ -425,7 +455,7 @@ function createTexture(img) {
 }
 
 GLT.loadmanager.loadFiles({
-	"files" : ["cube.obj", "sphere.obj", "diffuse.shader", "cube.png", "skybox.obj", "border.shader"], 
+	"files" : ["cube.obj", "sphere.obj", "diffuse.shader", "cube.png", "skybox.obj", "border.shader", "goal.obj"], 
 	"error" : function(file, err) {
 		derr(file, err); 
 	}, 
@@ -433,6 +463,7 @@ GLT.loadmanager.loadFiles({
 		cube = files["cube.obj"]; 
 		sky  = files["skybox.obj"]; 
 		sphereData = files["sphere.obj"]; 
+		goal = files["goal.obj"]; 
 		program = GLT.shader.compileProgram(gl,files["diffuse.shader"]);
 		borderprogram = GLT.shader.compileProgram(gl,files["border.shader"]);
 		cubetex = createTexture(files["cube.png"]);
@@ -495,6 +526,11 @@ GLT.loadmanager.loadFiles({
 					if(obj === Map.CUBE) { 
 						cubelist.push( { vector : vec3create([x,y,z])} ); 
 					}
+					else if(obj === Map.GOAL) {
+						goalpos[0] = x; 
+						goalpos[1] = y; 
+						goalpos[2] = z; 
+					}
 				}
 
 		cameraDir[0] = map.startingPosition.x;
@@ -513,13 +549,18 @@ GLT.loadmanager.loadFiles({
 
 		//(new GLT.Gameloop(gameloop)).start(); 
 		GLT.requestGameFrame(gameloop); 
+
+
+		//TEST AUDIO 
+		var params = {"oldParams":true,"wave_type":3,"p_env_attack":0,"p_env_sustain":0.3507373180706054,"p_env_punch":0.7507036675233394,"p_env_decay":0.1148287485120818,"p_base_freq":0.030365511453751274,"p_freq_limit":0,"p_freq_ramp":0,"p_freq_dramp":0,"p_vib_strength":0,"p_vib_speed":0,"p_arp_mod":0,"p_arp_speed":0,"p_duty":0,"p_duty_ramp":0,"p_repeat_speed":0.7296395279234276,"p_pha_offset":-0.2251016782131046,"p_pha_ramp":-0.2945099702104926,"p_lpf_freq":1,"p_lpf_ramp":0,"p_lpf_resonance":0,"p_hpf_freq":0,"p_hpf_ramp":0,"sound_vol":0.25,"sample_rate":44100,"sample_size":8};
+		var SOUND = new Sfxr.SoundEffect(params).generate(); 
+		var audio = new Audio(); 
+		audio.src = SOUND.dataURI
+		audio.play(); 
+
 	}
 });
 	
 dlog("DEBUG Build:", __DATE__, __TIME__); 
-
-#undef PREVIEW_WIDTH  
-#undef PREVIEW_HEIGHT 
-#undef PREVIEW_BORDER 
 
 
