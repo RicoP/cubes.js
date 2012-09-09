@@ -196,7 +196,6 @@ var getClickDirection = (function() {
 
 	return function(camPos) {
 		vec3set(camPos, cam); 
-		dlog("Pos", camPos); 
 		vec3normalize(cam); 
 
 		var lastLength = 99999; 
@@ -230,7 +229,6 @@ function update(info) {
 
 	if(tapped) {
 		var dir = getClickDirection(cameraPos);
-		dlog( dir ); 		
 		sphere.tap(info, dir); 		
 	} 
 
@@ -537,7 +535,7 @@ GLT.loadmanager.loadFiles({
 		cameraDir[1] = map.startingPosition.x;
 		cameraDir[2] = map.startingPosition.x;
 
-		sphere = new Sphere({ x : cameraDir[0], y : cameraDir[1], z : cameraDir[2] }); 
+		sphere = new Sphere({ x : cameraDir[0], y : cameraDir[1], z : cameraDir[2] }, map); 
 
 		vec3set(cameraDir, cameraPos); 
 		cameraPos[0] = 0; 	
@@ -553,7 +551,15 @@ GLT.loadmanager.loadFiles({
 
 		//TEST AUDIO 
 		var params = {"oldParams":true,"wave_type":3,"p_env_attack":0,"p_env_sustain":0.3507373180706054,"p_env_punch":0.7507036675233394,"p_env_decay":0.1148287485120818,"p_base_freq":0.030365511453751274,"p_freq_limit":0,"p_freq_ramp":0,"p_freq_dramp":0,"p_vib_strength":0,"p_vib_speed":0,"p_arp_mod":0,"p_arp_speed":0,"p_duty":0,"p_duty_ramp":0,"p_repeat_speed":0.7296395279234276,"p_pha_offset":-0.2251016782131046,"p_pha_ramp":-0.2945099702104926,"p_lpf_freq":1,"p_lpf_ramp":0,"p_lpf_resonance":0,"p_hpf_freq":0,"p_hpf_ramp":0,"sound_vol":0.25,"sample_rate":44100,"sample_size":8};
-		var SOUND = new Sfxr.SoundEffect(params).generate(); 
+
+		var pdead = {"oldParams":true,"wave_type":0,"p_env_attack":-0.031099240445367497,"p_env_sustain":0.7635753833033847,"p_env_punch":0.2816417110611466,"p_env_decay":-0.6867234703619033,"p_base_freq":-0.05417757730129136,"p_freq_limit":0,"p_freq_ramp":0.366020674391696,"p_freq_dramp":0.061304970543220046,"p_vib_strength":-0.13391388831049597,"p_vib_speed":-0.08958338294178247,"p_arp_mod":0.7950661345385015,"p_arp_speed":0.5519341775216162,"p_duty":0.6044134241528809,"p_duty_ramp":0.8909097971481785,"p_repeat_speed":0.2607004144228995,"p_pha_offset":-0.00018430166566930404,"p_pha_ramp":0.8547329901213455,"p_lpf_freq":0.9224470124042238,"p_lpf_ramp":0.007261712532774577,"p_lpf_resonance":0.8195562218315899,"p_hpf_freq":2.3264287110167006e-7,"p_hpf_ramp":-0.6950668630055059,"sound_vol":0.25,"sample_rate":44100,"sample_size":8}; 
+
+		var pblob = {"oldParams":true,"wave_type":0,"p_env_attack":-0.018341900495896277,"p_env_sustain":0.3757311985941444,"p_env_punch":-0.003057873247569856,"p_env_decay":0.06331000293139369,"p_base_freq":0.1656650181731793,"p_freq_limit":0,"p_freq_ramp":-0.0589514924457087,"p_freq_dramp":0.030146547487526147,"p_vib_strength":-0.019250509277321262,"p_vib_speed":0.5508432540111242,"p_arp_mod":0.8034108052030207,"p_arp_speed":0.16075012690853327,"p_duty":-0.04733387050218882,"p_duty_ramp":0.46016203196294625,"p_repeat_speed":-0.17416390222497286,"p_pha_offset":0.14307537902977768,"p_pha_ramp":-0.421786501233935,"p_lpf_freq":0.41369926108195854,"p_lpf_ramp":-0.2612435719273578,"p_lpf_resonance":-0.9390350750647485,"p_hpf_freq":0.16551226912858946,"p_hpf_ramp":-0.10125760095251089,"sound_vol":0.25,"sample_rate":44100,"sample_size":8,"p_vib_delay":null}; 
+
+		var pfreu = {"oldParams":true,"wave_type":0,"p_env_attack":-0.004527911166038838,"p_env_sustain":0.840333883056117,"p_env_punch":0.32125634341977,"p_env_decay":0.8337062487844378,"p_base_freq":0.9230462823158505,"p_freq_limit":0,"p_freq_ramp":0.054141002534628405,"p_freq_dramp":0.028436068801879585,"p_vib_strength":0.05286053257716272,"p_vib_speed":0.7490090135484934,"p_arp_mod":0.002945324592292308,"p_arp_speed":-0.2514595840359107,"p_duty":-0.538211698899977,"p_duty_ramp":-0.02350955880296343,"p_repeat_speed":-0.3621571579016745,"p_pha_offset":0.05005980333720715,"p_pha_ramp":0.03782556013502259,"p_lpf_freq":0.9357535395725334,"p_lpf_ramp":-0.7541079941455712,"p_lpf_resonance":0.6400827742181718,"p_hpf_freq":1.0007283491126555,"p_hpf_ramp":0.42763103001397496,"sound_vol":0.25,"sample_rate":44100,"sample_size":8,"p_vib_delay":null}; 
+
+
+		var SOUND = new Sfxr.SoundEffect(pdead).generate(); 
 		var audio = new Audio(); 
 		audio.src = SOUND.dataURI
 		audio.play(); 

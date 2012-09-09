@@ -2420,67 +2420,6 @@ function quat4fromAngleAxis(angle, axis, dest) {
  function __error(message, file, line) {
   throw new Error(message + "(" + file + ":" + line + ")");
  }
-var Sphere = (function() {
- var tmpvector = vec3create();
- function Statemachine(sphere) {
-  "use strict";
-  var speed = 2.0;
-  var state = 0;
-  var direction = vec3create();
-  var startpos = vec3create();
-  var movetime = 0;
-  this.tick = function(time) {
-   switch(state) {
-    case 0:
-    break;
-    case 1:
-    vec3add(sphere.position, vec3scale(direction, time.delta * speed, tmpvector));
-    movetime += time.delta * speed;
-    if(movetime >= 1) {
-     state = 0;
-     vec3set(vec3add(startpos, direction, tmpvector), sphere.position);
-     movetime = 0.0;
-    }
-    break;
-    default:
-    console.error("ERROR (" + "src/sphere.js" + ":" + 42 + ")", "unknow state.", state );
-    break;
-   }
-  };
-  this.tap = function(time, dir) {
-   do { if(!(time.delta instanceof Number) && !("Number".toLowerCase() === typeof time.delta)) { __error("Objct " + "time.delta" + " is not from type " + "Number", "src/sphere.js", 48); } } while(false);
-   do { if(!(dir instanceof Float32Array) && !("Float32Array".toLowerCase() === typeof dir)) { __error("Objct " + "dir" + " is not from type " + "Float32Array", "src/sphere.js", 49); } } while(false);
-   do { if(!(Math.abs((vec3length(dir) - 1.0)) < 0.0001)) { __error("assertion failed: " + "Math.abs((vec3length(dir) - 1.0)) < 0.0001" + " = " + (Math.abs((vec3length(dir) - 1.0)) < 0.0001), "src/sphere.js", 50); } } while(false);
-   switch(state) {
-    case 1:
-    break;
-    case 0:
-    vec3set(dir, direction);
-    vec3set(sphere.position, startpos);
-    movetime = 0.0;
-    state = 1;
-    break;
-    default:
-    console.error("ERROR (" + "src/sphere.js" + ":" + 64 + ")", "unknow state.", state );
-    break;
-   }
-  };
- }
- return function(position) {
-  do { if(typeof (position . x) === "undefined") { __error("No property " + "x" + " in " + "position", "src/sphere.js", 71); } } while(false);
-  do { if(typeof (position . y) === "undefined") { __error("No property " + "y" + " in " + "position", "src/sphere.js", 72); } } while(false);
-  do { if(typeof (position . z) === "undefined") { __error("No property " + "z" + " in " + "position", "src/sphere.js", 73); } } while(false);
-  do { if(!(this !== window)) { __error("assertion failed: " + "this !== window" + " = " + (this !== window), "src/sphere.js", 74); } } while(false);
-  this.position = vec3create([position.x, position.y, position.z]);
-  var state = new Statemachine(this);
-  this.tap = function(info, dir) {
-   state.tap(info, dir);
-  };
-  this.tick = function(info) {
-   state.tick(info);
-  };
- };
-}());
 function Random(x) {
  "use strict";
  do { if(!(x === (x|0))) { __error("assertion failed: " + "x === (x|0)" + " = " + (x === (x|0)), "src/random.js", 9); } } while(false);
@@ -2512,106 +2451,6 @@ function Random(x) {
   return ret % MAX;
  };
 };
-do { if(!(64 === 16 * 4)) { __error("assertion failed: " + "CUBE_WIDTH === FACE_WIDTH * 4" + " = " + (64 === 16 * 4), "src/funkycube.js", 8); } } while(false);
-var Funkycube;
-!function() {
-"use strict";
- function Point(x,y) {
-  this.x = x;
-  this.y = y;
-  this.toString = function() {
-   return "[" + x + ", " + y + "]";
-  };
- }
- Funkycube = function() {
-  var canvas = document.createElement("canvas");
-  canvas.width = canvas.height = 64;
-  var ctx = canvas.getContext("2d");
-  function getCanvasCoordinate(face, x, y) {
-   do { if(!(face >= 0 && face <= 5)) { __error("assertion failed: " + "face >= 0 && face <= 5" + " = " + (face >= 0 && face <= 5), "src/funkycube.js", 52); } } while(false);
-   if(x < 0) {
-    switch(face) {
-     case 0:
-     return getCanvasCoordinate(1, y, -x-1);
-     case 1:
-     return getCanvasCoordinate(5, -x-1, 16 - 1 - y);
-     case 2:
-     return getCanvasCoordinate(1, x + 16, y);
-     case 3:
-     return getCanvasCoordinate(2, x + 16, y);
-     case 4:
-     return getCanvasCoordinate(1, 16 - 1 - y, 16 + x);
-     case 5:
-     return getCanvasCoordinate(1, -x-1 ,16 - 1 - y);
-     default: throw new RangeError();
-    }
-   }
-   if(y < 0) {
-    switch(face) {
-     case 0:
-     return getCanvasCoordinate(5, x, 16 + y);
-     case 1:
-     return getCanvasCoordinate(0, -y-1 ,x);
-     case 2:
-     return getCanvasCoordinate(0, x, 16 + y);
-     case 3:
-     return getCanvasCoordinate(0, 16 + y, 16 - 1 - x);
-     case 4:
-     return getCanvasCoordinate(2, x, 16 + y);
-     case 5:
-     return getCanvasCoordinate(4, x, 16 + y);
-     default: throw new RangeError();
-    }
-   }
-   if(x >= 16) {
-    switch(face) {
-     case 0:
-     return getCanvasCoordinate(3, 16 - 1 - y, x - 16);
-     case 1:
-     return getCanvasCoordinate(2, x - 16, y);
-     case 2:
-     return getCanvasCoordinate(3, x - 16, y);
-     case 3:
-     return getCanvasCoordinate(5, 2*16 -1 - x, 16 - 1 - y);
-     case 4:
-     return getCanvasCoordinate(3, y, 2*16 -1 - x);
-     case 5:
-     return getCanvasCoordinate(3, 2*16 -1 - x, 16 - 1 - y);
-     default: throw new RangeError();
-    }
-   }
-   if(y >= 16) {
-    switch(face) {
-     case 0:
-     return getCanvasCoordinate(2, x, y - 16);
-     case 1:
-     return getCanvasCoordinate(4, y - 16, 16 - 1 - x);
-     case 2:
-     return getCanvasCoordinate(4, x, y - 16);
-     case 3:
-     return getCanvasCoordinate(4, 2*16 -1 - y ,x);
-     case 4:
-     return getCanvasCoordinate(5, x, y - 16);
-     case 5:
-     return getCanvasCoordinate(0, x, y - 16);
-     default: throw new RangeError();
-    }
-   }
-   switch(face) {
-    case 0: return new Point(x + 16 , y);
-    case 1: return new Point(x , y + 16);
-    case 2: return new Point(x + 16 , y + 16);
-    case 3: return new Point(x + 16*2, y + 16);
-    case 4: return new Point(x + 16 , y + 16*2);
-    case 5: return new Point(x + 16 , y + 16*3);
-    default: throw new RangeError();
-   }
-  }
-  this.getCanvasCoordinate = getCanvasCoordinate;
-  this.canvas = canvas;
-  this.ctx = ctx;
- };
-}();
 var Map = {
  "OUT_OF_BOUNDS" : -1,
  "AIR" : 0,
@@ -2722,11 +2561,11 @@ Map.create = function (seed) {
   var iterations = 0;
   do {
    rand = new Random(seed++);
-   dimension = (rand.next() % 8 + 4) * 2;
+   dimension = 16;
    startingPosition = { x : (dimension/2) | 0, y : (dimension/2) | 0, z : (dimension/2) | 0 };
    clearField();
    set(startingPosition.x, startingPosition.y, startingPosition.z, Map.START);
-   iterations = 5 + (rand.next() % 8);
+   iterations = 11 + (rand.next() % 8);
   } while(!fillRec(rand, startingPosition, iterations, 0, -1));
  }
  fill(seed);
@@ -2736,6 +2575,181 @@ Map.create = function (seed) {
   "path" : path
  };
 }
+var Sphere = (function() {
+ var tmpvector = vec3create();
+ function Statemachine(sphere, map) {
+  "use strict";
+  var speed = 8.0;
+  var state = 0;
+  var direction = vec3create();
+  var startpos = vec3create();
+  var movetime = 0;
+  this.tick = function(time) {
+   switch(state) {
+    case 0:
+    break;
+    case 1:
+    vec3add(sphere.position, vec3scale(direction, time.delta * speed, tmpvector));
+    movetime += time.delta * speed;
+    if(movetime >= 1) {
+     vec3set(vec3add(startpos, direction, tmpvector), sphere.position);
+     state = 0;
+     movetime = 0.0;
+     this.tap(time, direction);
+    }
+    break;
+    default:
+    console.error("ERROR (" + "src/sphere.js" + ":" + 46 + ")", "unknow state.", state );
+    break;
+   }
+  };
+  this.tap = function(time, dir) {
+   do { if(!(time.delta instanceof Number) && !("Number".toLowerCase() === typeof time.delta)) { __error("Objct " + "time.delta" + " is not from type " + "Number", "src/sphere.js", 52); } } while(false);
+   do { if(!(dir instanceof Float32Array) && !("Float32Array".toLowerCase() === typeof dir)) { __error("Objct " + "dir" + " is not from type " + "Float32Array", "src/sphere.js", 53); } } while(false);
+   do { if(!(Math.abs((vec3length(dir) - 1.0)) < 0.0001)) { __error("assertion failed: " + "Math.abs((vec3length(dir) - 1.0)) < 0.0001" + " = " + (Math.abs((vec3length(dir) - 1.0)) < 0.0001), "src/sphere.js", 54); } } while(false);
+   switch(state) {
+    case 1:
+    break;
+    case 0:
+    var destx = Math.round(sphere.position[0] + dir[0]);
+    var desty = Math.round(sphere.position[1] + dir[1]);
+    var destz = Math.round(sphere.position[2] + dir[2]);
+    var obj = map.getObject(destx, desty, destz);
+    if(obj === Map.AIR) {
+     vec3set(dir, direction);
+     vec3set(sphere.position, startpos);
+     movetime = 0.0;
+     state = 1;
+     break;
+    }
+    if(obj === Map.OUT_OF_BOUNDS) {
+     console.log("DEBUG (" + "src/sphere.js" + ":" + 77 + ")", "dead" );
+    }
+    if(obj === Map.GOAL) {
+     console.log("DEBUG (" + "src/sphere.js" + ":" + 80 + ")", "win" );
+    }
+    break;
+    default:
+    console.error("ERROR (" + "src/sphere.js" + ":" + 85 + ")", "unknow state.", state );
+    break;
+   }
+  };
+ }
+ return function(position, map) {
+  do { if(typeof (position . x) === "undefined") { __error("No property " + "x" + " in " + "position", "src/sphere.js", 92); } } while(false);
+  do { if(typeof (position . y) === "undefined") { __error("No property " + "y" + " in " + "position", "src/sphere.js", 93); } } while(false);
+  do { if(typeof (position . z) === "undefined") { __error("No property " + "z" + " in " + "position", "src/sphere.js", 94); } } while(false);
+  do { if(!(this !== window)) { __error("assertion failed: " + "this !== window" + " = " + (this !== window), "src/sphere.js", 95); } } while(false);
+  this.position = vec3create([position.x, position.y, position.z]);
+  var state = new Statemachine(this, map);
+  this.tap = function(info, dir) {
+   state.tap(info, dir);
+  };
+  this.tick = function(info) {
+   state.tick(info, map);
+  };
+ };
+}());
+do { if(!(64 === 16 * 4)) { __error("assertion failed: " + "CUBE_WIDTH === FACE_WIDTH * 4" + " = " + (64 === 16 * 4), "src/funkycube.js", 8); } } while(false);
+var Funkycube;
+!function() {
+"use strict";
+ function Point(x,y) {
+  this.x = x;
+  this.y = y;
+  this.toString = function() {
+   return "[" + x + ", " + y + "]";
+  };
+ }
+ Funkycube = function() {
+  var canvas = document.createElement("canvas");
+  canvas.width = canvas.height = 64;
+  var ctx = canvas.getContext("2d");
+  function getCanvasCoordinate(face, x, y) {
+   do { if(!(face >= 0 && face <= 5)) { __error("assertion failed: " + "face >= 0 && face <= 5" + " = " + (face >= 0 && face <= 5), "src/funkycube.js", 52); } } while(false);
+   if(x < 0) {
+    switch(face) {
+     case 0:
+     return getCanvasCoordinate(1, y, -x-1);
+     case 1:
+     return getCanvasCoordinate(5, -x-1, 16 - 1 - y);
+     case 2:
+     return getCanvasCoordinate(1, x + 16, y);
+     case 3:
+     return getCanvasCoordinate(2, x + 16, y);
+     case 4:
+     return getCanvasCoordinate(1, 16 - 1 - y, 16 + x);
+     case 5:
+     return getCanvasCoordinate(1, -x-1 ,16 - 1 - y);
+     default: throw new RangeError();
+    }
+   }
+   if(y < 0) {
+    switch(face) {
+     case 0:
+     return getCanvasCoordinate(5, x, 16 + y);
+     case 1:
+     return getCanvasCoordinate(0, -y-1 ,x);
+     case 2:
+     return getCanvasCoordinate(0, x, 16 + y);
+     case 3:
+     return getCanvasCoordinate(0, 16 + y, 16 - 1 - x);
+     case 4:
+     return getCanvasCoordinate(2, x, 16 + y);
+     case 5:
+     return getCanvasCoordinate(4, x, 16 + y);
+     default: throw new RangeError();
+    }
+   }
+   if(x >= 16) {
+    switch(face) {
+     case 0:
+     return getCanvasCoordinate(3, 16 - 1 - y, x - 16);
+     case 1:
+     return getCanvasCoordinate(2, x - 16, y);
+     case 2:
+     return getCanvasCoordinate(3, x - 16, y);
+     case 3:
+     return getCanvasCoordinate(5, 2*16 -1 - x, 16 - 1 - y);
+     case 4:
+     return getCanvasCoordinate(3, y, 2*16 -1 - x);
+     case 5:
+     return getCanvasCoordinate(3, 2*16 -1 - x, 16 - 1 - y);
+     default: throw new RangeError();
+    }
+   }
+   if(y >= 16) {
+    switch(face) {
+     case 0:
+     return getCanvasCoordinate(2, x, y - 16);
+     case 1:
+     return getCanvasCoordinate(4, y - 16, 16 - 1 - x);
+     case 2:
+     return getCanvasCoordinate(4, x, y - 16);
+     case 3:
+     return getCanvasCoordinate(4, 2*16 -1 - y ,x);
+     case 4:
+     return getCanvasCoordinate(5, x, y - 16);
+     case 5:
+     return getCanvasCoordinate(0, x, y - 16);
+     default: throw new RangeError();
+    }
+   }
+   switch(face) {
+    case 0: return new Point(x + 16 , y);
+    case 1: return new Point(x , y + 16);
+    case 2: return new Point(x + 16 , y + 16);
+    case 3: return new Point(x + 16*2, y + 16);
+    case 4: return new Point(x + 16 , y + 16*2);
+    case 5: return new Point(x + 16 , y + 16*3);
+    default: throw new RangeError();
+   }
+  }
+  this.getCanvasCoordinate = getCanvasCoordinate;
+  this.canvas = canvas;
+  this.ctx = ctx;
+ };
+}();
 var cube;
 var sphereData;
 var sphere;
@@ -2879,7 +2893,6 @@ var getClickDirection = (function() {
  var div = vec3create();
  return function(camPos) {
   vec3set(camPos, cam);
-  console.log("DEBUG (" + "src/main.js" + ":" + 199 + ")", "Pos", camPos );
   vec3normalize(cam);
   var lastLength = 99999;
   var lastIndex = -1;
@@ -2906,7 +2919,6 @@ function update(info) {
  var touchedACube = false;
  if(tapped) {
   var dir = getClickDirection(cameraPos);
-  console.log("DEBUG (" + "src/main.js" + ":" + 233 + ")", dir );
   sphere.tap(info, dir);
  }
  if(dragged) {
@@ -3013,10 +3025,10 @@ function drawSky(program) {
  var aVertex = gl.getAttribLocation(program, "aVertex");
  var aTextureuv = gl.getAttribLocation(program, "aTextureuv");
  var modelviewprojection = tmpmatrix;
- do { if(!(uModelviewprojection)) { __error("assertion failed: " + "uModelviewprojection" + " = " + (uModelviewprojection), "src/main.js", 386); } } while(false);
- do { if(!(uTexture)) { __error("assertion failed: " + "uTexture" + " = " + (uTexture), "src/main.js", 387); } } while(false);
- do { if(!(aTextureuv !== -1)) { __error("assertion failed: " + "aTextureuv !== -1" + " = " + (aTextureuv !== -1), "src/main.js", 388); } } while(false);
- do { if(!(aVertex !== -1)) { __error("assertion failed: " + "aVertex !== -1" + " = " + (aVertex !== -1), "src/main.js", 389); } } while(false);
+ do { if(!(uModelviewprojection)) { __error("assertion failed: " + "uModelviewprojection" + " = " + (uModelviewprojection), "src/main.js", 384); } } while(false);
+ do { if(!(uTexture)) { __error("assertion failed: " + "uTexture" + " = " + (uTexture), "src/main.js", 385); } } while(false);
+ do { if(!(aTextureuv !== -1)) { __error("assertion failed: " + "aTextureuv !== -1" + " = " + (aTextureuv !== -1), "src/main.js", 386); } } while(false);
+ do { if(!(aVertex !== -1)) { __error("assertion failed: " + "aVertex !== -1" + " = " + (aVertex !== -1), "src/main.js", 387); } } while(false);
  gl.bindBuffer(GL_ARRAY_BUFFER, skyBuffer);
  gl.vertexAttribPointer(aVertex, 4, GL_FLOAT, false, sky.stride, sky.voffset);
  gl.enableVertexAttribArray(aVertex);
@@ -3035,8 +3047,8 @@ function drawPath(program, path) {
  var aVertex = gl.getAttribLocation(program, "aVertex");
  var uModelviewprojection = gl.getUniformLocation(program, "uModelviewprojection");
  var modelviewprojection = tmpmatrix;
- do { if(!(aVertex !== -1)) { __error("assertion failed: " + "aVertex !== -1" + " = " + (aVertex !== -1), "src/main.js", 418); } } while(false);
- do { if(!(uModelviewprojection !== -1)) { __error("assertion failed: " + "uModelviewprojection !== -1" + " = " + (uModelviewprojection !== -1), "src/main.js", 419); } } while(false);
+ do { if(!(aVertex !== -1)) { __error("assertion failed: " + "aVertex !== -1" + " = " + (aVertex !== -1), "src/main.js", 416); } } while(false);
+ do { if(!(uModelviewprojection !== -1)) { __error("assertion failed: " + "uModelviewprojection !== -1" + " = " + (uModelviewprojection !== -1), "src/main.js", 417); } } while(false);
  gl.bindBuffer(GL_ARRAY_BUFFER, pathBuffer);
  gl.vertexAttribPointer(aVertex, 3, GL_FLOAT, false, 0, 0);
  gl.enableVertexAttribArray(aVertex);
@@ -3054,7 +3066,7 @@ function setCanvasForTexture(canvas, text) {
  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
 }
 function createTexture(img) {
- do { if(!(img)) { __error("assertion failed: " + "img" + " = " + (img), "src/main.js", 447); } } while(false);
+ do { if(!(img)) { __error("assertion failed: " + "img" + " = " + (img), "src/main.js", 445); } } while(false);
  var tex = gl.createTexture();
  setCanvasForTexture(img, tex);
  gl.bindTexture(GL_TEXTURE_2D, null);
@@ -3063,7 +3075,7 @@ function createTexture(img) {
 GLT.loadmanager.loadFiles({
  "files" : ["cube.obj", "sphere.obj", "diffuse.shader", "cube.png", "skybox.obj", "border.shader", "goal.obj"],
  "error" : function(file, err) {
-  console.error("ERROR (" + "src/main.js" + ":" + 460 + ")", file, err );
+  console.error("ERROR (" + "src/main.js" + ":" + 458 + ")", file, err );
  },
  "finished" : function(files) {
   cube = files["cube.obj"];
@@ -3112,7 +3124,7 @@ GLT.loadmanager.loadFiles({
    setCanvasForTexture(funkycube.canvas, skytex);
   }, 100);
   var seed = (0xFFFF * Math.random()) & 0xFFFF;
-  console.log("DEBUG (" + "src/main.js" + ":" + 519 + ")", "SEED", seed );
+  console.log("DEBUG (" + "src/main.js" + ":" + 517 + ")", "SEED", seed );
   map = Map.create(seed);
   for(var x = 0; x !== 16; x++)
    for(var y = 0; y !== 16; y++)
@@ -3130,7 +3142,7 @@ GLT.loadmanager.loadFiles({
   cameraDir[0] = map.startingPosition.x;
   cameraDir[1] = map.startingPosition.x;
   cameraDir[2] = map.startingPosition.x;
-  sphere = new Sphere({ x : cameraDir[0], y : cameraDir[1], z : cameraDir[2] });
+  sphere = new Sphere({ x : cameraDir[0], y : cameraDir[1], z : cameraDir[2] }, map);
   vec3set(cameraDir, cameraPos);
   cameraPos[0] = 0;
   cameraPos[1] = 0;
@@ -3139,10 +3151,13 @@ GLT.loadmanager.loadFiles({
   recalcCamera();
   GLT.requestGameFrame(gameloop);
   var params = {"oldParams":true,"wave_type":3,"p_env_attack":0,"p_env_sustain":0.3507373180706054,"p_env_punch":0.7507036675233394,"p_env_decay":0.1148287485120818,"p_base_freq":0.030365511453751274,"p_freq_limit":0,"p_freq_ramp":0,"p_freq_dramp":0,"p_vib_strength":0,"p_vib_speed":0,"p_arp_mod":0,"p_arp_speed":0,"p_duty":0,"p_duty_ramp":0,"p_repeat_speed":0.7296395279234276,"p_pha_offset":-0.2251016782131046,"p_pha_ramp":-0.2945099702104926,"p_lpf_freq":1,"p_lpf_ramp":0,"p_lpf_resonance":0,"p_hpf_freq":0,"p_hpf_ramp":0,"sound_vol":0.25,"sample_rate":44100,"sample_size":8};
-  var SOUND = new Sfxr.SoundEffect(params).generate();
+  var pdead = {"oldParams":true,"wave_type":0,"p_env_attack":-0.031099240445367497,"p_env_sustain":0.7635753833033847,"p_env_punch":0.2816417110611466,"p_env_decay":-0.6867234703619033,"p_base_freq":-0.05417757730129136,"p_freq_limit":0,"p_freq_ramp":0.366020674391696,"p_freq_dramp":0.061304970543220046,"p_vib_strength":-0.13391388831049597,"p_vib_speed":-0.08958338294178247,"p_arp_mod":0.7950661345385015,"p_arp_speed":0.5519341775216162,"p_duty":0.6044134241528809,"p_duty_ramp":0.8909097971481785,"p_repeat_speed":0.2607004144228995,"p_pha_offset":-0.00018430166566930404,"p_pha_ramp":0.8547329901213455,"p_lpf_freq":0.9224470124042238,"p_lpf_ramp":0.007261712532774577,"p_lpf_resonance":0.8195562218315899,"p_hpf_freq":2.3264287110167006e-7,"p_hpf_ramp":-0.6950668630055059,"sound_vol":0.25,"sample_rate":44100,"sample_size":8};
+  var pblob = {"oldParams":true,"wave_type":0,"p_env_attack":-0.018341900495896277,"p_env_sustain":0.3757311985941444,"p_env_punch":-0.003057873247569856,"p_env_decay":0.06331000293139369,"p_base_freq":0.1656650181731793,"p_freq_limit":0,"p_freq_ramp":-0.0589514924457087,"p_freq_dramp":0.030146547487526147,"p_vib_strength":-0.019250509277321262,"p_vib_speed":0.5508432540111242,"p_arp_mod":0.8034108052030207,"p_arp_speed":0.16075012690853327,"p_duty":-0.04733387050218882,"p_duty_ramp":0.46016203196294625,"p_repeat_speed":-0.17416390222497286,"p_pha_offset":0.14307537902977768,"p_pha_ramp":-0.421786501233935,"p_lpf_freq":0.41369926108195854,"p_lpf_ramp":-0.2612435719273578,"p_lpf_resonance":-0.9390350750647485,"p_hpf_freq":0.16551226912858946,"p_hpf_ramp":-0.10125760095251089,"sound_vol":0.25,"sample_rate":44100,"sample_size":8,"p_vib_delay":null};
+  var pfreu = {"oldParams":true,"wave_type":0,"p_env_attack":-0.004527911166038838,"p_env_sustain":0.840333883056117,"p_env_punch":0.32125634341977,"p_env_decay":0.8337062487844378,"p_base_freq":0.9230462823158505,"p_freq_limit":0,"p_freq_ramp":0.054141002534628405,"p_freq_dramp":0.028436068801879585,"p_vib_strength":0.05286053257716272,"p_vib_speed":0.7490090135484934,"p_arp_mod":0.002945324592292308,"p_arp_speed":-0.2514595840359107,"p_duty":-0.538211698899977,"p_duty_ramp":-0.02350955880296343,"p_repeat_speed":-0.3621571579016745,"p_pha_offset":0.05005980333720715,"p_pha_ramp":0.03782556013502259,"p_lpf_freq":0.9357535395725334,"p_lpf_ramp":-0.7541079941455712,"p_lpf_resonance":0.6400827742181718,"p_hpf_freq":1.0007283491126555,"p_hpf_ramp":0.42763103001397496,"sound_vol":0.25,"sample_rate":44100,"sample_size":8,"p_vib_delay":null};
+  var SOUND = new Sfxr.SoundEffect(pdead).generate();
   var audio = new Audio();
   audio.src = SOUND.dataURI
   audio.play();
  }
 });
-console.log("DEBUG (" + "src/main.js" + ":" + 564 + ")", "DEBUG Build:", "Sep  8 2012", "19:26:00" );
+console.log("DEBUG (" + "src/main.js" + ":" + 570 + ")", "DEBUG Build:", "Sep  9 2012", "15:06:15" );

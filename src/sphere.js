@@ -4,6 +4,7 @@
 #include "debug.js" 
 #include "assert.js" 
 #include "math.js" 
+#include "map.js" 
 
 #define STATE_NONE   0 
 #define STATE_MOVE   1
@@ -11,10 +12,10 @@
 var Sphere = (function() { 
 	var tmpvector  = vec3create();
 
-	function Statemachine(sphere) {		
+	function Statemachine(sphere, map) {		
 		"use strict"; 
 
-		var speed = 2.0;
+		var speed = 8.0;
 
 		var state       = STATE_NONE;  
 		var direction   = vec3create(); 
@@ -29,12 +30,15 @@ var Sphere = (function() {
 				case STATE_MOVE: 
 				vec3add(sphere.position, vec3scale(direction, time.delta * speed, tmpvector)); 
 				movetime += time.delta * speed;
-				if(movetime >= 1) {
+				if(movetime >= 1) {				
 					//we reached our destination.
-					state = STATE_NONE; 
-					vec3set(vec3add(startpos, direction, tmpvector), sphere.position); 
+					vec3set(vec3add(startpos, direction, tmpvector), sphere.position); 					
+
 					//TODO: Grid 
+					state = STATE_NONE; 
 					movetime = 0.0; 
+					//repeat process till we hit something 
+					this.tap(time, direction); 
 				}
 				break; 
 
@@ -54,10 +58,27 @@ var Sphere = (function() {
 				break; 
 
 				case STATE_NONE: 
-				vec3set(dir, direction); 
-				vec3set(sphere.position, startpos); 
-				movetime = 0.0; 
-				state = STATE_MOVE; 
+				//calculate if hit a cube
+				var destx = Math.round(sphere.position[0] + dir[0]); 
+				var desty = Math.round(sphere.position[1] + dir[1]); 
+				var destz = Math.round(sphere.position[2] + dir[2]); 
+
+				var obj = map.getObject(destx, desty, destz); 
+				
+				if(obj === Map.AIR) { 
+					vec3set(dir, direction); 
+					vec3set(sphere.position, startpos); 
+					movetime = 0.0; 
+					state = STATE_MOVE; 
+					break; 
+				}
+
+				if(obj === Map.OUT_OF_BOUNDS) {
+					dlog("dead"); 
+				}
+				if(obj === Map.GOAL) {
+					dlog("win"); 
+				}				
 				break; 
 
 				default: 
@@ -67,7 +88,7 @@ var Sphere = (function() {
 		};
 	}
 
-	return function(position) {
+	return function(position, map) {
 		checkprop(position, x); 
 		checkprop(position, y); 
 		checkprop(position, z); 		
@@ -75,15 +96,15 @@ var Sphere = (function() {
 
 		this.position = vec3create([position.x, position.y, position.z]); 
 
-		var state  = new Statemachine(this); 
+		var state  = new Statemachine(this, map); 
 
 		this.tap = function(info, dir) {
 			state.tap(info, dir); 
 		}; 
 
 		this.tick = function(info) {
-			state.tick(info); 
-		};
+			state.tick(info, map); 
+		};		
 	};
 }());
 

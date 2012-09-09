@@ -145,11 +145,11 @@ Map.create = function (seed) {
 		var iterations = 0; 
 		do { 
 			rand = new Random(seed++); 
-			dimension = (rand.next() % 8 + 4) * 2; 
+			dimension = 16; //(rand.next() % 8 + 4) * 2; 
 			startingPosition  = { x : (dimension/2) | 0, y : (dimension/2) | 0, z : (dimension/2) | 0 };  
 			clearField(); 
 			set(startingPosition.x, startingPosition.y, startingPosition.z, Map.START); 
-			iterations = 5 + (rand.next() % 8);
+			iterations = 11 + (rand.next() % 8);
 		} while(!fillRec(rand, startingPosition, iterations, 0, -1)); 
 	}
 
