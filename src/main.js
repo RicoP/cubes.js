@@ -133,9 +133,9 @@ function setup() {
 	path[j++] = map.startingPosition.z;
 
 	for(var i = 0; i !== map.path.length; i++) {
-		path[j++] = map.path[i].x;
-		path[j++] = map.path[i].y;
-		path[j++] = map.path[i].z;
+		path[j++] = map.path[i][0];
+		path[j++] = map.path[i][1];
+		path[j++] = map.path[i][2];
 	}
 
 	pathBuffer = gl.createBuffer(); 
@@ -562,8 +562,7 @@ GLT.loadmanager.loadFiles({
 		var SOUND = new Sfxr.SoundEffect(pdead).generate(); 
 		var audio = new Audio(); 
 		audio.src = SOUND.dataURI
-		audio.play(); 
-
+		//audio.play(); 
 	}
 });
 	

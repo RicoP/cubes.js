@@ -15,7 +15,7 @@
 
 	#define checkprop(obj, prop)                                                 \
 	do {                                                                         \
-		if(typeof (obj . prop) === "undefined") {                                \
+		if(typeof obj === "undefined" || typeof (obj . prop) === "undefined") {                                \
 			__error("No property " + #prop + " in " + #obj, __FILE__, __LINE__); \
 		}                                                                        \
 	} while(false)
