@@ -2474,12 +2474,8 @@ Map.create = function (seed) {
  directions[Y_MINUS] = [0,-1,0];
  directions[Z_PLUS] = [0,0,1];
  directions[Z_MINUS] = [0,0,-1];
- var field;
- var dimension = 0;
- var startingPosition = null;
- var path = [];
- function clearField() {
-  field = [];
+ function clearField(dimension) {
+  var field = [];
   for(var x = dimension; x--;) {
    field[x] = [];
    for(var y = dimension; y--;) {
@@ -2489,19 +2485,25 @@ Map.create = function (seed) {
     }
    }
   }
+  return field;
  }
- function set(x, y, z, type) {
-  do { if(!(x instanceof Number) && !("Number".toLowerCase() === typeof x)) { __error("Objct " + "x" + " is not from type " + "Number", "src/map.js", 53); } } while(false);
-  do { if(!(y instanceof Number) && !("Number".toLowerCase() === typeof y)) { __error("Objct " + "y" + " is not from type " + "Number", "src/map.js", 54); } } while(false);
-  do { if(!(z instanceof Number) && !("Number".toLowerCase() === typeof z)) { __error("Objct " + "z" + " is not from type " + "Number", "src/map.js", 55); } } while(false);
-  do { if(!(type instanceof Number) && !("Number".toLowerCase() === typeof type)) { __error("Objct " + "type" + " is not from type " + "Number", "src/map.js", 56); } } while(false);
-  do { if(!(x === (x|0))) { __error("assertion failed: " + "x === (x|0)" + " = " + (x === (x|0)), "src/map.js", 58); } } while(false);
-  do { if(!(y === (y|0))) { __error("assertion failed: " + "y === (y|0)" + " = " + (y === (y|0)), "src/map.js", 59); } } while(false);
-  do { if(!(z === (z|0))) { __error("assertion failed: " + "z === (z|0)" + " = " + (z === (z|0)), "src/map.js", 60); } } while(false);
-  do { if(!(type === (type|0))) { __error("assertion failed: " + "type === (type|0)" + " = " + (type === (type|0)), "src/map.js", 61); } } while(false);
+ function set(field, x, y, z, type) {
+  do { if(!(x instanceof Number) && !("Number".toLowerCase() === typeof x)) { __error("Objct " + "x" + " is not from type " + "Number", "src/map.js", 55); } } while(false);
+  do { if(!(y instanceof Number) && !("Number".toLowerCase() === typeof y)) { __error("Objct " + "y" + " is not from type " + "Number", "src/map.js", 56); } } while(false);
+  do { if(!(z instanceof Number) && !("Number".toLowerCase() === typeof z)) { __error("Objct " + "z" + " is not from type " + "Number", "src/map.js", 57); } } while(false);
+  do { if(!(type instanceof Number) && !("Number".toLowerCase() === typeof type)) { __error("Objct " + "type" + " is not from type " + "Number", "src/map.js", 58); } } while(false);
+  do { if(!(x === (x|0))) { __error("assertion failed: " + "x === (x|0)" + " = " + (x === (x|0)), "src/map.js", 60); } } while(false);
+  do { if(!(y === (y|0))) { __error("assertion failed: " + "y === (y|0)" + " = " + (y === (y|0)), "src/map.js", 61); } } while(false);
+  do { if(!(z === (z|0))) { __error("assertion failed: " + "z === (z|0)" + " = " + (z === (z|0)), "src/map.js", 62); } } while(false);
+  do { if(!(type === (type|0))) { __error("assertion failed: " + "type === (type|0)" + " = " + (type === (type|0)), "src/map.js", 63); } } while(false);
   field[x][y][z] = type;
  }
- function get(x,y,z) {
+ function get(field, dimension, x,y,z) {
+  do { if(!(field)) { __error("assertion failed: " + "field" + " = " + (field), "src/map.js", 69); } } while(false);
+  do { if(!(dimension > 0)) { __error("assertion failed: " + "dimension > 0" + " = " + (dimension > 0), "src/map.js", 70); } } while(false);
+  do { if(!(x instanceof Number) && !("Number".toLowerCase() === typeof x)) { __error("Objct " + "x" + " is not from type " + "Number", "src/map.js", 71); } } while(false);
+  do { if(!(y instanceof Number) && !("Number".toLowerCase() === typeof y)) { __error("Objct " + "y" + " is not from type " + "Number", "src/map.js", 72); } } while(false);
+  do { if(!(z instanceof Number) && !("Number".toLowerCase() === typeof z)) { __error("Objct " + "z" + " is not from type " + "Number", "src/map.js", 73); } } while(false);
   if(x<0 || y<0 || z<0 || x>= dimension || y>=dimension || z>=dimension) {
    return Map.OUT_OF_BOUNDS;
   }
@@ -2514,6 +2516,11 @@ Map.create = function (seed) {
    return [1,0,3,2,5,4][n];
  }
  function getCoords(position, dir, steps) {
+  do { if(typeof (position . x) === "undefined") { __error("No property " + "x" + " in " + "position", "src/map.js", 90); } } while(false);
+  do { if(typeof (position . y) === "undefined") { __error("No property " + "y" + " in " + "position", "src/map.js", 91); } } while(false);
+  do { if(typeof (position . z) === "undefined") { __error("No property " + "z" + " in " + "position", "src/map.js", 92); } } while(false);
+  do { if(!(dir instanceof Number) && !("Number".toLowerCase() === typeof dir)) { __error("Objct " + "dir" + " is not from type " + "Number", "src/map.js", 93); } } while(false);
+  do { if(!(steps >= 0)) { __error("assertion failed: " + "steps >= 0" + " = " + (steps >= 0), "src/map.js", 94); } } while(false);
   var pos = [position.x, position.y, position.z];
   var vec = directions[dir];
   for(var i = 0; i < steps; i++) {
@@ -2523,57 +2530,62 @@ Map.create = function (seed) {
   }
   return { x : pos[0], y : pos[1], z : pos[2] };
  }
- function nothingInBetween(position, dir, steps) {
+ function nothingInBetween(field, dimension, position, dir, steps) {
   for(var i = 1; i < steps; i++) {
    var pos = getCoords(position, dir, i);
-   var obj = get(pos.x, pos.y, pos.z);
+   var obj = get(field, dimension, pos.x, pos.y, pos.z);
    if(obj !== Map.AIR) return false;
   }
   return true;
  }
- function fillRec(rand, position, iterationsLeft, attempt, directionICameFrom) {
-  do { if(typeof (position . x) === "undefined") { __error("No property " + "x" + " in " + "position", "src/map.js", 104); } } while(false);
-  do { if(typeof (position . y) === "undefined") { __error("No property " + "y" + " in " + "position", "src/map.js", 105); } } while(false);
-  do { if(typeof (position . z) === "undefined") { __error("No property " + "z" + " in " + "position", "src/map.js", 106); } } while(false);
-  var type = iterationsLeft === 1 ? Map.GOAL : Map.CUBE;
+ function fillRec(rand, position, iterationsLeft, attempt, directionICameFrom, path, field, dimension, setGoal) {
+  do { if(typeof (position . x) === "undefined") { __error("No property " + "x" + " in " + "position", "src/map.js", 119); } } while(false);
+  do { if(typeof (position . y) === "undefined") { __error("No property " + "y" + " in " + "position", "src/map.js", 120); } } while(false);
+  do { if(typeof (position . z) === "undefined") { __error("No property " + "z" + " in " + "position", "src/map.js", 121); } } while(false);
+  var type = iterationsLeft === 1 && setGoal ? Map.GOAL : Map.CUBE;
   var dir = rand.next() % 6;
   var steps = 3 + rand.next() % (dimension - 3);
   if(iterationsLeft === 0) return true;
   if(attempt >= MAX_ATTEMPTS) return false;
   if(dir === directionICameFrom || dir === getOppositeDirection(directionICameFrom)) {
-   return fillRec(rand, position, iterationsLeft, attempt, directionICameFrom);
+   return fillRec(rand, position, iterationsLeft, attempt, directionICameFrom, path, field, dimension, setGoal);
   }
-  if(!nothingInBetween(position, dir, steps)) {
-   return fillRec(rand, position, iterationsLeft, attempt+1, directionICameFrom);
+  if(!nothingInBetween(field, dimension, position, dir, steps)) {
+   return fillRec(rand, position, iterationsLeft, attempt+1, directionICameFrom, path, field, dimension, setGoal);
   }
   var newObjectCoords = getCoords(position, dir, steps);
-  var obj = get(newObjectCoords.x, newObjectCoords.y, newObjectCoords.z);
+  var obj = get(field, dimension, newObjectCoords.x, newObjectCoords.y, newObjectCoords.z);
   if(obj === Map.OUT_OF_BOUNDS) {
-   return fillRec(rand, position, iterationsLeft, attempt+1, directionICameFrom);
+   return fillRec(rand, position, iterationsLeft, attempt+1, directionICameFrom, path, field, dimension, setGoal);
   }
-  set(newObjectCoords.x, newObjectCoords.y, newObjectCoords.z, type);
+  set(field, newObjectCoords.x, newObjectCoords.y, newObjectCoords.z, type);
   var newStartingPoint = getCoords(position, dir, steps-1);
   path.push(newStartingPoint);
-  return fillRec(rand, newStartingPoint, iterationsLeft-1, 0, getOppositeDirection(dir));
+  return fillRec(rand, newStartingPoint, iterationsLeft-1, 0, getOppositeDirection(dir), path, field, dimension, setGoal);
  }
  function fill(seed) {
-  var rand;
-  var iterations = 0;
-  do {
-   rand = new Random(seed++);
-   dimension = 16;
-   startingPosition = { x : (dimension/2) | 0, y : (dimension/2) | 0, z : (dimension/2) | 0 };
-   clearField();
-   set(startingPosition.x, startingPosition.y, startingPosition.z, Map.START);
-   iterations = 11 + (rand.next() % 8);
-  } while(!fillRec(rand, startingPosition, iterations, 0, -1));
+  var dimension = 16;
+  var rand = new Random(seed);
+  var iterations = 5 + (rand.next() % 4);
+  var startingPosition = { x : (dimension/2) | 0, y : (dimension/2) | 0, z : (dimension/2) | 0 };
+  var field = clearField(dimension);
+  set(field, startingPosition.x, startingPosition.y, startingPosition.z, Map.START);
+  var pathA = [];
+  var fillA = fillRec(rand, startingPosition, iterations, 0, -1, pathA, field, dimension, true);
+  var pathB = [];
+  var fillB = fillRec(rand, pathA[rand.next() % pathA.length], iterations, 0, -1, pathB, field, dimension, false);
+  if(fillA) {
+   return {
+    "startingPosition" : startingPosition,
+    "getObject" : function(x,y,z) { return get(field, dimension, x,y,z); },
+    "path" : pathA
+   };
+  }
+  else {
+   return fill(seed+1);
+  }
  }
- fill(seed);
- return {
-  "startingPosition" : startingPosition,
-  "getObject" : get,
-  "path" : path
- };
+ return fill(seed);
 }
 var Sphere = (function() {
  var tmpvector = vec3create();
@@ -3160,4 +3172,4 @@ GLT.loadmanager.loadFiles({
   audio.play();
  }
 });
-console.log("DEBUG (" + "src/main.js" + ":" + 570 + ")", "DEBUG Build:", "Sep  9 2012", "15:06:15" );
+console.log("DEBUG (" + "src/main.js" + ":" + 570 + ")", "DEBUG Build:", "Sep  9 2012", "16:27:00" );

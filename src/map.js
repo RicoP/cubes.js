@@ -4,12 +4,18 @@
 #include "assert.js" 
 #include "random.js" 
 
+#define MAP_OUT_OF_BOUNDS -1
+#define MAP_AIR            0
+#define MAP_CUBE           1
+#define MAP_START          2
+#define MAP_GOAL           3
+
 var Map = {
-	"OUT_OF_BOUNDS" : -1, 
-	"AIR" : 0, 
-	"CUBE" : 1, 
-	"START" : 2, 
-	"GOAL" : 3
+	"OUT_OF_BOUNDS" : MAP_OUT_OF_BOUNDS, 
+	"AIR" : MAP_AIR, 
+	"CUBE" : MAP_CUBE, 
+	"START" : MAP_START, 
+	"GOAL" : MAP_GOAL
 }; 
 
 Map.create = function (seed) {
@@ -31,13 +37,8 @@ Map.create = function (seed) {
 	directions[Z_PLUS]  = [0,0,1];
 	directions[Z_MINUS] = [0,0,-1];
 
-	var field; // Array3
-	var dimension = 0; 
-	var startingPosition = null;
-	var path = []; 
-
-	function clearField() { 
-		field = []; 
+	function clearField(dimension) { 
+		var field = []; 
 		for(var x = dimension; x--;) {
 			field[x] = []; 
 			for(var y = dimension; y--;) {
@@ -47,9 +48,10 @@ Map.create = function (seed) {
 				}
 			}
 		}
+		return field; 
 	}
 
-	function set(x, y, z, type) {
+	function set(field, x, y, z, type) {
 		checkclass(x, Number); 
 		checkclass(y, Number); 
 		checkclass(z, Number); 
@@ -63,7 +65,14 @@ Map.create = function (seed) {
 		field[x][y][z] = type; 
 	}
 
-	function get(x,y,z) {
+	function get(field, dimension, x,y,z) {
+		assert(field); 
+		assert(dimension > 0); 
+		checkclass(x, Number); 
+		checkclass(y, Number); 
+		checkclass(z, Number); 
+
+
 		if(x<0 || y<0 || z<0 || x>= dimension || y>=dimension || z>=dimension) {
 			return Map.OUT_OF_BOUNDS; 
 		}
@@ -78,6 +87,12 @@ Map.create = function (seed) {
 	}
 
 	function getCoords(position, dir, steps) {
+		checkprop(position, x); 
+		checkprop(position, y); 
+		checkprop(position, z); 
+		checkclass(dir, Number); 
+		assert(steps >= 0); 
+
 		var pos = [position.x, position.y, position.z]; 
 		var vec = directions[dir]; 
 		for(var i = 0; i < steps; i++) {
@@ -89,10 +104,10 @@ Map.create = function (seed) {
 		return { x : pos[0], y : pos[1], z : pos[2] }; 
 	}
 
-	function nothingInBetween(position, dir, steps) {
+	function nothingInBetween(field, dimension, position, dir, steps) {
 		for(var i = 1; i < steps; i++) {
 			var pos = getCoords(position, dir, i); 
-			var obj = get(pos.x, pos.y, pos.z); 
+			var obj = get(field, dimension, pos.x, pos.y, pos.z); 
 			if(obj !== Map.AIR) return false; 
 		}
 
@@ -100,12 +115,12 @@ Map.create = function (seed) {
 	}
 
 	// iterationsLeft > 1 -> CUBE, iterationsLeft === 1 -> GOAL, iterationsLeft === 0 -> done
-	function fillRec(rand, position, iterationsLeft, attempt, directionICameFrom) {
+	function fillRec(rand, position, iterationsLeft, attempt, directionICameFrom, path, field, dimension, setGoal) {
 		checkprop(position, x);
 		checkprop(position, y);
 		checkprop(position, z);
 
-		var type = iterationsLeft === 1 ? Map.GOAL : Map.CUBE; 
+		var type = iterationsLeft === 1 && setGoal ? Map.GOAL : Map.CUBE; 
 		var dir = rand.next() % 6; 
 		var steps = 3 + rand.next() % (dimension - 3); 
 
@@ -117,49 +132,57 @@ Map.create = function (seed) {
 
 		//Don't go back from where you came from. retry
 		if(dir === directionICameFrom || dir === getOppositeDirection(directionICameFrom)) { 
-			return fillRec(rand, position, iterationsLeft, attempt, directionICameFrom); 
+			return fillRec(rand, position, iterationsLeft, attempt, directionICameFrom, path, field, dimension, setGoal); 
 		}
 
-		if(!nothingInBetween(position, dir, steps)) {
+		if(!nothingInBetween(field, dimension, position, dir, steps)) {
 			//Try next attempt with next random numbers
-			return fillRec(rand, position, iterationsLeft, attempt+1, directionICameFrom);
+			return fillRec(rand, position, iterationsLeft, attempt+1, directionICameFrom, path, field, dimension, setGoal);
 		}
 
 		var newObjectCoords = getCoords(position, dir, steps); 
 
-		var obj = get(newObjectCoords.x, newObjectCoords.y, newObjectCoords.z); 
+		var obj = get(field, dimension, newObjectCoords.x, newObjectCoords.y, newObjectCoords.z); 
 		if(obj === Map.OUT_OF_BOUNDS) {			
-			return fillRec(rand, position, iterationsLeft, attempt+1, directionICameFrom); 
+			return fillRec(rand, position, iterationsLeft, attempt+1, directionICameFrom, path, field, dimension, setGoal); 
 		}
 
-		set(newObjectCoords.x, newObjectCoords.y, newObjectCoords.z, type); 
+		set(field, newObjectCoords.x, newObjectCoords.y, newObjectCoords.z, type); 
 
 		var newStartingPoint = getCoords(position, dir, steps-1); 
 		path.push(newStartingPoint); 
 
-		return fillRec(rand, newStartingPoint, iterationsLeft-1, 0, getOppositeDirection(dir)); 
+		return fillRec(rand, newStartingPoint, iterationsLeft-1, 0, getOppositeDirection(dir), path, field, dimension, setGoal); 
 	}
 
 	function fill(seed) {
-		var rand; 
-		var iterations = 0; 
-		do { 
-			rand = new Random(seed++); 
-			dimension = 16; //(rand.next() % 8 + 4) * 2; 
-			startingPosition  = { x : (dimension/2) | 0, y : (dimension/2) | 0, z : (dimension/2) | 0 };  
-			clearField(); 
-			set(startingPosition.x, startingPosition.y, startingPosition.z, Map.START); 
-			iterations = 11 + (rand.next() % 8);
-		} while(!fillRec(rand, startingPosition, iterations, 0, -1)); 
+		var dimension = 16; //(rand.next() % 8 + 4) * 2; 
+		var rand = new Random(seed); 
+		var iterations = 5 + (rand.next() % 4);
+		var startingPosition  = { x : (dimension/2) | 0, y : (dimension/2) | 0, z : (dimension/2) | 0 };  
+		
+		var field = clearField(dimension); 
+		set(field, startingPosition.x, startingPosition.y, startingPosition.z, Map.START); 
+
+		var pathA = []; 
+		var fillA = fillRec(rand, startingPosition, iterations, 0, -1, pathA, field, dimension, true);
+
+		var pathB = []; 
+		var fillB = fillRec(rand, pathA[rand.next() % pathA.length], iterations, 0, -1, pathB, field, dimension, false);
+
+		if(fillA) {
+			return {
+				"startingPosition" : startingPosition,
+				"getObject" : function(x,y,z) { return get(field, dimension, x,y,z); }, 
+				"path" : pathA 
+			}; 
+		}
+		else { 
+			return fill(seed+1);
+		}
 	}
 
-	fill(seed); 
-
-	return {
-		"startingPosition" : startingPosition,
-		"getObject" : get, 
-		"path" : path 
-	}; 
+	return fill(seed); 
 }
 
 #endif 
