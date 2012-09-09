@@ -65,7 +65,7 @@ var Sphere = (function() {
 
 				var obj = map.getObject(destx, desty, destz); 
 				
-				if(obj === Map.AIR) { 
+				if(obj === MAP_AIR) { 
 					vec3set(dir, direction); 
 					vec3set(sphere.position, startpos); 
 					movetime = 0.0; 
@@ -73,10 +73,10 @@ var Sphere = (function() {
 					break; 
 				}
 
-				if(obj === Map.OUT_OF_BOUNDS) {
+				if(obj === MAP_OUT_OF_BOUNDS) {
 					dlog("dead"); 
 				}
-				if(obj === Map.GOAL) {
+				if(obj === MAP_GOAL) {
 					dlog("win"); 
 				}				
 				break; 

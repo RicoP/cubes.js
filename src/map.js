@@ -10,15 +10,7 @@
 #define MAP_START          2
 #define MAP_GOAL           3
 
-var Map = {
-	"OUT_OF_BOUNDS" : MAP_OUT_OF_BOUNDS, 
-	"AIR" : MAP_AIR, 
-	"CUBE" : MAP_CUBE, 
-	"START" : MAP_START, 
-	"GOAL" : MAP_GOAL
-}; 
-
-Map.create = function (seed) {
+function MapCreate(seed) {
 	"use strict"; 
 
 	var MAX_ATTEMPTS = 16; 
@@ -44,7 +36,7 @@ Map.create = function (seed) {
 			for(var y = dimension; y--;) {
 				field[x][y] = []; 
 				for(var z = dimension; z--;) {
-					field[x][y][z] = Map.AIR; 
+					field[x][y][z] = MAP_AIR; 
 				}
 			}
 		}
@@ -74,7 +66,7 @@ Map.create = function (seed) {
 
 
 		if(x<0 || y<0 || z<0 || x>= dimension || y>=dimension || z>=dimension) {
-			return Map.OUT_OF_BOUNDS; 
+			return MAP_OUT_OF_BOUNDS; 
 		}
 		return field[x][y][z]; 
 	}
@@ -108,7 +100,7 @@ Map.create = function (seed) {
 		for(var i = 1; i < steps; i++) {
 			var pos = getCoords(position, dir, i); 
 			var obj = get(field, dimension, pos.x, pos.y, pos.z); 
-			if(obj !== Map.AIR) return false; 
+			if(obj !== MAP_AIR) return false; 
 		}
 
 		return true; 
@@ -120,7 +112,7 @@ Map.create = function (seed) {
 		checkprop(position, y);
 		checkprop(position, z);
 
-		var type = iterationsLeft === 1 && setGoal ? Map.GOAL : Map.CUBE; 
+		var type = iterationsLeft === 1 && setGoal ? MAP_GOAL : MAP_CUBE; 
 		var dir = rand.next() % 6; 
 		var steps = 3 + rand.next() % (dimension - 3); 
 
@@ -143,7 +135,7 @@ Map.create = function (seed) {
 		var newObjectCoords = getCoords(position, dir, steps); 
 
 		var obj = get(field, dimension, newObjectCoords.x, newObjectCoords.y, newObjectCoords.z); 
-		if(obj === Map.OUT_OF_BOUNDS) {			
+		if(obj === MAP_OUT_OF_BOUNDS) {			
 			return fillRec(rand, position, iterationsLeft, attempt+1, directionICameFrom, path, field, dimension, setGoal); 
 		}
 
@@ -162,7 +154,7 @@ Map.create = function (seed) {
 		var startingPosition  = { x : (dimension/2) | 0, y : (dimension/2) | 0, z : (dimension/2) | 0 };  
 		
 		var field = clearField(dimension); 
-		set(field, startingPosition.x, startingPosition.y, startingPosition.z, Map.START); 
+		set(field, startingPosition.x, startingPosition.y, startingPosition.z, MAP_START); 
 
 		var pathA = []; 
 		var fillA = fillRec(rand, startingPosition, iterations, 0, -1, pathA, field, dimension, true);

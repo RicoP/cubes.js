@@ -515,16 +515,16 @@ GLT.loadmanager.loadFiles({
 
 		var seed = (0xFFFF * Math.random()) & 0xFFFF; 
 		dlog("SEED", seed); 
-		map = Map.create(seed);  
+		map = MapCreate(seed);  
 
 		for(var x = 0; x !== 16; x++) 
 			for(var y = 0; y !== 16; y++) 
 				for(var z = 0; z !== 16; z++) {
 					var obj = map.getObject(x,y,z); 
-					if(obj === Map.CUBE) { 
+					if(obj === MAP_CUBE) { 
 						cubelist.push( { vector : vec3create([x,y,z])} ); 
 					}
-					else if(obj === Map.GOAL) {
+					else if(obj === MAP_GOAL) {
 						goalpos[0] = x; 
 						goalpos[1] = y; 
 						goalpos[2] = z; 
