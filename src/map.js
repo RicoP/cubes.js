@@ -43,27 +43,32 @@ function MapCreate(seed) {
 		return field; 
 	}
 
-	function set(field, x, y, z, type) {
-		checkclass(x, Number); 
-		checkclass(y, Number); 
-		checkclass(z, Number); 
+	function set(field, position, type) {
+		assert(field); 
+		checkclass(position[0], Number); 
+		checkclass(position[1], Number); 
+		checkclass(position[2], Number); 
 		checkclass(type, Number); 
 
-		assert(x === (x|0)); 
-		assert(y === (y|0)); 
-		assert(z === (z|0)); 
 		assert(type === (type|0)); 
+
+		var x = position[0];
+		var y = position[1];
+		var z = position[2];
 		
 		field[x][y][z] = type; 
 	}
 
-	function get(field, dimension, x,y,z) {
+	function get(field, dimension, position) {
 		assert(field); 
 		assert(dimension > 0); 
-		checkclass(x, Number); 
-		checkclass(y, Number); 
-		checkclass(z, Number); 
+		checkclass(position[0], Number); 
+		checkclass(position[1], Number); 
+		checkclass(position[2], Number); 
 
+		var x = position[0];
+		var y = position[1];
+		var z = position[2];
 
 		if(x<0 || y<0 || z<0 || x>= dimension || y>=dimension || z>=dimension) {
 			return MAP_OUT_OF_BOUNDS; 
@@ -78,39 +83,54 @@ function MapCreate(seed) {
 			return [1,0,3,2,5,4][n]; 
 	}
 
+	function copyArray(array) {
+		assert(array instanceof Array); 
+		return array.slice(0); 
+	}
+
+	function step(position, dir) {
+		assert(dir >= 0 && dir <= 5); 
+		var direction = directions[dir]; 
+		var array = copyArray(position); 
+
+		array[0] += direction[0]; 
+		array[1] += direction[1]; 
+		array[2] += direction[2]; 
+		return array; 
+	}
+
 	function getCoords(position, dir, steps) {
-		checkprop(position, x); 
-		checkprop(position, y); 
-		checkprop(position, z); 
+		checkclass(position[0], Number); 
+		checkclass(position[1], Number); 
+		checkclass(position[2], Number); 
 		checkclass(dir, Number); 
 		assert(steps >= 0); 
 
-		var pos = [position.x, position.y, position.z]; 
-		var vec = directions[dir]; 
-		for(var i = 0; i < steps; i++) {
-			pos[0] += vec[0];
-			pos[1] += vec[1];
-			pos[2] += vec[2];
-		}
-
-		return { x : pos[0], y : pos[1], z : pos[2] }; 
+		if(steps === 0) return position; 
+		return getCoords(step(position, dir), dir, steps-1); 
 	}
 
 	function nothingInBetween(field, dimension, position, dir, steps) {
-		for(var i = 1; i < steps; i++) {
-			var pos = getCoords(position, dir, i); 
-			var obj = get(field, dimension, pos.x, pos.y, pos.z); 
-			if(obj !== MAP_AIR) return false; 
-		}
+		assert(field.length); 
+		checkclass(dimension, Number); 
+		checkclass(dir, Number); 
+		checkclass(steps, Number); 
+		checkclass(position[0], Number); 
+		checkclass(position[1], Number); 
+		checkclass(position[2], Number); 
 
-		return true; 
+		if(steps < 2) return true; 
+
+		var newPos = getCoords(position, dir, 1);
+		if( get(field,dimension, newPos) !== MAP_AIR ) return false; 
+		return nothingInBetween(field, dimension, newPos, dir, steps-1); 
 	}
 
 	// iterationsLeft > 1 -> CUBE, iterationsLeft === 1 -> GOAL, iterationsLeft === 0 -> done
 	function fillRec(rand, position, iterationsLeft, attempt, directionICameFrom, path, field, dimension, setGoal) {
-		checkprop(position, x);
-		checkprop(position, y);
-		checkprop(position, z);
+		checkclass(position[0], Number); 
+		checkclass(position[1], Number); 
+		checkclass(position[2], Number); 
 
 		var type = iterationsLeft === 1 && setGoal ? MAP_GOAL : MAP_CUBE; 
 		var dir = rand.next() % 6; 
@@ -134,12 +154,12 @@ function MapCreate(seed) {
 
 		var newObjectCoords = getCoords(position, dir, steps); 
 
-		var obj = get(field, dimension, newObjectCoords.x, newObjectCoords.y, newObjectCoords.z); 
+		var obj = get(field, dimension, newObjectCoords); 
 		if(obj === MAP_OUT_OF_BOUNDS) {			
 			return fillRec(rand, position, iterationsLeft, attempt+1, directionICameFrom, path, field, dimension, setGoal); 
 		}
 
-		set(field, newObjectCoords.x, newObjectCoords.y, newObjectCoords.z, type); 
+		set(field, newObjectCoords, type); 
 
 		var newStartingPoint = getCoords(position, dir, steps-1); 
 		path.push(newStartingPoint); 
@@ -151,21 +171,21 @@ function MapCreate(seed) {
 		var dimension = 16; //(rand.next() % 8 + 4) * 2; 
 		var rand = new Random(seed); 
 		var iterations = 5 + (rand.next() % 4);
-		var startingPosition  = { x : (dimension/2) | 0, y : (dimension/2) | 0, z : (dimension/2) | 0 };  
+		var startingPosition  = [ (dimension/2) | 0, (dimension/2) | 0, (dimension/2) | 0 ];  
 		
 		var field = clearField(dimension); 
-		set(field, startingPosition.x, startingPosition.y, startingPosition.z, MAP_START); 
+		set(field, startingPosition, MAP_START); 
 
 		var pathA = []; 
 		var fillA = fillRec(rand, startingPosition, iterations, 0, -1, pathA, field, dimension, true);
 
 		var pathB = []; 
-		var fillB = fillRec(rand, pathA[rand.next() % pathA.length], iterations, 0, -1, pathB, field, dimension, false);
+		var fillB = fillA && fillRec(rand, pathA[rand.next() % pathA.length], iterations, 0, -1, pathB, field, dimension, false);
 
 		if(fillA) {
 			return {
-				"startingPosition" : startingPosition,
-				"getObject" : function(x,y,z) { return get(field, dimension, x,y,z); }, 
+				"startingPosition" : { x : startingPosition[0], y : startingPosition[0], z : startingPosition[0] },  
+				"getObject" : function(x,y,z) { return get(field, dimension, [x,y,z]); }, 
 				"path" : pathA 
 			}; 
 		}
