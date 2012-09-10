@@ -7,11 +7,11 @@ var Sfxr = (function() {
 	function require() { return exports; }; 
 
 	!function() { 
-		#include "../jsfxr/riffwave.js"
+		#include "riffwave.js"
 	}(); 
 
 	!function() { 
-		#include "../jsfxr/sfxr.js"		
+		#include "sfxr.js"		
 	}(); 
 
 	return exports; 

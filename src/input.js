@@ -7,7 +7,7 @@
 #define STATE_DOWN 1 
 #define STATE_POKE 2 
 #define STATE_DRAG 3 
-#define DRAG_DIV  5
+#define DRAG_DIV   3
 
 var Input = function(canvas) {
 	"use strict"; 
@@ -125,8 +125,8 @@ var Input = function(canvas) {
 	canvas.onmousemove = function(ev) {
 		lastmousex = mousex; 
 		lastmousey = mousey; 
-		mousex = ev.x; 
-		mousey = ev.y; 
+		mousex = ev.clientX; 
+		mousey = ev.clientY; 
 		move(); 
 	} 
 	that.update = tick; 

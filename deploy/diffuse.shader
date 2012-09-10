@@ -4,7 +4,6 @@ precision highp float;
 
 uniform mat4 uModelviewprojection; 
 uniform sampler2D uTexture; 
-uniform float uBling; 
 
 varying vec2 vTextureuv; 
 
@@ -24,7 +23,7 @@ vec4 fragment() {
 	vec2 uv    = vTextureuv; 
 	vec3 color = texture2D(uTexture, uv).rgb; 
 
-	return vec4(color * (1.0 + uBling), 1.0); 
+	return vec4(color, 1.0); 
 }
 
 

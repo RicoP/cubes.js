@@ -31,6 +31,8 @@ var funkycube = new Funkycube();
 var canvas = document.getElementsByTagName("canvas")[0]; 
 var gl = GLT.createContext(canvas); 
 
+#include "glcalls.js" 
+
 var input = new Input(canvas); 
 
 var projection = mat4perspective(60, canvas.width / canvas.height, 0.1, 1000); 
@@ -63,17 +65,6 @@ var cubeNormals = [
 ];
 
 
-var cubeDragSides = [
-	//U  L  R  D
-	[ 0, 0, 0, 0], //0
-	[ 2, 3, 4, 5], //1 +x
-	[ 0, 0, 0, 0], //2 +y
-	[ 2, 6, 1, 5], //3 +z
-	[ 2, 1, 6, 5], //4 -z
-	[ 0, 0, 0, 0], //5 -y
-	[ 2, 4, 3, 5], //6 -x
-];
-
 var cubelist = [];
 var goalpos = vec3create(); 
 
@@ -105,28 +96,27 @@ function spinVert(angle) {
 }
 
 function setup() {
-	gl.enable( GL_DEPTH_TEST ); 
-	//gl.enable( GL_SCISSOR_TEST ); 
-	gl.enable( GL_CULL_FACE ); 
-	gl.lineWidth(4.5); 
-	gl.clearColor(0,0,0,0); 
-	gl.viewport(0,0,canvas.width, canvas.height);  
+	glEnable( GL_DEPTH_TEST ); 
+	glEnable( GL_CULL_FACE ); 
+	glLineWidth(4.5); 
+	glClearColor(0,0,0,0); 
+	glViewport(0,0,canvas.width, canvas.height);  
 
-	cubeBuffer = gl.createBuffer(); 
-	gl.bindBuffer(GL_ARRAY_BUFFER, cubeBuffer); 
-	gl.bufferData(GL_ARRAY_BUFFER, cube.rawData, GL_STATIC_DRAW);
+	cubeBuffer = glCreateBuffer(); 
+	glBindBuffer(GL_ARRAY_BUFFER, cubeBuffer); 
+	glBufferData(GL_ARRAY_BUFFER, cube.rawData, GL_STATIC_DRAW);
 
-	sphereBuffer = gl.createBuffer(); 
-	gl.bindBuffer(GL_ARRAY_BUFFER, sphereBuffer); 
-	gl.bufferData(GL_ARRAY_BUFFER, sphereData.rawData, GL_STATIC_DRAW);
+	sphereBuffer = glCreateBuffer(); 
+	glBindBuffer(GL_ARRAY_BUFFER, sphereBuffer); 
+	glBufferData(GL_ARRAY_BUFFER, sphereData.rawData, GL_STATIC_DRAW);
 
-	skyBuffer = gl.createBuffer(); 
-	gl.bindBuffer(GL_ARRAY_BUFFER, skyBuffer); 
-	gl.bufferData(GL_ARRAY_BUFFER, sky.rawData, GL_STATIC_DRAW);
+	skyBuffer = glCreateBuffer(); 
+	glBindBuffer(GL_ARRAY_BUFFER, skyBuffer); 
+	glBufferData(GL_ARRAY_BUFFER, sky.rawData, GL_STATIC_DRAW);
 
-	goalBuffer = gl.createBuffer(); 
-	gl.bindBuffer(GL_ARRAY_BUFFER, goalBuffer); 
-	gl.bufferData(GL_ARRAY_BUFFER, goal.rawData, GL_STATIC_DRAW); 
+	goalBuffer = glCreateBuffer(); 
+	glBindBuffer(GL_ARRAY_BUFFER, goalBuffer); 
+	glBufferData(GL_ARRAY_BUFFER, goal.rawData, GL_STATIC_DRAW); 
 	
 	var path = new Float32Array( 3 * map.path.length ); 
 	var j = 0; 
@@ -140,9 +130,9 @@ function setup() {
 		path[j++] = map.path[i][2];
 	}
 
-	pathBuffer = gl.createBuffer(); 
-	gl.bindBuffer(GL_ARRAY_BUFFER, pathBuffer); 
-	gl.bufferData(GL_ARRAY_BUFFER, path, GL_STATIC_DRAW); 
+	pathBuffer = glCreateBuffer(); 
+	glBindBuffer(GL_ARRAY_BUFFER, pathBuffer); 
+	glBufferData(GL_ARRAY_BUFFER, path, GL_STATIC_DRAW); 
 }
 
 function gameloop(info) {
@@ -209,11 +199,11 @@ function update(info) {
 }
 
 function draw(info) {
-	gl.disable( GL_DEPTH_TEST ); 
+	glDisable( GL_DEPTH_TEST ); 
 	drawSky(program); 
-	gl.enable( GL_DEPTH_TEST ); 
+	glEnable( GL_DEPTH_TEST ); 
 
-	gl.clear(GL_DEPTH_BUFFER_BIT); 
+	glClear(GL_DEPTH_BUFFER_BIT); 
 		
 	drawCubes(program); 
 	drawSphere(program); 
@@ -222,35 +212,35 @@ function draw(info) {
 } 
 
 function drawCubes(program) {
-	gl.useProgram(program); 
+	glUseProgram(program); 
 
-	var uModelviewprojection = gl.getUniformLocation(program, "uModelviewprojection"); 
-	var uTexture   = gl.getUniformLocation(program, "uTexture"); 	
+	var uModelviewprojection = glGetUniformLocation(program, "uModelviewprojection"); 
+	var uTexture   = glGetUniformLocation(program, "uTexture"); 	
 
-	var aVertex    = gl.getAttribLocation(program, "aVertex"); 
-	var aTextureuv = gl.getAttribLocation(program, "aTextureuv"); 
-	var aNormal    = gl.getAttribLocation(program, "aNormal"); 
+	var aVertex    = glGetAttribLocation(program, "aVertex"); 
+	var aTextureuv = glGetAttribLocation(program, "aTextureuv"); 
+	var aNormal    = glGetAttribLocation(program, "aNormal"); 
 
 	var modelviewprojection = tmpmatrix; 
 
-	gl.bindBuffer(GL_ARRAY_BUFFER, cubeBuffer); 
+	glBindBuffer(GL_ARRAY_BUFFER, cubeBuffer); 
 
-	gl.vertexAttribPointer(aVertex, 4, GL_FLOAT, false, cube.stride, cube.voffset); 
-	gl.enableVertexAttribArray(aVertex); 
+	glVertexAttribPointer(aVertex, 4, GL_FLOAT, false, cube.stride, cube.voffset); 
+	glEnableVertexAttribArray(aVertex); 
 
 	if(aTextureuv !== -1) {
-		gl.vertexAttribPointer(aTextureuv, 4, GL_FLOAT, false, cube.stride, cube.toffset); 
-		gl.enableVertexAttribArray(aTextureuv); 
+		glVertexAttribPointer(aTextureuv, 4, GL_FLOAT, false, cube.stride, cube.toffset); 
+		glEnableVertexAttribArray(aTextureuv); 
 	}
 
 	if(aNormal !== -1) { 
-		gl.vertexAttribPointer(aNormal, 4, GL_FLOAT, false, cube.stride, cube.noffset); 
-		gl.enableVertexAttribArray(aNormal); 
+		glVertexAttribPointer(aNormal, 4, GL_FLOAT, false, cube.stride, cube.noffset); 
+		glEnableVertexAttribArray(aNormal); 
 	} 	
 
 	if(uTexture) {
-		gl.bindTexture(GL_TEXTURE_2D, cubetex); 
-		gl.uniform1i(uTexture, 0); 
+		glBindTexture(GL_TEXTURE_2D, cubetex); 
+		glUniform1i(uTexture, 0); 
 	}
 
 	for(var i = 0; i != cubelist.length; i++) { 
@@ -259,87 +249,87 @@ function drawCubes(program) {
 		mat4multiply(projection, camera, modelviewprojection); 
 		mat4translate(modelviewprojection, object.vector); 
 
-		gl.uniformMatrix4fv(uModelviewprojection, false, modelviewprojection); 
+		glUniformMatrix4fv(uModelviewprojection, false, modelviewprojection); 
 
-		gl.drawArrays(GL_TRIANGLES, 0, cube.numVertices); 
+		glDrawArrays(GL_TRIANGLES, 0, cube.numVertices); 
 	}	
 }
 
 function drawSphere(program) {
-	gl.useProgram(program); 
+	glUseProgram(program); 
 
-	var uModelviewprojection = gl.getUniformLocation(program, "uModelviewprojection"); 
-	var uTexture   = gl.getUniformLocation(program, "uTexture"); 	
+	var uModelviewprojection = glGetUniformLocation(program, "uModelviewprojection"); 
+	var uTexture   = glGetUniformLocation(program, "uTexture"); 	
 
-	var aVertex    = gl.getAttribLocation(program, "aVertex"); 
-	var aTextureuv = gl.getAttribLocation(program, "aTextureuv"); 
+	var aVertex    = glGetAttribLocation(program, "aVertex"); 
+	var aTextureuv = glGetAttribLocation(program, "aTextureuv"); 
 
 	var modelviewprojection = tmpmatrix; 
 
-	gl.bindBuffer(GL_ARRAY_BUFFER, sphereBuffer); 
+	glBindBuffer(GL_ARRAY_BUFFER, sphereBuffer); 
 
-	gl.vertexAttribPointer(aVertex, 4, GL_FLOAT, false, sphereData.stride, sphereData.voffset); 
-	gl.enableVertexAttribArray(aVertex); 
+	glVertexAttribPointer(aVertex, 4, GL_FLOAT, false, sphereData.stride, sphereData.voffset); 
+	glEnableVertexAttribArray(aVertex); 
 
 	if(aTextureuv !== -1) {
-		gl.vertexAttribPointer(aTextureuv, 4, GL_FLOAT, false, sphereData.stride, sphereData.toffset); 
-		gl.enableVertexAttribArray(aTextureuv); 
+		glVertexAttribPointer(aTextureuv, 4, GL_FLOAT, false, sphereData.stride, sphereData.toffset); 
+		glEnableVertexAttribArray(aTextureuv); 
 	}
 
 	if(uTexture) {
-		gl.bindTexture(GL_TEXTURE_2D, cubetex); 
-		gl.uniform1i(uTexture, 0); 
+		glBindTexture(GL_TEXTURE_2D, cubetex); 
+		glUniform1i(uTexture, 0); 
 	}
 
 	mat4multiply(projection, camera, modelviewprojection); 
 	mat4translate(modelviewprojection, sphere.position); 
 
-	gl.uniformMatrix4fv(uModelviewprojection, false, modelviewprojection); 
+	glUniformMatrix4fv(uModelviewprojection, false, modelviewprojection); 
 
-	gl.drawArrays(GL_TRIANGLES, 0, sphereData.numVertices); 
+	glDrawArrays(GL_TRIANGLES, 0, sphereData.numVertices); 
 }
 
 function drawGoal(program) {
-	gl.useProgram(program); 
+	glUseProgram(program); 
 
-	var uModelviewprojection = gl.getUniformLocation(program, "uModelviewprojection"); 
-	var uTexture   = gl.getUniformLocation(program, "uTexture"); 	
+	var uModelviewprojection = glGetUniformLocation(program, "uModelviewprojection"); 
+	var uTexture   = glGetUniformLocation(program, "uTexture"); 	
 
-	var aVertex    = gl.getAttribLocation(program, "aVertex"); 
-	var aTextureuv = gl.getAttribLocation(program, "aTextureuv"); 
+	var aVertex    = glGetAttribLocation(program, "aVertex"); 
+	var aTextureuv = glGetAttribLocation(program, "aTextureuv"); 
 
 	var modelviewprojection = tmpmatrix; 
 
-	gl.bindBuffer(GL_ARRAY_BUFFER, goalBuffer); 
+	glBindBuffer(GL_ARRAY_BUFFER, goalBuffer); 
 
-	gl.vertexAttribPointer(aVertex, 4, GL_FLOAT, false, goal.stride, goal.voffset); 
-	gl.enableVertexAttribArray(aVertex); 
+	glVertexAttribPointer(aVertex, 4, GL_FLOAT, false, goal.stride, goal.voffset); 
+	glEnableVertexAttribArray(aVertex); 
 
 	if(aTextureuv !== -1) {
-		gl.vertexAttribPointer(aTextureuv, 4, GL_FLOAT, false, goal.stride, goal.toffset); 
-		gl.enableVertexAttribArray(aTextureuv); 
+		glVertexAttribPointer(aTextureuv, 4, GL_FLOAT, false, goal.stride, goal.toffset); 
+		glEnableVertexAttribArray(aTextureuv); 
 	}
 
 	if(uTexture) {
-		gl.bindTexture(GL_TEXTURE_2D, cubetex); 
-		gl.uniform1i(uTexture, 0); 
+		glBindTexture(GL_TEXTURE_2D, cubetex); 
+		glUniform1i(uTexture, 0); 
 	}
 
 	mat4multiply(projection, camera, modelviewprojection); 
 	mat4translate(modelviewprojection, goalpos); 
 
-	gl.uniformMatrix4fv(uModelviewprojection, false, modelviewprojection); 
+	glUniformMatrix4fv(uModelviewprojection, false, modelviewprojection); 
 
-	gl.drawArrays(GL_TRIANGLES, 0, goal.numVertices); 
+	glDrawArrays(GL_TRIANGLES, 0, goal.numVertices); 
 }
 
 function drawSky(program) {
-	gl.useProgram(program); 
+	glUseProgram(program); 
 
-	var uModelviewprojection = gl.getUniformLocation(program, "uModelviewprojection"); 
-	var uTexture   = gl.getUniformLocation(program, "uTexture"); 	
-	var aVertex    = gl.getAttribLocation(program, "aVertex"); 
-	var aTextureuv = gl.getAttribLocation(program, "aTextureuv"); 
+	var uModelviewprojection = glGetUniformLocation(program, "uModelviewprojection"); 
+	var uTexture   = glGetUniformLocation(program, "uTexture"); 	
+	var aVertex    = glGetAttribLocation(program, "aVertex"); 
+	var aTextureuv = glGetAttribLocation(program, "aTextureuv"); 
 
 	var modelviewprojection = tmpmatrix; 
 	
@@ -348,69 +338,69 @@ function drawSky(program) {
 	assert(aTextureuv !== -1); 
 	assert(aVertex    !== -1); 
 
-	gl.bindBuffer(GL_ARRAY_BUFFER, skyBuffer); 
+	glBindBuffer(GL_ARRAY_BUFFER, skyBuffer); 
 
-	gl.vertexAttribPointer(aVertex, 4, GL_FLOAT, false, sky.stride, sky.voffset); 
-	gl.enableVertexAttribArray(aVertex); 
+	glVertexAttribPointer(aVertex, 4, GL_FLOAT, false, sky.stride, sky.voffset); 
+	glEnableVertexAttribArray(aVertex); 
 
-	gl.vertexAttribPointer(aTextureuv, 4, GL_FLOAT, false, sky.stride, sky.toffset); 
-	gl.enableVertexAttribArray(aTextureuv); 
+	glVertexAttribPointer(aTextureuv, 4, GL_FLOAT, false, sky.stride, sky.toffset); 
+	glEnableVertexAttribArray(aTextureuv); 
 
-	gl.bindTexture(GL_TEXTURE_2D, skytex); 
-	gl.uniform1i(uTexture, 0); 
+	glBindTexture(GL_TEXTURE_2D, skytex); 
+	glUniform1i(uTexture, 0); 
 
 	mat4multiply(projection, camera, modelviewprojection); 
 	mat4translate(modelviewprojection, cameraDir); 
 	mat4translate(modelviewprojection, cameraPos); 
 
-	gl.uniformMatrix4fv(uModelviewprojection, false, modelviewprojection); 
+	glUniformMatrix4fv(uModelviewprojection, false, modelviewprojection); 
 
-	gl.drawArrays(GL_TRIANGLES, 0, sky.numVertices); 
+	glDrawArrays(GL_TRIANGLES, 0, sky.numVertices); 
 }
 
 function drawPath(program, path) {
-	gl.useProgram(program); 
+	glUseProgram(program); 
 
-	var aVertex = gl.getAttribLocation(program, "aVertex"); 
-	var uModelviewprojection = gl.getUniformLocation(program, "uModelviewprojection"); 
+	var aVertex = glGetAttribLocation(program, "aVertex"); 
+	var uModelviewprojection = glGetUniformLocation(program, "uModelviewprojection"); 
 	var modelviewprojection = tmpmatrix; 
 	
 	assert(aVertex    !== -1); 
 	assert(uModelviewprojection !== -1); 
 
-	gl.bindBuffer(GL_ARRAY_BUFFER, pathBuffer); 
+	glBindBuffer(GL_ARRAY_BUFFER, pathBuffer); 
 
-	gl.vertexAttribPointer(aVertex, 3, GL_FLOAT, false, 0, 0); 
-	gl.enableVertexAttribArray(aVertex); 
+	glVertexAttribPointer(aVertex, 3, GL_FLOAT, false, 0, 0); 
+	glEnableVertexAttribArray(aVertex); 
 
 
 	mat4multiply(projection, camera, modelviewprojection); 
 	//mat4translate(modelviewprojection, object.vector); 
 
-	gl.uniformMatrix4fv(uModelviewprojection, false, modelviewprojection); 
+	glUniformMatrix4fv(uModelviewprojection, false, modelviewprojection); 
 	
 	for(var i = 0; i !== map.path.length - 1; i++) { 
-		gl.drawArrays(GL_LINES, i, 2); 
+		glDrawArrays(GL_LINES, i, 2); 
 	}
 }
 
 function setCanvasForTexture(canvas, text) {
-	gl.bindTexture(gl.TEXTURE_2D, text);
-	gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
-	gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, canvas);
+	glBindTexture(GL_TEXTURE_2D, text);
+	glPixelStorei(GL_UNPACK_FLIP_Y_WEBGL, true);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, canvas);
 
-	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 }
 
 function createTexture(img) {
 	assert(img); 
 
-	var tex = gl.createTexture(); 
+	var tex = glCreateTexture(); 
 
 	setCanvasForTexture(img, tex); 
 
-	gl.bindTexture(GL_TEXTURE_2D, null); 		
+	glBindTexture(GL_TEXTURE_2D, null); 		
 	return tex; 
 }
 

@@ -13,6 +13,8 @@ try {
 #ifndef RELEASE 
 }
 catch(e) {
-	alert(e.message || e); 
+	var m = e.message || e; 
+	document.body.innerHTML = m; 
+	alert(m); 
 }
 #endif 
