@@ -2832,7 +2832,7 @@ GLT.loadmanager.loadFiles({
   audio.src = SOUND.dataURI
  }
 });
-console.log("DEBUG (" + "src/main.js" + ":" + 522 + ")", "DEBUG Build:", "Sep 10 2012", "13:58:09" );
+console.log("DEBUG (" + "src/main.js" + ":" + 522 + ")", "DEBUG Build:", "Sep 10 2012", "14:07:27" );
 }
 catch(e) {
  var m = e.message || e;
