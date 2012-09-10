@@ -3,8 +3,8 @@
 #include <glt.requestgameframe.js>  
 #include <glt.loadmanager.js>  
 #include <glt.shader.js>  
-#include <hammer.js>  
 #include <jsfxr.js> 
+#include "input.js" 
 #include "debug.js" 
 #include "math.js" 
 #include "assert.js"
@@ -30,6 +30,8 @@ var funkycube = new Funkycube();
 
 var canvas = document.getElementsByTagName("canvas")[0]; 
 var gl = GLT.createContext(canvas); 
+
+var input = new Input(canvas); 
 
 var projection = mat4perspective(60, canvas.width / canvas.height, 0.1, 1000); 
 var cameraPos  = vec3create(); 
@@ -141,34 +143,6 @@ function setup() {
 	pathBuffer = gl.createBuffer(); 
 	gl.bindBuffer(GL_ARRAY_BUFFER, pathBuffer); 
 	gl.bufferData(GL_ARRAY_BUFFER, path, GL_STATIC_DRAW); 
-
-	var hammer = new Hammer(canvas); 
-	/*var events = ["ondragstart", "ondrag", "ondraged", "onswipe", "ontap", "ondoubletap", "onhold", "ontransformstart", "ontransform", "ontransformed"]; 
-
-	for(var i = 0; i != events.length; i++) { 
-		(function(eventname) { 
-			hammer[eventname] = function(ev) {
-				dlog(eventname, ev); 
-			}; 
-		}(events[i])); 
-	}*/
-	hammer.ontap = function(ev) {
-		tapped = true; 
-		tapEvent = ev; 
-		var x = ev.position[0].x; 
-		var y = canvas.height - ev.position[0].y; 
-		eventPosition.x = x; 		
-		eventPosition.y = y; 		
-	}; 
-
-	hammer.ondrag = function(ev) {
-		dragged = true; 
-		dragEvent = ev; 
-		var x = ev.position.x; 
-		var y = canvas.height - ev.position.y; 
-		eventPosition.x = x; 		
-		eventPosition.y = y; 		
-	};
 }
 
 function gameloop(info) {
@@ -218,31 +192,19 @@ var getClickDirection = (function() {
 }()); 
 
 function update(info) {
-	var r = 0; 
-	var g = 0; 
-	var b = 0; 
-	var a = 0; 
-	var side = 0; 
-	var selectedid = 0; 
-	var touchedTheSky = false; 
-	var touchedACube  = false; 
-
-	if(tapped) {
+	if(input.poke) {
 		var dir = getClickDirection(cameraPos);
 		sphere.tap(info, dir); 		
 	} 
 
-	if(dragged) {
-		var disx = dragEvent.distanceX * 2 * Math.PI / canvas.width / -20; 
-		var disy = dragEvent.distanceY * 2 * Math.PI / canvas.height / 20; 
+	if(input.drag) {
+		var disx = input.dragDirection.x * 2 * Math.PI / canvas.width; 
+		var disy = input.dragDirection.y * 2 * Math.PI / canvas.height; 
 		spinHorz(disx); 
 		spinVert(disy); 
 	}
 
-
-	tapped = false; 
-	dragged = false; 	
-
+	input.update(); 
 	sphere.tick(info); 
 }
 
@@ -454,6 +416,7 @@ function createTexture(img) {
 
 GLT.loadmanager.loadFiles({
 	"files" : ["cube.obj", "sphere.obj", "diffuse.shader", "cube.png", "skybox.obj", "border.shader", "goal.obj"], 
+	"update" : function(p,q) { dlog(p,q); }, 
 	"error" : function(file, err) {
 		derr(file, err); 
 	}, 

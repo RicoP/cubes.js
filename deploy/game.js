@@ -1,3 +1,8 @@
+
+
+
+
+try {
 var GL_DEPTH_BUFFER_BIT = 256;
 var GL_STENCIL_BUFFER_BIT = 1024;
 var GL_COLOR_BUFFER_BIT = 16384;
@@ -744,466 +749,6 @@ function compileProgram(gl, programsource) {
 GLT.shader = {};
 GLT.shader.compileProgram = compileProgram;
 }(GLT));
-function Hammer(element, options, undefined)
-{
-    var self = this;
-    var defaults = {
-        prevent_default : false,
-        css_hacks : true,
-        swipe : true,
-        swipe_time : 200,
-        swipe_min_distance : 20,
-        drag : true,
-        drag_vertical : true,
-        drag_horizontal : true,
-        drag_min_distance : 20,
-        transform : true,
-        scale_treshold : 0.1,
-        rotation_treshold : 15,
-        tap : true,
-        tap_double : true,
-        tap_max_interval : 300,
-        tap_max_distance : 10,
-        tap_double_distance: 20,
-        hold : true,
-        hold_timeout : 500
-    };
-    options = mergeObject(defaults, options);
-    (function() {
-        if(!options.css_hacks) {
-            return false;
-        }
-        var vendors = ['webkit','moz','ms','o',''];
-        var css_props = {
-            "userSelect": "none",
-            "touchCallout": "none",
-            "userDrag": "none",
-            "tapHighlightColor": "rgba(0,0,0,0)"
-        };
-        var prop = '';
-        for(var i = 0; i < vendors.length; i++) {
-            for(var p in css_props) {
-                prop = p;
-                if(vendors[i]) {
-                    prop = vendors[i] + prop.substring(0, 1).toUpperCase() + prop.substring(1);
-                }
-                element.style[ prop ] = css_props[p];
-            }
-        }
-    })();
-    var _distance = 0;
-    var _angle = 0;
-    var _direction = 0;
-    var _pos = { };
-    var _fingers = 0;
-    var _first = false;
-    var _gesture = null;
-    var _prev_gesture = null;
-    var _touch_start_time = null;
-    var _prev_tap_pos = {x: 0, y: 0};
-    var _prev_tap_end_time = null;
-    var _hold_timer = null;
-    var _offset = {};
-    var _mousedown = false;
-    var _event_start;
-    var _event_move;
-    var _event_end;
-    var _has_touch = ('ontouchstart' in window);
-    this.option = function(key, val) {
-        if(val != undefined) {
-            options[key] = val;
-        }
-        return options[key];
-    };
-    this.getDirectionFromAngle = function( angle )
-    {
-        var directions = {
-            down: angle >= 45 && angle < 135,
-            left: angle >= 135 || angle <= -135,
-            up: angle < -45 && angle > -135,
-            right: angle >= -45 && angle <= 45
-        };
-        var direction, key;
-        for(key in directions){
-            if(directions[key]){
-                direction = key;
-                break;
-            }
-        }
-        return direction;
-    };
-    function countFingers( event )
-    {
-        return event.touches ? event.touches.length : 1;
-    }
-    function getXYfromEvent( event )
-    {
-        event = event || window.event;
-        if(!_has_touch) {
-            var doc = document,
-                body = doc.body;
-            return [{
-                x: event.pageX || event.clientX + ( doc && doc.scrollLeft || body && body.scrollLeft || 0 ) - ( doc && doc.clientLeft || body && doc.clientLeft || 0 ),
-                y: event.pageY || event.clientY + ( doc && doc.scrollTop || body && body.scrollTop || 0 ) - ( doc && doc.clientTop || body && doc.clientTop || 0 )
-            }];
-        }
-        else {
-            var pos = [], src, touches = event.touches.length > 0 ? event.touches : event.changedTouches;
-            for(var t=0, len=touches.length; t<len; t++) {
-                src = touches[t];
-                pos.push({ x: src.pageX, y: src.pageY });
-            }
-            return pos;
-        }
-    }
-    function getAngle( pos1, pos2 )
-    {
-        return Math.atan2(pos2.y - pos1.y, pos2.x - pos1.x) * 180 / Math.PI;
-    }
-    function calculateScale(pos_start, pos_move)
-    {
-        if(pos_start.length == 2 && pos_move.length == 2) {
-            var x, y;
-            x = pos_start[0].x - pos_start[1].x;
-            y = pos_start[0].y - pos_start[1].y;
-            var start_distance = Math.sqrt((x*x) + (y*y));
-            x = pos_move[0].x - pos_move[1].x;
-            y = pos_move[0].y - pos_move[1].y;
-            var end_distance = Math.sqrt((x*x) + (y*y));
-            return end_distance / start_distance;
-        }
-        return 0;
-    }
-    function calculateRotation(pos_start, pos_move)
-    {
-        if(pos_start.length == 2 && pos_move.length == 2) {
-            var x, y;
-            x = pos_start[0].x - pos_start[1].x;
-            y = pos_start[0].y - pos_start[1].y;
-            var start_rotation = Math.atan2(y, x) * 180 / Math.PI;
-            x = pos_move[0].x - pos_move[1].x;
-            y = pos_move[0].y - pos_move[1].y;
-            var end_rotation = Math.atan2(y, x) * 180 / Math.PI;
-            return end_rotation - start_rotation;
-        }
-        return 0;
-    }
-    function triggerEvent( eventName, params )
-    {
-        params.touches = getXYfromEvent(params.originalEvent);
-        params.type = eventName;
-        if(isFunction(self["on"+ eventName])) {
-            self["on"+ eventName].call(self, params);
-        }
-    }
-    function cancelEvent(event)
-    {
-        event = event || window.event;
-        if(event.preventDefault){
-            event.preventDefault();
-            event.stopPropagation();
-        }else{
-            event.returnValue = false;
-            event.cancelBubble = true;
-        }
-    }
-    function reset()
-    {
-        _pos = {};
-        _first = false;
-        _fingers = 0;
-        _distance = 0;
-        _angle = 0;
-        _gesture = null;
-    }
-    var gestures = {
-        hold : function(event)
-        {
-            if(options.hold) {
-                _gesture = 'hold';
-                clearTimeout(_hold_timer);
-                _hold_timer = setTimeout(function() {
-                    if(_gesture == 'hold') {
-                        triggerEvent("hold", {
-                            originalEvent : event,
-                            position : _pos.start
-                        });
-                    }
-                }, options.hold_timeout);
-            }
-        },
-        swipe : function(event)
-        {
-            if(!_pos.move) {
-                return;
-            }
-            var _distance_x = _pos.move[0].x - _pos.start[0].x;
-            var _distance_y = _pos.move[0].y - _pos.start[0].y;
-            _distance = Math.sqrt(_distance_x*_distance_x + _distance_y*_distance_y);
-            var now = new Date().getTime();
-            var touch_time = now - _touch_start_time;
-            if(options.swipe && (options.swipe_time > touch_time) && (_distance > options.swipe_min_distance)) {
-                _angle = getAngle(_pos.start[0], _pos.move[0]);
-                _direction = self.getDirectionFromAngle(_angle);
-                _gesture = 'swipe';
-                var position = { x: _pos.move[0].x - _offset.left,
-                    y: _pos.move[0].y - _offset.top };
-                var event_obj = {
-                    originalEvent : event,
-                    position : position,
-                    direction : _direction,
-                    distance : _distance,
-                    distanceX : _distance_x,
-                    distanceY : _distance_y,
-                    angle : _angle
-                };
-                triggerEvent("swipe", event_obj);
-            }
-        },
-        drag : function(event)
-        {
-            var _distance_x = _pos.move[0].x - _pos.start[0].x;
-            var _distance_y = _pos.move[0].y - _pos.start[0].y;
-            _distance = Math.sqrt(_distance_x * _distance_x + _distance_y * _distance_y);
-            if(options.drag && (_distance > options.drag_min_distance) || _gesture == 'drag') {
-                _angle = getAngle(_pos.start[0], _pos.move[0]);
-                _direction = self.getDirectionFromAngle(_angle);
-                var is_vertical = (_direction == 'up' || _direction == 'down');
-                if(((is_vertical && !options.drag_vertical) || (!is_vertical && !options.drag_horizontal))
-                    && (_distance > options.drag_min_distance)) {
-                    return;
-                }
-                _gesture = 'drag';
-                var position = { x: _pos.move[0].x - _offset.left,
-                    y: _pos.move[0].y - _offset.top };
-                var event_obj = {
-                    originalEvent : event,
-                    position : position,
-                    direction : _direction,
-                    distance : _distance,
-                    distanceX : _distance_x,
-                    distanceY : _distance_y,
-                    angle : _angle
-                };
-                if(_first) {
-                    triggerEvent("dragstart", event_obj);
-                    _first = false;
-                }
-                triggerEvent("drag", event_obj);
-                cancelEvent(event);
-            }
-        },
-        transform : function(event)
-        {
-            if(options.transform) {
-                if(countFingers(event) != 2) {
-                    return false;
-                }
-                var rotation = calculateRotation(_pos.start, _pos.move);
-                var scale = calculateScale(_pos.start, _pos.move);
-                if(_gesture != 'drag' &&
-                    (_gesture == 'transform' || Math.abs(1-scale) > options.scale_treshold || Math.abs(rotation) > options.rotation_treshold)) {
-                    _gesture = 'transform';
-                    _pos.center = { x: ((_pos.move[0].x + _pos.move[1].x) / 2) - _offset.left,
-                        y: ((_pos.move[0].y + _pos.move[1].y) / 2) - _offset.top };
-                    var event_obj = {
-                        originalEvent : event,
-                        position : _pos.center,
-                        scale : scale,
-                        rotation : rotation
-                    };
-                    if(_first) {
-                        triggerEvent("transformstart", event_obj);
-                        _first = false;
-                    }
-                    triggerEvent("transform", event_obj);
-                    cancelEvent(event);
-                    return true;
-                }
-            }
-            return false;
-        },
-        tap : function(event)
-        {
-            var now = new Date().getTime();
-            var touch_time = now - _touch_start_time;
-            if(options.hold && !(options.hold && options.hold_timeout > touch_time)) {
-                return;
-            }
-            var is_double_tap = (function(){
-                if (_prev_tap_pos &&
-                    options.tap_double &&
-                    _prev_gesture == 'tap' &&
-                    (_touch_start_time - _prev_tap_end_time) < options.tap_max_interval)
-                {
-                    var x_distance = Math.abs(_prev_tap_pos[0].x - _pos.start[0].x);
-                    var y_distance = Math.abs(_prev_tap_pos[0].y - _pos.start[0].y);
-                    return (_prev_tap_pos && _pos.start && Math.max(x_distance, y_distance) < options.tap_double_distance);
-                }
-                return false;
-            })();
-            if(is_double_tap) {
-                _gesture = 'double_tap';
-                _prev_tap_end_time = null;
-                triggerEvent("doubletap", {
-                    originalEvent : event,
-                    position : _pos.start
-                });
-                cancelEvent(event);
-            }
-            else {
-                var x_distance = (_pos.move) ? Math.abs(_pos.move[0].x - _pos.start[0].x) : 0;
-                var y_distance = (_pos.move) ? Math.abs(_pos.move[0].y - _pos.start[0].y) : 0;
-                _distance = Math.max(x_distance, y_distance);
-                if(_distance < options.tap_max_distance) {
-                    _gesture = 'tap';
-                    _prev_tap_end_time = now;
-                    _prev_tap_pos = _pos.start;
-                    if(options.tap) {
-                        triggerEvent("tap", {
-                            originalEvent : event,
-                            position : _pos.start
-                        });
-                        cancelEvent(event);
-                    }
-                }
-            }
-        }
-    };
-    function handleEvents(event)
-    {
-        switch(event.type)
-        {
-            case 'mousedown':
-            case 'touchstart':
-                _pos.start = getXYfromEvent(event);
-                _touch_start_time = new Date().getTime();
-                _fingers = countFingers(event);
-                _first = true;
-                _event_start = event;
-                var box = element.getBoundingClientRect();
-                var clientTop = element.clientTop || document.body.clientTop || 0;
-                var clientLeft = element.clientLeft || document.body.clientLeft || 0;
-                var scrollTop = window.pageYOffset || element.scrollTop || document.body.scrollTop;
-                var scrollLeft = window.pageXOffset || element.scrollLeft || document.body.scrollLeft;
-                _offset = {
-                    top: box.top + scrollTop - clientTop,
-                    left: box.left + scrollLeft - clientLeft
-                };
-                _mousedown = true;
-                gestures.hold(event);
-                if(options.prevent_default) {
-                    cancelEvent(event);
-                }
-                break;
-            case 'mousemove':
-            case 'touchmove':
-                if(!_mousedown) {
-                    return false;
-                }
-                _event_move = event;
-                _pos.move = getXYfromEvent(event);
-                if(!gestures.transform(event)) {
-                    gestures.drag(event);
-                }
-                break;
-            case 'mouseup':
-            case 'mouseout':
-            case 'touchcancel':
-            case 'touchend':
-                if(!_mousedown || (_gesture != 'transform' && event.touches && event.touches.length > 0)) {
-                    return false;
-                }
-                _mousedown = false;
-                _event_end = event;
-                var dragging = _gesture == 'drag';
-                gestures.swipe(event);
-                if(dragging) {
-                    triggerEvent("dragend", {
-                        originalEvent : event,
-                        direction : _direction,
-                        distance : _distance,
-                        angle : _angle
-                    });
-                }
-                else if(_gesture == 'transform') {
-                    triggerEvent("transformend", {
-                        originalEvent : event,
-                        position : _pos.center,
-                        scale : calculateScale(_pos.start, _pos.move),
-                        rotation : calculateRotation(_pos.start, _pos.move)
-                    });
-                }
-                else {
-                    gestures.tap(_event_start);
-                }
-                _prev_gesture = _gesture;
-                triggerEvent("release", {
-                    originalEvent : event,
-                    gesture : _gesture
-                });
-                reset();
-                break;
-        }
-    }
-    if(_has_touch) {
-        addEvent(element, "touchstart touchmove touchend touchcancel", handleEvents);
-    }
-    else {
-        addEvent(element, "mouseup mousedown mousemove", handleEvents);
-        addEvent(element, "mouseout", function(event) {
-            if(!isInsideHammer(element, event.relatedTarget)) {
-                handleEvents(event);
-            }
-        });
-    }
-    function isInsideHammer(parent, child) {
-        if(!child && window.event && window.event.toElement){
-            child = window.event.toElement;
-        }
-        if(parent === child){
-            return true;
-        }
-        if(child){
-            var node = child.parentNode;
-            while(node !== null){
-                if(node === parent){
-                    return true;
-                };
-                node = node.parentNode;
-            }
-        }
-        return false;
-    }
-    function mergeObject(obj1, obj2) {
-        var output = {};
-        if(!obj2) {
-            return obj1;
-        }
-        for (var prop in obj1) {
-            if (prop in obj2) {
-                output[prop] = obj2[prop];
-            } else {
-                output[prop] = obj1[prop];
-            }
-        }
-        return output;
-    }
-    function isFunction( obj ){
-        return Object.prototype.toString.call( obj ) == "[object Function]";
-    }
-    function addEvent(element, types, callback) {
-        types = types.split(" ");
-        for(var t= 0,len=types.length; t<len; t++) {
-            if(element.addEventListener){
-                element.addEventListener(types[t], callback, false);
-            }
-            else if(document.attachEvent){
-                element.attachEvent("on"+ types[t], callback);
-            }
-        }
-    }
-}
 var Sfxr = (function() {
  var exports = {};
  function require() { return exports; };
@@ -2099,6 +1644,111 @@ if (typeof exports !== 'undefined') {
  }();
  return exports;
 }());
+ function __error(message, file, line) {
+  throw new Error(message + "(" + file + ":" + line + ")");
+ }
+var Input = function(canvas) {
+ "use strict";
+ do { if(!(canvas)) { __error("assertion failed: " + "canvas" + " = " + (canvas), "src/input.js", 14); } } while(false);
+ var that = this;
+ function press() {
+  switch(state) {
+   case 0:
+   state = 1;
+   break;
+   case 1:
+   break;
+   case 2:
+   that.poke = false;
+   state = 0;
+   break;
+   case 3:
+   break;
+   default:
+   do { if(!(false && "unknow state " + state)) { __error("assertion failed: " + "false && \"unknow state \" + state" + " = " + (false && "unknow state " + state), "src/input.js", 36); } } while(false);
+  }
+ }
+ function up() {
+  switch(state) {
+   case 0:
+   break;
+   case 1:
+   that.poke = true;
+   state = 2;
+   break;
+   case 2:
+   case 3:
+   that.drag = that.poke = false;
+   state = 0;
+   break;
+   default:
+   do { if(!(false && "unknow state " + state)) { __error("assertion failed: " + "false && \"unknow state \" + state" + " = " + (false && "unknow state " + state), "src/input.js", 57); } } while(false);
+  }
+ }
+ function tick() {
+  switch(state) {
+   case 0:
+   break;
+   case 1:
+   break;
+   case 2:
+   that.poke = false;
+   state = 0;
+   break;
+   case 3:
+   break;
+   default:
+   do { if(!(false && "unknow state " + state)) { __error("assertion failed: " + "false && \"unknow state \" + state" + " = " + (false && "unknow state " + state), "src/input.js", 78); } } while(false);
+  }
+ }
+ function move() {
+  switch(state) {
+   case 0:
+   break;
+   case 1:
+   var divx = lastmousex - mousex;
+   var divy = lastmousey - mousey;
+   if(Math.sqrt(divx*divx + divy*divy) > 5) {
+    that.dragDirection.x = divx;
+    that.dragDirection.y = divy;
+    that.drag = true;
+    state = 3;
+   }
+   break;
+   case 2:
+   that.poke = false;
+   state = 0;
+   break;
+   case 3:
+    var divx = lastmousex - mousex;
+    var divy = lastmousey - mousey;
+    that.dragDirection.x = divx;
+    that.dragDirection.y = divy;
+   break;
+   default:
+   do { if(!(false && "unknow state " + state)) { __error("assertion failed: " + "false && \"unknow state \" + state" + " = " + (false && "unknow state " + state), "src/input.js", 112); } } while(false);
+  }
+ }
+ var state = 0;
+ var mousedown = false;
+ var lastmousex = 0;
+ var lastmousey = 0;
+ var mousex = 0;
+ var mousey = 0;
+ canvas.onmousedown = press;
+ canvas.onmouseup = canvas.onmouseout = window.onblur = up;
+ canvas.onmousemove = function(ev) {
+  lastmousex = mousex;
+  lastmousey = mousey;
+  mousex = ev.x;
+  mousey = ev.y;
+  move();
+ }
+ that.update = tick;
+ that.drag = false;
+ that.poke = false;
+ that.dragDirection = {x:0,y:0};
+};
 var MatrixArray = Float32Array;
 function mat4create(mat) {
  var dest = new MatrixArray(16);
@@ -2417,9 +2067,6 @@ function quat4fromAngleAxis(angle, axis, dest) {
         dest[2] = s * axis[2];
         return dest;
     };
- function __error(message, file, line) {
-  throw new Error(message + "(" + file + ":" + line + ")");
- }
 function Random(x) {
  "use strict";
  do { if(!(x === (x|0))) { __error("assertion failed: " + "x === (x|0)" + " = " + (x === (x|0)), "src/random.js", 9); } } while(false);
@@ -2787,6 +2434,7 @@ var map;
 var funkycube = new Funkycube();
 var canvas = document.getElementsByTagName("canvas")[0];
 var gl = GLT.createContext(canvas);
+var input = new Input(canvas);
 var projection = mat4perspective(60, canvas.width / canvas.height, 0.1, 1000);
 var cameraPos = vec3create();
 var cameraDir = vec3create();
@@ -2875,23 +2523,6 @@ function setup() {
  pathBuffer = gl.createBuffer();
  gl.bindBuffer(GL_ARRAY_BUFFER, pathBuffer);
  gl.bufferData(GL_ARRAY_BUFFER, path, GL_STATIC_DRAW);
- var hammer = new Hammer(canvas);
- hammer.ontap = function(ev) {
-  tapped = true;
-  tapEvent = ev;
-  var x = ev.position[0].x;
-  var y = canvas.height - ev.position[0].y;
-  eventPosition.x = x;
-  eventPosition.y = y;
- };
- hammer.ondrag = function(ev) {
-  dragged = true;
-  dragEvent = ev;
-  var x = ev.position.x;
-  var y = canvas.height - ev.position.y;
-  eventPosition.x = x;
-  eventPosition.y = y;
- };
 }
 function gameloop(info) {
  update(info);
@@ -2930,26 +2561,17 @@ var getClickDirection = (function() {
  };
 }());
 function update(info) {
- var r = 0;
- var g = 0;
- var b = 0;
- var a = 0;
- var side = 0;
- var selectedid = 0;
- var touchedTheSky = false;
- var touchedACube = false;
- if(tapped) {
+ if(input.poke) {
   var dir = getClickDirection(cameraPos);
   sphere.tap(info, dir);
  }
- if(dragged) {
-  var disx = dragEvent.distanceX * 2 * Math.PI / canvas.width / -20;
-  var disy = dragEvent.distanceY * 2 * Math.PI / canvas.height / 20;
+ if(input.drag) {
+  var disx = input.dragDirection.x * 2 * Math.PI / canvas.width;
+  var disy = input.dragDirection.y * 2 * Math.PI / canvas.height;
   spinHorz(disx);
   spinVert(disy);
  }
- tapped = false;
- dragged = false;
+ input.update();
  sphere.tick(info);
 }
 function draw(info) {
@@ -3046,10 +2668,10 @@ function drawSky(program) {
  var aVertex = gl.getAttribLocation(program, "aVertex");
  var aTextureuv = gl.getAttribLocation(program, "aTextureuv");
  var modelviewprojection = tmpmatrix;
- do { if(!(uModelviewprojection)) { __error("assertion failed: " + "uModelviewprojection" + " = " + (uModelviewprojection), "src/main.js", 384); } } while(false);
- do { if(!(uTexture)) { __error("assertion failed: " + "uTexture" + " = " + (uTexture), "src/main.js", 385); } } while(false);
- do { if(!(aTextureuv !== -1)) { __error("assertion failed: " + "aTextureuv !== -1" + " = " + (aTextureuv !== -1), "src/main.js", 386); } } while(false);
- do { if(!(aVertex !== -1)) { __error("assertion failed: " + "aVertex !== -1" + " = " + (aVertex !== -1), "src/main.js", 387); } } while(false);
+ do { if(!(uModelviewprojection)) { __error("assertion failed: " + "uModelviewprojection" + " = " + (uModelviewprojection), "src/main.js", 346); } } while(false);
+ do { if(!(uTexture)) { __error("assertion failed: " + "uTexture" + " = " + (uTexture), "src/main.js", 347); } } while(false);
+ do { if(!(aTextureuv !== -1)) { __error("assertion failed: " + "aTextureuv !== -1" + " = " + (aTextureuv !== -1), "src/main.js", 348); } } while(false);
+ do { if(!(aVertex !== -1)) { __error("assertion failed: " + "aVertex !== -1" + " = " + (aVertex !== -1), "src/main.js", 349); } } while(false);
  gl.bindBuffer(GL_ARRAY_BUFFER, skyBuffer);
  gl.vertexAttribPointer(aVertex, 4, GL_FLOAT, false, sky.stride, sky.voffset);
  gl.enableVertexAttribArray(aVertex);
@@ -3068,8 +2690,8 @@ function drawPath(program, path) {
  var aVertex = gl.getAttribLocation(program, "aVertex");
  var uModelviewprojection = gl.getUniformLocation(program, "uModelviewprojection");
  var modelviewprojection = tmpmatrix;
- do { if(!(aVertex !== -1)) { __error("assertion failed: " + "aVertex !== -1" + " = " + (aVertex !== -1), "src/main.js", 416); } } while(false);
- do { if(!(uModelviewprojection !== -1)) { __error("assertion failed: " + "uModelviewprojection !== -1" + " = " + (uModelviewprojection !== -1), "src/main.js", 417); } } while(false);
+ do { if(!(aVertex !== -1)) { __error("assertion failed: " + "aVertex !== -1" + " = " + (aVertex !== -1), "src/main.js", 378); } } while(false);
+ do { if(!(uModelviewprojection !== -1)) { __error("assertion failed: " + "uModelviewprojection !== -1" + " = " + (uModelviewprojection !== -1), "src/main.js", 379); } } while(false);
  gl.bindBuffer(GL_ARRAY_BUFFER, pathBuffer);
  gl.vertexAttribPointer(aVertex, 3, GL_FLOAT, false, 0, 0);
  gl.enableVertexAttribArray(aVertex);
@@ -3087,7 +2709,7 @@ function setCanvasForTexture(canvas, text) {
  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
 }
 function createTexture(img) {
- do { if(!(img)) { __error("assertion failed: " + "img" + " = " + (img), "src/main.js", 445); } } while(false);
+ do { if(!(img)) { __error("assertion failed: " + "img" + " = " + (img), "src/main.js", 407); } } while(false);
  var tex = gl.createTexture();
  setCanvasForTexture(img, tex);
  gl.bindTexture(GL_TEXTURE_2D, null);
@@ -3095,8 +2717,9 @@ function createTexture(img) {
 }
 GLT.loadmanager.loadFiles({
  "files" : ["cube.obj", "sphere.obj", "diffuse.shader", "cube.png", "skybox.obj", "border.shader", "goal.obj"],
+ "update" : function(p,q) { console.log("DEBUG (" + "src/main.js" + ":" + 419 + ")", p,q ); },
  "error" : function(file, err) {
-  console.error("ERROR (" + "src/main.js" + ":" + 458 + ")", file, err );
+  console.error("ERROR (" + "src/main.js" + ":" + 421 + ")", file, err );
  },
  "finished" : function(files) {
   cube = files["cube.obj"];
@@ -3145,7 +2768,7 @@ GLT.loadmanager.loadFiles({
    setCanvasForTexture(funkycube.canvas, skytex);
   }, 100);
   var seed = (0xFFFF * Math.random()) & 0xFFFF;
-  console.log("DEBUG (" + "src/main.js" + ":" + 517 + ")", "SEED", seed );
+  console.log("DEBUG (" + "src/main.js" + ":" + 480 + ")", "SEED", seed );
   map = MapCreate(seed);
   for(var x = 0; x !== 16; x++)
    for(var y = 0; y !== 16; y++)
@@ -3180,4 +2803,8 @@ GLT.loadmanager.loadFiles({
   audio.src = SOUND.dataURI
  }
 });
-console.log("DEBUG (" + "src/main.js" + ":" + 569 + ")", "DEBUG Build:", "Sep  9 2012", "19:05:07" );
+console.log("DEBUG (" + "src/main.js" + ":" + 532 + ")", "DEBUG Build:", "Sep 10 2012", "12:39:42" );
+}
+catch(e) {
+ alert(e.message || e);
+}
