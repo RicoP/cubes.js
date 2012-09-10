@@ -9,7 +9,8 @@ function Random(x) {
 	assert(x === (x|0));
 
 	var MAX = 0xFFFF; 
-	var Q = new Uint32Array(4096); 
+	var IntArray = Uint32Array || Array; 
+	var Q = new IntArray(4096); 
 	var c = 362436; 
 	var PHI = 0x9e3779b9; 
 

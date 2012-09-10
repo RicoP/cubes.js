@@ -35,11 +35,12 @@ var gl = GLT.createContext(canvas);
 
 var input = new Input(canvas); 
 
-var projection = mat4perspective(60, canvas.width / canvas.height, 0.1, 1000); 
+var projection = mat4perspective(75, canvas.width / canvas.height, 0.1, 1000); 
 var cameraPos  = vec3create(); 
 var cameraDir  = vec3create(); 
 var cameraUp   = vec3create([0,1,0]); 
 var camera     = mat4identity();  
+var cameraScale = 10; 
 
 var tmpmatrix = mat4create();  
 
@@ -76,7 +77,10 @@ var eventPosition = { x : 0, y : 0 };
 
 function recalcCamera() {
 	var cameraWorldPos = tmpmatrix; 
-	vec3add(cameraDir, cameraPos, cameraWorldPos); 
+	vec3set(cameraPos, cameraWorldPos); 
+	vec3scale(cameraWorldPos, cameraScale); 
+	vec3add(cameraWorldPos, cameraDir); 
+
 	mat4lookAt(cameraWorldPos, cameraDir, cameraUp, camera); 
 }
 
@@ -349,9 +353,12 @@ function drawSky(program) {
 	glBindTexture(GL_TEXTURE_2D, skytex); 
 	glUniform1i(uTexture, 0); 
 
+	var camPos = vec3create(cameraPos); 	
+	vec3scale(camPos, cameraScale); 
+
 	mat4multiply(projection, camera, modelviewprojection); 
 	mat4translate(modelviewprojection, cameraDir); 
-	mat4translate(modelviewprojection, cameraPos); 
+	mat4translate(modelviewprojection, camPos); 
 
 	glUniformMatrix4fv(uModelviewprojection, false, modelviewprojection); 
 
@@ -405,7 +412,7 @@ function createTexture(img) {
 }
 
 GLT.loadmanager.loadFiles({
-	"files" : ["cube.obj", "sphere.obj", "diffuse.shader", "cube.png", "skybox.obj", "border.shader", "goal.obj"], 
+	"files" : ["cube.obj", "sphere.obj", "diffuse.shader", "faces.png", "skybox.obj", "border.shader", "goal.obj"], 
 	"update" : function(p,q) { dlog(p,q); }, 
 	"error" : function(file, err) {
 		derr(file, err); 
@@ -417,7 +424,7 @@ GLT.loadmanager.loadFiles({
 		goal = files["goal.obj"]; 
 		program = GLT.shader.compileProgram(gl,files["diffuse.shader"]);
 		borderprogram = GLT.shader.compileProgram(gl,files["border.shader"]);
-		cubetex = createTexture(files["cube.png"]);
+		cubetex = createTexture(files["faces.png"]);
 		skytex = createTexture( funkycube.canvas );
 
 		var MAX = 10; 
@@ -493,7 +500,7 @@ GLT.loadmanager.loadFiles({
 		vec3set(cameraDir, cameraPos); 
 		cameraPos[0] = 0; 	
 		cameraPos[1] = 0;  	
-		cameraPos[2] = 20; 	
+		cameraPos[2] = 1; 	
 
 		setup(); 
 		recalcCamera(); 

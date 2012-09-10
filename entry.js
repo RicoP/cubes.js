@@ -1,5 +1,5 @@
 #ifdef RELEASE 
-!function(document, window) { 
+!function(document, window, Float32Array, Uint32Array, Uint8Array) { 
 #endif
 #ifndef RELEASE
 try { 
@@ -8,7 +8,7 @@ try {
 #include "src/main.js"
 
 #ifdef RELEASE 
-}(document, this); 
+}(document, this, Float32Array || Array, Uint32Array || Array, Uint8Array || Array); 
 #endif 
 #ifndef RELEASE 
 }
