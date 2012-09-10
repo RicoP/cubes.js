@@ -2188,6 +2188,7 @@ var glUniformMatrix4fv = gl.uniformMatrix4fv.bind(gl);
 var glUseProgram = gl.useProgram.bind(gl);
 var glVertexAttribPointer = gl.vertexAttribPointer.bind(gl);
 var glViewport = gl.viewport.bind(gl);
+var glUniform2f = gl.uniform2f.bind(gl);
 var input = new Input(canvas);
 var projection = mat4perspective(75, canvas.width / canvas.height, 0.1, 1000);
 var cameraPos = vec3create();
@@ -2195,7 +2196,15 @@ var cameraDir = vec3create();
 var cameraUp = vec3create([0,1,0]);
 var camera = mat4identity();
 var cameraScale = 10;
+canvas.onmousewheel = function(ev) {
+ var d = ev.wheelDelta;
+ if(d>0) cameraScale -= 0.5;
+ if(d<0) cameraScale += 0.5;
+ cameraScale = Math.min(20, Math.max(10, cameraScale));
+ recalcCamera();
+};
 var tmpmatrix = mat4create();
+var tmpvector = vec3create();
 var cubetex = null;
 var skytex = null;
 var asisX = vec3create([1,0,0]);
@@ -2336,6 +2345,7 @@ function drawCubes(program) {
  glUseProgram(program);
  var uModelviewprojection = glGetUniformLocation(program, "uModelviewprojection");
  var uTexture = glGetUniformLocation(program, "uTexture");
+ var uTextureOffset = glGetUniformLocation(program, "uTextureOffset");
  var aVertex = glGetAttribLocation(program, "aVertex");
  var aTextureuv = glGetAttribLocation(program, "aTextureuv");
  var aNormal = glGetAttribLocation(program, "aNormal");
@@ -2357,6 +2367,9 @@ function drawCubes(program) {
  }
  for(var i = 0; i != cubelist.length; i++) {
   var object = cubelist[i];
+  if(uTextureOffset) {
+   glUniform2f(uTextureOffset, 12/32, 12/32);
+  }
   mat4multiply(projection, camera, modelviewprojection);
   mat4translate(modelviewprojection, object.vector);
   glUniformMatrix4fv(uModelviewprojection, false, modelviewprojection);
@@ -2415,11 +2428,12 @@ function drawSky(program) {
  var uTexture = glGetUniformLocation(program, "uTexture");
  var aVertex = glGetAttribLocation(program, "aVertex");
  var aTextureuv = glGetAttribLocation(program, "aTextureuv");
+ var uTextureOffset = glGetUniformLocation(program, "uTextureOffset");
  var modelviewprojection = tmpmatrix;
- do { if(!(uModelviewprojection)) { __error("assertion failed: " + "uModelviewprojection" + " = " + (uModelviewprojection), "src/main.js", 340); } } while(false);
- do { if(!(uTexture)) { __error("assertion failed: " + "uTexture" + " = " + (uTexture), "src/main.js", 341); } } while(false);
- do { if(!(aTextureuv !== -1)) { __error("assertion failed: " + "aTextureuv !== -1" + " = " + (aTextureuv !== -1), "src/main.js", 342); } } while(false);
- do { if(!(aVertex !== -1)) { __error("assertion failed: " + "aVertex !== -1" + " = " + (aVertex !== -1), "src/main.js", 343); } } while(false);
+ do { if(!(uModelviewprojection)) { __error("assertion failed: " + "uModelviewprojection" + " = " + (uModelviewprojection), "src/main.js", 356); } } while(false);
+ do { if(!(uTexture)) { __error("assertion failed: " + "uTexture" + " = " + (uTexture), "src/main.js", 357); } } while(false);
+ do { if(!(aTextureuv !== -1)) { __error("assertion failed: " + "aTextureuv !== -1" + " = " + (aTextureuv !== -1), "src/main.js", 358); } } while(false);
+ do { if(!(aVertex !== -1)) { __error("assertion failed: " + "aVertex !== -1" + " = " + (aVertex !== -1), "src/main.js", 359); } } while(false);
  glBindBuffer(GL_ARRAY_BUFFER, skyBuffer);
  glVertexAttribPointer(aVertex, 4, GL_FLOAT, false, sky.stride, sky.voffset);
  glEnableVertexAttribArray(aVertex);
@@ -2427,12 +2441,13 @@ function drawSky(program) {
  glEnableVertexAttribArray(aTextureuv);
  glBindTexture(GL_TEXTURE_2D, skytex);
  glUniform1i(uTexture, 0);
- var camPos = vec3create(cameraPos);
+ var camPos = vec3set(cameraPos, tmpvector);
  vec3scale(camPos, cameraScale);
  mat4multiply(projection, camera, modelviewprojection);
  mat4translate(modelviewprojection, cameraDir);
  mat4translate(modelviewprojection, camPos);
  glUniformMatrix4fv(uModelviewprojection, false, modelviewprojection);
+ glUniform2f(uTextureOffset, 0,0);
  glDrawArrays(GL_TRIANGLES, 0, sky.numVertices);
 }
 function drawPath(program, path) {
@@ -2440,8 +2455,8 @@ function drawPath(program, path) {
  var aVertex = glGetAttribLocation(program, "aVertex");
  var uModelviewprojection = glGetUniformLocation(program, "uModelviewprojection");
  var modelviewprojection = tmpmatrix;
- do { if(!(aVertex !== -1)) { __error("assertion failed: " + "aVertex !== -1" + " = " + (aVertex !== -1), "src/main.js", 375); } } while(false);
- do { if(!(uModelviewprojection !== -1)) { __error("assertion failed: " + "uModelviewprojection !== -1" + " = " + (uModelviewprojection !== -1), "src/main.js", 376); } } while(false);
+ do { if(!(aVertex !== -1)) { __error("assertion failed: " + "aVertex !== -1" + " = " + (aVertex !== -1), "src/main.js", 392); } } while(false);
+ do { if(!(uModelviewprojection !== -1)) { __error("assertion failed: " + "uModelviewprojection !== -1" + " = " + (uModelviewprojection !== -1), "src/main.js", 393); } } while(false);
  glBindBuffer(GL_ARRAY_BUFFER, pathBuffer);
  glVertexAttribPointer(aVertex, 3, GL_FLOAT, false, 0, 0);
  glEnableVertexAttribArray(aVertex);
@@ -2459,7 +2474,7 @@ function setCanvasForTexture(canvas, text) {
  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 }
 function createTexture(img) {
- do { if(!(img)) { __error("assertion failed: " + "img" + " = " + (img), "src/main.js", 404); } } while(false);
+ do { if(!(img)) { __error("assertion failed: " + "img" + " = " + (img), "src/main.js", 421); } } while(false);
  var tex = glCreateTexture();
  setCanvasForTexture(img, tex);
  glBindTexture(GL_TEXTURE_2D, null);
@@ -2467,9 +2482,9 @@ function createTexture(img) {
 }
 GLT.loadmanager.loadFiles({
  "files" : ["cube.obj", "sphere.obj", "diffuse.shader", "faces.png", "skybox.obj", "border.shader", "goal.obj"],
- "update" : function(p,q) { console.log("DEBUG (" + "src/main.js" + ":" + 416 + ")", p,q ); },
+ "update" : function(p,q) { console.log("DEBUG (" + "src/main.js" + ":" + 433 + ")", p,q ); },
  "error" : function(file, err) {
-  console.error("ERROR (" + "src/main.js" + ":" + 418 + ")", file, err );
+  console.error("ERROR (" + "src/main.js" + ":" + 435 + ")", file, err );
  },
  "finished" : function(files) {
   cube = files["cube.obj"];
@@ -2518,7 +2533,7 @@ GLT.loadmanager.loadFiles({
    setCanvasForTexture(funkycube.canvas, skytex);
   }, 100);
   var seed = (0xFFFF * Math.random()) & 0xFFFF;
-  console.log("DEBUG (" + "src/main.js" + ":" + 477 + ")", "SEED", seed );
+  console.log("DEBUG (" + "src/main.js" + ":" + 494 + ")", "SEED", seed );
   map = MapCreate(seed);
   for(var x = 0; x !== 16; x++)
    for(var y = 0; y !== 16; y++)
@@ -2553,7 +2568,7 @@ GLT.loadmanager.loadFiles({
   audio.src = SOUND.dataURI
  }
 });
-console.log("DEBUG (" + "src/main.js" + ":" + 529 + ")", "DEBUG Build:", "Sep 10 2012", "15:42:38" );
+console.log("DEBUG (" + "src/main.js" + ":" + 546 + ")", "DEBUG Build:", "Sep 10 2012", "19:17:50" );
 }
 catch(e) {
  var m = e.message || e;

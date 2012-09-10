@@ -8,7 +8,7 @@
 
 function Cube(position) {	
 	this.position = position; 
-	this.face = CUBE_FACE_NEUTRAL; 
+	this.face = CUBE_FACE_NEUTRAL; 	
 }
 
 #endif 

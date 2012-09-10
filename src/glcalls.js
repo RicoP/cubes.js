@@ -28,3 +28,4 @@ var glUniformMatrix4fv = gl.uniformMatrix4fv.bind(gl);
 var glUseProgram = gl.useProgram.bind(gl);
 var glVertexAttribPointer = gl.vertexAttribPointer.bind(gl);
 var glViewport = gl.viewport.bind(gl);
+var glUniform2f = gl.uniform2f.bind(gl); 

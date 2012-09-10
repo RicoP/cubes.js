@@ -42,7 +42,16 @@ var cameraUp   = vec3create([0,1,0]);
 var camera     = mat4identity();  
 var cameraScale = 10; 
 
+canvas.onmousewheel = function(ev) {
+	var d = ev.wheelDelta; 
+	if(d>0) cameraScale -= 0.5; 
+	if(d<0) cameraScale += 0.5; 
+	cameraScale = Math.min(20, Math.max(10, cameraScale)); 
+	recalcCamera(); 
+};
+
 var tmpmatrix = mat4create();  
+var tmpvector = vec3create(); 
 
 var cubetex = null; 
 var skytex = null; 
@@ -220,6 +229,8 @@ function drawCubes(program) {
 
 	var uModelviewprojection = glGetUniformLocation(program, "uModelviewprojection"); 
 	var uTexture   = glGetUniformLocation(program, "uTexture"); 	
+	//uniform vec2 uTextureOffset; 
+	var uTextureOffset = glGetUniformLocation(program, "uTextureOffset"); 
 
 	var aVertex    = glGetAttribLocation(program, "aVertex"); 
 	var aTextureuv = glGetAttribLocation(program, "aTextureuv"); 
@@ -249,6 +260,10 @@ function drawCubes(program) {
 
 	for(var i = 0; i != cubelist.length; i++) { 
 		var object = cubelist[i]; 
+
+		if(uTextureOffset) {
+			glUniform2f(uTextureOffset, 12/32, 12/32); 
+		}
 
 		mat4multiply(projection, camera, modelviewprojection); 
 		mat4translate(modelviewprojection, object.vector); 
@@ -334,6 +349,7 @@ function drawSky(program) {
 	var uTexture   = glGetUniformLocation(program, "uTexture"); 	
 	var aVertex    = glGetAttribLocation(program, "aVertex"); 
 	var aTextureuv = glGetAttribLocation(program, "aTextureuv"); 
+	var uTextureOffset = glGetUniformLocation(program, "uTextureOffset"); 
 
 	var modelviewprojection = tmpmatrix; 
 	
@@ -353,7 +369,7 @@ function drawSky(program) {
 	glBindTexture(GL_TEXTURE_2D, skytex); 
 	glUniform1i(uTexture, 0); 
 
-	var camPos = vec3create(cameraPos); 	
+	var camPos = vec3set(cameraPos, tmpvector); 	
 	vec3scale(camPos, cameraScale); 
 
 	mat4multiply(projection, camera, modelviewprojection); 
@@ -361,6 +377,7 @@ function drawSky(program) {
 	mat4translate(modelviewprojection, camPos); 
 
 	glUniformMatrix4fv(uModelviewprojection, false, modelviewprojection); 
+	glUniform2f(uTextureOffset, 0,0); 
 
 	glDrawArrays(GL_TRIANGLES, 0, sky.numVertices); 
 }
