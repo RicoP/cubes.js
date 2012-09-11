@@ -1971,6 +1971,50 @@ function MapCreate(seed) {
  }
  return fill(seed);
 }
+var Directions = (function() {
+ var directions = [
+  vec3create([ 1, 0, 0]),
+  vec3create([-1, 0, 0]),
+  vec3create([ 0, 1, 0]),
+  vec3create([ 0,-1, 0]),
+  vec3create([ 0, 0, 1]),
+  vec3create([ 0, 0,-1])
+ ];
+ var zero = vec3create([0,0,0]);
+ function getVector(dir) {
+  do { if(!(dir >= -1 && dir <= 5)) { __error("assertion failed: " + "dir >= -1 && dir <= 5" + " = " + (dir >= -1 && dir <= 5), "src/directions.js", 28); } } while(false);
+  if(dir === -1) return zero;
+  return directions[dir];
+ }
+ function getOppositeDirection(dir) {
+  do { if(!(dir >= -1 && dir <= 5)) { __error("assertion failed: " + "dir >= -1 && dir <= 5" + " = " + (dir >= -1 && dir <= 5), "src/directions.js", 35); } } while(false);
+  if(dir === -1) return -1;
+  return [1,0,3,2,5,4][dir];
+ }
+ function getOppositeVector(dir) {
+  return getVector( getOppositeDirection(dir) );
+ }
+ function getDirectionBasedOnVector(vec) {
+  var norm = vec3create(vec);
+  vec3normalize(norm);
+  for(var i = 0; i !== 6; i++) {
+   var vdir = getVector(i);
+   if(norm[0] === vdir[0] && norm[1] === vdir[1] && norm[2] === vdir[2]) {
+    return i;
+   }
+  }
+  if(norm[0] === 0 && norm[1] === 0 && norm[2] === 0) {
+   return -1;
+  }
+  do { if(!(false && "vector not in area")) { __error("assertion failed: " + "false && \"vector not in area\"" + " = " + (false && "vector not in area"), "src/directions.js", 60); } } while(false);
+ }
+ return {
+  getVector : getVector,
+  getOppositeDirection : getOppositeDirection,
+  getOppositeVector : getOppositeVector,
+  getDirectionBasedOnVector : getDirectionBasedOnVector
+ }
+}());
 var Sphere = (function() {
  var tmpvector = vec3create();
  function Statemachine(sphere, cubelist, goalpos, dimension) {
@@ -1980,7 +2024,44 @@ var Sphere = (function() {
   var direction = vec3create();
   var startpos = vec3create();
   var movetime = 0;
-  function getObject(x,y,z) {
+  function markCubesWhoSeeMe(position, dir, view) {
+   var x = position[0];
+   var y = position[1];
+   var z = position[2];
+   if(x<0 || x>= dimension || y<0 || y>= dimension || z<0 || z>= dimension) {
+    return;
+   }
+   var cube = getCube(x,y,z);
+   if(cube) {
+    if(view) {
+     cube.view();
+    } else {
+     cube.unview();
+    }
+    return;
+   }
+   var v = Directions.getVector(dir);
+   markCubesWhoSeeMe( [ x + v[0], y + v[1], z + v[2] ], dir, view);
+  }
+  function markCubesWhoSeeMeAsWatching(position, directionIAmGoing) {
+   for(var dir = 0; dir !== 6; dir++) {
+    if(dir === directionIAmGoing) continue;
+    var vec = Directions.getVector(dir);
+    var pos = vec3create(sphere.position);
+    vec3add(pos, vec);
+    markCubesWhoSeeMe(position, dir, true);
+   }
+  }
+  function markCubesWhoSeeMeAsUnwatching(position, directionIAmGoing) {
+   for(var dir = 0; dir !== 6; dir++) {
+    if(dir === directionIAmGoing) continue;
+    var vec = Directions.getVector(dir);
+    var pos = vec3create(sphere.position);
+    vec3add(pos, vec);
+    markCubesWhoSeeMe(position, dir, false);
+   }
+  }
+  function getCube(x,y,z) {
    for(var i = 0, l = cubelist.length; i !== l; i++) {
     var cube = cubelist[i]
     var pos = cube.position;
@@ -1999,20 +2080,21 @@ var Sphere = (function() {
     movetime += time.delta * speed;
     if(movetime >= 1) {
      vec3set(vec3add(startpos, direction, tmpvector), sphere.position);
+     markCubesWhoSeeMeAsWatching(sphere.position, Directions.getDirectionBasedOnVector(direction));
      state = 0;
      movetime = 0.0;
      this.tap(time, direction);
     }
     break;
     default:
-    console.error("ERROR (" + "src/sphere.js" + ":" + 58 + ")", "unknow state.", state );
+    console.error("ERROR (" + "src/sphere.js" + ":" + 107 + ")", "unknow state.", state );
     break;
    }
   };
   this.tap = function(time, dir) {
-   do { if(!(time.delta instanceof Number) && !("Number".toLowerCase() === typeof time.delta)) { __error("Objct " + "time.delta" + " is not from type " + "Number", "src/sphere.js", 64); } } while(false);
-   do { if(!(dir instanceof Float32Array) && !("Float32Array".toLowerCase() === typeof dir)) { __error("Objct " + "dir" + " is not from type " + "Float32Array", "src/sphere.js", 65); } } while(false);
-   do { if(!(Math.abs((vec3length(dir) - 1.0)) < 0.0001)) { __error("assertion failed: " + "Math.abs((vec3length(dir) - 1.0)) < 0.0001" + " = " + (Math.abs((vec3length(dir) - 1.0)) < 0.0001), "src/sphere.js", 66); } } while(false);
+   do { if(!(time.delta instanceof Number) && !("Number".toLowerCase() === typeof time.delta)) { __error("Objct " + "time.delta" + " is not from type " + "Number", "src/sphere.js", 113); } } while(false);
+   do { if(!(dir instanceof Float32Array) && !("Float32Array".toLowerCase() === typeof dir)) { __error("Objct " + "dir" + " is not from type " + "Float32Array", "src/sphere.js", 114); } } while(false);
+   do { if(!(Math.abs((vec3length(dir) - 1.0)) < 0.0001)) { __error("assertion failed: " + "Math.abs((vec3length(dir) - 1.0)) < 0.0001" + " = " + (Math.abs((vec3length(dir) - 1.0)) < 0.0001), "src/sphere.js", 115); } } while(false);
    switch(state) {
     case 1:
     break;
@@ -2021,14 +2103,14 @@ var Sphere = (function() {
     var desty = Math.round(sphere.position[1] + dir[1]);
     var destz = Math.round(sphere.position[2] + dir[2]);
     if(destx === goalpos[0] && desty === goalpos[1] && destz === goalpos[2]) {
-     console.log("DEBUG (" + "src/sphere.js" + ":" + 79 + ")", "winning" );
+     console.log("DEBUG (" + "src/sphere.js" + ":" + 128 + ")", "winning" );
      return;
     }
     if(destx < 0 || destx >= dimension || desty < 0 || desty >= dimension || destz < 0 || destz >= dimension) {
-     console.log("DEBUG (" + "src/sphere.js" + ":" + 84 + ")", "dead" );
+     console.log("DEBUG (" + "src/sphere.js" + ":" + 133 + ")", "dead" );
      return;
     }
-    var cube = getObject(destx, desty, destz);
+    var cube = getCube(destx, desty, destz);
     if(cube) {
      cube.touch();
      if(sphere.lastCube && sphere.lastCube !== cube) {
@@ -2044,19 +2126,20 @@ var Sphere = (function() {
     vec3set(dir, direction);
     vec3set(sphere.position, startpos);
     movetime = 0.0;
+    markCubesWhoSeeMeAsUnwatching(sphere.position, Directions.getDirectionBasedOnVector(direction));
     state = 1;
     break;
     default:
-    console.error("ERROR (" + "src/sphere.js" + ":" + 114 + ")", "unknow state.", state );
+    console.error("ERROR (" + "src/sphere.js" + ":" + 167 + ")", "unknow state.", state );
     break;
    }
   };
  }
  return function(position, cubelist, goalpos, dimension) {
-  do { if(typeof position === "undefined" || typeof (position . x) === "undefined") { __error("No property " + "x" + " in " + "position", "src/sphere.js", 121); } } while(false);
-  do { if(typeof position === "undefined" || typeof (position . y) === "undefined") { __error("No property " + "y" + " in " + "position", "src/sphere.js", 122); } } while(false);
-  do { if(typeof position === "undefined" || typeof (position . z) === "undefined") { __error("No property " + "z" + " in " + "position", "src/sphere.js", 123); } } while(false);
-  do { if(!(this !== window)) { __error("assertion failed: " + "this !== window" + " = " + (this !== window), "src/sphere.js", 124); } } while(false);
+  do { if(typeof position === "undefined" || typeof (position . x) === "undefined") { __error("No property " + "x" + " in " + "position", "src/sphere.js", 174); } } while(false);
+  do { if(typeof position === "undefined" || typeof (position . y) === "undefined") { __error("No property " + "y" + " in " + "position", "src/sphere.js", 175); } } while(false);
+  do { if(typeof position === "undefined" || typeof (position . z) === "undefined") { __error("No property " + "z" + " in " + "position", "src/sphere.js", 176); } } while(false);
+  do { if(!(this !== window)) { __error("assertion failed: " + "this !== window" + " = " + (this !== window), "src/sphere.js", 177); } } while(false);
   this.position = vec3create([position.x, position.y, position.z]);
   var state = new Statemachine(this, cubelist, goalpos, dimension);
   this.tap = function(info, dir) {
@@ -2669,7 +2752,7 @@ GLT.loadmanager.loadFiles({
   audio.src = SOUND.dataURI
  }
 });
-console.log("DEBUG (" + "src/main.js" + ":" + 569 + ")", "DEBUG Build:", "Sep 11 2012", "15:10:37" );
+console.log("DEBUG (" + "src/main.js" + ":" + 569 + ")", "DEBUG Build:", "Sep 11 2012", "18:23:21" );
 }
 catch(e) {
  var m = e.message || e;

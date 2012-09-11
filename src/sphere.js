@@ -5,6 +5,7 @@
 #include "assert.js" 
 #include "math.js" 
 #include "map.js" 
+#include "directions.js" 
 
 #define STATE_NONE   0 
 #define STATE_MOVE   1
@@ -22,7 +23,53 @@ var Sphere = (function() {
 		var startpos    = vec3create(); 
 		var movetime    = 0; 
 
-		function getObject(x,y,z) {
+		function markCubesWhoSeeMe(position, dir, view) {
+			var x = position[0];
+			var y = position[1];
+			var z = position[2];
+		
+
+			if(x<0 || x>= dimension || y<0 || y>= dimension || z<0 || z>= dimension) {
+				return; 
+			}
+
+			var cube = getCube(x,y,z); 
+			if(cube) {
+				if(view) { 
+					cube.view(); 
+				} else {
+					cube.unview(); 
+				}
+				return; 
+			}
+
+			var v = Directions.getVector(dir); 
+			markCubesWhoSeeMe( [ x + v[0], y + v[1], z + v[2] ], dir, view); 				
+		}
+
+		function markCubesWhoSeeMeAsWatching(position, directionIAmGoing) {
+			for(var dir = 0; dir !== 6; dir++) {
+				if(dir === directionIAmGoing) continue; 
+
+				var vec = Directions.getVector(dir); 
+				var pos = vec3create(sphere.position); 
+				vec3add(pos, vec); 
+				markCubesWhoSeeMe(position, dir, true); 
+			}
+		}
+	
+		function markCubesWhoSeeMeAsUnwatching(position, directionIAmGoing) {
+			for(var dir = 0; dir !== 6; dir++) {
+				if(dir === directionIAmGoing) continue; 
+
+				var vec = Directions.getVector(dir); 
+				var pos = vec3create(sphere.position); 
+				vec3add(pos, vec); 
+				markCubesWhoSeeMe(position, dir, false); 
+			}
+		}
+
+		function getCube(x,y,z) {
 			for(var i = 0, l = cubelist.length; i !== l; i++) {
 				var cube = cubelist[i]
 				var pos = cube.position; 
@@ -45,6 +92,8 @@ var Sphere = (function() {
 				if(movetime >= 1) {				
 					//we reached our destination.
 					vec3set(vec3add(startpos, direction, tmpvector), sphere.position); 					
+
+					markCubesWhoSeeMeAsWatching(sphere.position, Directions.getDirectionBasedOnVector(direction)); 
 
 					//TODO: Grid 
 					state = STATE_NONE; 
@@ -85,7 +134,7 @@ var Sphere = (function() {
 					return; 
 				} 
 
-				var cube = getObject(destx, desty, destz); 
+				var cube = getCube(destx, desty, destz); 
 
 				if(cube) {
 					//the cube I am going to touch. 
@@ -107,6 +156,10 @@ var Sphere = (function() {
 				vec3set(dir, direction); 
 				vec3set(sphere.position, startpos); 
 				movetime = 0.0; 
+
+				//Tell old cubes who have seen me, that they don't see me 				
+				markCubesWhoSeeMeAsUnwatching(sphere.position, Directions.getDirectionBasedOnVector(direction)); 
+
 				state = STATE_MOVE; 
 				break; 
 
