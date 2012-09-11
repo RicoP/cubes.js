@@ -186,7 +186,8 @@ function MapCreate(seed) {
 			return {
 				"startingPosition" : { x : startingPosition[0], y : startingPosition[0], z : startingPosition[0] },  
 				"getObject" : function(x,y,z) { return get(field, dimension, [x,y,z]); }, 
-				"path" : pathA 
+				"path" : pathA, 
+				"dimension" : dimension 
 			}; 
 		}
 		else { 

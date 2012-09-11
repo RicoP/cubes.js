@@ -10,9 +10,9 @@
 #define STATE_MOVE   1
 
 var Sphere = (function() { 
-	var tmpvector  = vec3create();
+	var tmpvector = vec3create();
 
-	function Statemachine(sphere, map) {		
+	function Statemachine(sphere, cubelist, goalpos,  dimension) {		
 		"use strict"; 
 
 		var speed = 8.0;
@@ -21,6 +21,18 @@ var Sphere = (function() {
 		var direction   = vec3create(); 
 		var startpos    = vec3create(); 
 		var movetime    = 0; 
+
+		function getObject(x,y,z) {
+			for(var i = 0, l = cubelist.length; i !== l; i++) {
+				var cube = cubelist[i]
+				var pos = cube.position; 
+				if(pos[0] === x && pos[1] === y && pos[2] === z) {
+					return cube; 
+				}
+			}
+
+			return null; 
+		}
 
 		this.tick = function(time) {		
 			switch(state) {
@@ -63,22 +75,39 @@ var Sphere = (function() {
 				var desty = Math.round(sphere.position[1] + dir[1]); 
 				var destz = Math.round(sphere.position[2] + dir[2]); 
 
-				var obj = map.getObject(destx, desty, destz); 
-				
-				if(obj === MAP_AIR) { 
-					vec3set(dir, direction); 
-					vec3set(sphere.position, startpos); 
-					movetime = 0.0; 
-					state = STATE_MOVE; 
-					break; 
+				if(destx === goalpos[0] && desty === goalpos[1] && destz === goalpos[2]) {
+					dlog("winning"); 
+					return; 
 				}
 
-				if(obj === MAP_OUT_OF_BOUNDS) {
+				if(destx < 0 || destx >= dimension || desty < 0 || desty >= dimension || destz < 0 || destz >= dimension) {
 					dlog("dead"); 
+					return; 
+				} 
+
+				var cube = getObject(destx, desty, destz); 
+
+				if(cube) {
+					//the cube I am going to touch. 
+					cube.touch(); 
+
+					if(sphere.lastCube && sphere.lastCube !== cube) {
+						sphere.lastCube.leave(); 
+					}
+					sphere.lastCube = cube; 
+
+					return; 
 				}
-				if(obj === MAP_GOAL) {
-					dlog("win"); 
-				}				
+
+				if(sphere.lastCube && sphere.lastCube !== cube) {
+					sphere.lastCube.leave(); 
+				}
+				sphere.lastCube = cube; 
+
+				vec3set(dir, direction); 
+				vec3set(sphere.position, startpos); 
+				movetime = 0.0; 
+				state = STATE_MOVE; 
 				break; 
 
 				default: 
@@ -88,7 +117,7 @@ var Sphere = (function() {
 		};
 	}
 
-	return function(position, map) {
+	return function(position, cubelist, goalpos, dimension) {
 		checkprop(position, x); 
 		checkprop(position, y); 
 		checkprop(position, z); 		
@@ -96,15 +125,16 @@ var Sphere = (function() {
 
 		this.position = vec3create([position.x, position.y, position.z]); 
 
-		var state  = new Statemachine(this, map); 
+		var state  = new Statemachine(this, cubelist, goalpos, dimension); 
 
 		this.tap = function(info, dir) {
 			state.tap(info, dir); 
 		}; 
 
 		this.tick = function(info) {
-			state.tick(info, map); 
+			state.tick(info); 
 		};		
+		this.lastCube = null; 
 	};
 }());
 

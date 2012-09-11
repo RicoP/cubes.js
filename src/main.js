@@ -9,6 +9,7 @@
 #include "math.js" 
 #include "assert.js"
 #include "sphere.js"
+#include "cube.js"
 #include "random.js" 
 #include "funkycube.js" 
 #include "map.js" 
@@ -30,6 +31,14 @@ var funkycube = new Funkycube();
 
 var canvas = document.getElementsByTagName("canvas")[0]; 
 var gl = GLT.createContext(canvas); 
+
+if(!gl) { 
+	alert("Issues with WebGL :(");
+
+	#ifdef RELEASE 
+		location = "http://get.webgl.org";
+	#endif
+}
 
 #include "glcalls.js" 
 
@@ -234,7 +243,6 @@ function drawCubes(program) {
 
 	var aVertex    = glGetAttribLocation(program, "aVertex"); 
 	var aTextureuv = glGetAttribLocation(program, "aTextureuv"); 
-	var aNormal    = glGetAttribLocation(program, "aNormal"); 
 
 	var modelviewprojection = tmpmatrix; 
 
@@ -248,11 +256,6 @@ function drawCubes(program) {
 		glEnableVertexAttribArray(aTextureuv); 
 	}
 
-	if(aNormal !== -1) { 
-		glVertexAttribPointer(aNormal, 4, GL_FLOAT, false, cube.stride, cube.noffset); 
-		glEnableVertexAttribArray(aNormal); 
-	} 	
-
 	if(uTexture) {
 		glBindTexture(GL_TEXTURE_2D, cubetex); 
 		glUniform1i(uTexture, 0); 
@@ -262,11 +265,31 @@ function drawCubes(program) {
 		var object = cubelist[i]; 
 
 		if(uTextureOffset) {
-			glUniform2f(uTextureOffset, 12/32, 12/32); 
+			switch(object.getFace()) {
+				case FACE_NEUTRAL: 
+				glUniform2f(uTextureOffset, 0,0); 
+				break; 
+
+				case FACE_HAPPY: 
+				glUniform2f(uTextureOffset, 10/32,0); 
+				break; 
+
+				case FACE_LOVE: 
+				glUniform2f(uTextureOffset, 10/32,10/32); 
+				break; 
+
+				case FACE_SAD: 
+				glUniform2f(uTextureOffset, 0,10/32); 
+				break; 
+
+				case FACE_HOPE: 
+				glUniform2f(uTextureOffset, 20/32,0); 
+				break; 
+			}
 		}
 
 		mat4multiply(projection, camera, modelviewprojection); 
-		mat4translate(modelviewprojection, object.vector); 
+		mat4translate(modelviewprojection, object.position); 
 
 		glUniformMatrix4fv(uModelviewprojection, false, modelviewprojection); 
 
@@ -499,7 +522,7 @@ GLT.loadmanager.loadFiles({
 				for(var z = 0; z !== 16; z++) {
 					var obj = map.getObject(x,y,z); 
 					if(obj === MAP_CUBE) { 
-						cubelist.push( { vector : vec3create([x,y,z])} ); 
+						cubelist.push( new Cube( vec3create([x,y,z]) ) ); 
 					}
 					else if(obj === MAP_GOAL) {
 						goalpos[0] = x; 
@@ -512,7 +535,7 @@ GLT.loadmanager.loadFiles({
 		cameraDir[1] = map.startingPosition.x;
 		cameraDir[2] = map.startingPosition.x;
 
-		sphere = new Sphere({ x : cameraDir[0], y : cameraDir[1], z : cameraDir[2] }, map); 
+		sphere = new Sphere({ x : cameraDir[0], y : cameraDir[1], z : cameraDir[2] }, cubelist, goalpos, map.dimension); 
 
 		vec3set(cameraDir, cameraPos); 
 		cameraPos[0] = 0; 	

@@ -4,6 +4,7 @@
 
 try {
 var GL_ARRAY_BUFFER = 34962;
+var GL_CLAMP_TO_EDGE = 33071;
 var GL_CULL_FACE = 2884;
 var GL_DEPTH_BUFFER_BIT = 256;
 var GL_DEPTH_TEST = 2929;
@@ -15,6 +16,8 @@ var GL_STATIC_DRAW = 35044;
 var GL_TEXTURE_2D = 3553;
 var GL_TEXTURE_MAG_FILTER = 10240;
 var GL_TEXTURE_MIN_FILTER = 10241;
+var GL_TEXTURE_WRAP_S = 10242;
+var GL_TEXTURE_WRAP_T = 10243;
 var GL_TRIANGLES = 4;
 var GL_UNPACK_FLIP_Y_WEBGL = 37440;
 var GL_UNSIGNED_BYTE = 5121;
@@ -1958,7 +1961,8 @@ function MapCreate(seed) {
    return {
     "startingPosition" : { x : startingPosition[0], y : startingPosition[0], z : startingPosition[0] },
     "getObject" : function(x,y,z) { return get(field, dimension, [x,y,z]); },
-    "path" : pathA
+    "path" : pathA,
+    "dimension" : dimension
    };
   }
   else {
@@ -1969,13 +1973,23 @@ function MapCreate(seed) {
 }
 var Sphere = (function() {
  var tmpvector = vec3create();
- function Statemachine(sphere, map) {
+ function Statemachine(sphere, cubelist, goalpos, dimension) {
   "use strict";
   var speed = 8.0;
   var state = 0;
   var direction = vec3create();
   var startpos = vec3create();
   var movetime = 0;
+  function getObject(x,y,z) {
+   for(var i = 0, l = cubelist.length; i !== l; i++) {
+    var cube = cubelist[i]
+    var pos = cube.position;
+    if(pos[0] === x && pos[1] === y && pos[2] === z) {
+     return cube;
+    }
+   }
+   return null;
+  }
   this.tick = function(time) {
    switch(state) {
     case 0:
@@ -1991,14 +2005,14 @@ var Sphere = (function() {
     }
     break;
     default:
-    console.error("ERROR (" + "src/sphere.js" + ":" + 46 + ")", "unknow state.", state );
+    console.error("ERROR (" + "src/sphere.js" + ":" + 58 + ")", "unknow state.", state );
     break;
    }
   };
   this.tap = function(time, dir) {
-   do { if(!(time.delta instanceof Number) && !("Number".toLowerCase() === typeof time.delta)) { __error("Objct " + "time.delta" + " is not from type " + "Number", "src/sphere.js", 52); } } while(false);
-   do { if(!(dir instanceof Float32Array) && !("Float32Array".toLowerCase() === typeof dir)) { __error("Objct " + "dir" + " is not from type " + "Float32Array", "src/sphere.js", 53); } } while(false);
-   do { if(!(Math.abs((vec3length(dir) - 1.0)) < 0.0001)) { __error("assertion failed: " + "Math.abs((vec3length(dir) - 1.0)) < 0.0001" + " = " + (Math.abs((vec3length(dir) - 1.0)) < 0.0001), "src/sphere.js", 54); } } while(false);
+   do { if(!(time.delta instanceof Number) && !("Number".toLowerCase() === typeof time.delta)) { __error("Objct " + "time.delta" + " is not from type " + "Number", "src/sphere.js", 64); } } while(false);
+   do { if(!(dir instanceof Float32Array) && !("Float32Array".toLowerCase() === typeof dir)) { __error("Objct " + "dir" + " is not from type " + "Float32Array", "src/sphere.js", 65); } } while(false);
+   do { if(!(Math.abs((vec3length(dir) - 1.0)) < 0.0001)) { __error("assertion failed: " + "Math.abs((vec3length(dir) - 1.0)) < 0.0001" + " = " + (Math.abs((vec3length(dir) - 1.0)) < 0.0001), "src/sphere.js", 66); } } while(false);
    switch(state) {
     case 1:
     break;
@@ -2006,42 +2020,115 @@ var Sphere = (function() {
     var destx = Math.round(sphere.position[0] + dir[0]);
     var desty = Math.round(sphere.position[1] + dir[1]);
     var destz = Math.round(sphere.position[2] + dir[2]);
-    var obj = map.getObject(destx, desty, destz);
-    if(obj === 0) {
-     vec3set(dir, direction);
-     vec3set(sphere.position, startpos);
-     movetime = 0.0;
-     state = 1;
-     break;
+    if(destx === goalpos[0] && desty === goalpos[1] && destz === goalpos[2]) {
+     console.log("DEBUG (" + "src/sphere.js" + ":" + 79 + ")", "winning" );
+     return;
     }
-    if(obj === -1) {
-     console.log("DEBUG (" + "src/sphere.js" + ":" + 77 + ")", "dead" );
+    if(destx < 0 || destx >= dimension || desty < 0 || desty >= dimension || destz < 0 || destz >= dimension) {
+     console.log("DEBUG (" + "src/sphere.js" + ":" + 84 + ")", "dead" );
+     return;
     }
-    if(obj === 3) {
-     console.log("DEBUG (" + "src/sphere.js" + ":" + 80 + ")", "win" );
+    var cube = getObject(destx, desty, destz);
+    if(cube) {
+     cube.touch();
+     if(sphere.lastCube && sphere.lastCube !== cube) {
+      sphere.lastCube.leave();
+     }
+     sphere.lastCube = cube;
+     return;
     }
+    if(sphere.lastCube && sphere.lastCube !== cube) {
+     sphere.lastCube.leave();
+    }
+    sphere.lastCube = cube;
+    vec3set(dir, direction);
+    vec3set(sphere.position, startpos);
+    movetime = 0.0;
+    state = 1;
     break;
     default:
-    console.error("ERROR (" + "src/sphere.js" + ":" + 85 + ")", "unknow state.", state );
+    console.error("ERROR (" + "src/sphere.js" + ":" + 114 + ")", "unknow state.", state );
     break;
    }
   };
  }
- return function(position, map) {
-  do { if(typeof position === "undefined" || typeof (position . x) === "undefined") { __error("No property " + "x" + " in " + "position", "src/sphere.js", 92); } } while(false);
-  do { if(typeof position === "undefined" || typeof (position . y) === "undefined") { __error("No property " + "y" + " in " + "position", "src/sphere.js", 93); } } while(false);
-  do { if(typeof position === "undefined" || typeof (position . z) === "undefined") { __error("No property " + "z" + " in " + "position", "src/sphere.js", 94); } } while(false);
-  do { if(!(this !== window)) { __error("assertion failed: " + "this !== window" + " = " + (this !== window), "src/sphere.js", 95); } } while(false);
+ return function(position, cubelist, goalpos, dimension) {
+  do { if(typeof position === "undefined" || typeof (position . x) === "undefined") { __error("No property " + "x" + " in " + "position", "src/sphere.js", 121); } } while(false);
+  do { if(typeof position === "undefined" || typeof (position . y) === "undefined") { __error("No property " + "y" + " in " + "position", "src/sphere.js", 122); } } while(false);
+  do { if(typeof position === "undefined" || typeof (position . z) === "undefined") { __error("No property " + "z" + " in " + "position", "src/sphere.js", 123); } } while(false);
+  do { if(!(this !== window)) { __error("assertion failed: " + "this !== window" + " = " + (this !== window), "src/sphere.js", 124); } } while(false);
   this.position = vec3create([position.x, position.y, position.z]);
-  var state = new Statemachine(this, map);
+  var state = new Statemachine(this, cubelist, goalpos, dimension);
   this.tap = function(info, dir) {
    state.tap(info, dir);
   };
   this.tick = function(info) {
-   state.tick(info, map);
+   state.tick(info);
   };
+  this.lastCube = null;
  };
 }());
+function Cube(position) {
+ var that = this;
+ var face = 0;
+ function touch() {
+  face = 2;
+ }
+ function view() {
+  switch(face) {
+   case 0:
+   face = 1;
+   break;
+   case 1:
+   break;
+   case 2:
+   break;
+   case 3:
+   face = 4;
+   break;
+   case 4:
+   break;
+  }
+ }
+ function leave() {
+  switch(face) {
+   case 0:
+   break;
+   case 1:
+   break;
+   case 2:
+   face = 3;
+   break;
+   case 3:
+   break;
+   case 4:
+   face = 3;
+   break;
+  }
+ }
+ function unview() {
+  switch(face) {
+   case 0:
+   break;
+   case 1:
+   face = 0;
+   break;
+   case 2:
+   break;
+   case 3:
+   break;
+   case 4:
+   face = 3;
+   break;
+  }
+ }
+ that.position = position;
+ that.getFace = function() { return face; };
+ that.view = view;
+ that.unview = unview;
+ that.touch = touch;
+ that.leave = leave;
+}
 do { if(!(64 === 16 * 4)) { __error("assertion failed: " + "CUBE_WIDTH === FACE_WIDTH * 4" + " = " + (64 === 16 * 4), "src/funkycube.js", 8); } } while(false);
 var Funkycube;
 !function() {
@@ -2158,6 +2245,9 @@ var map;
 var funkycube = new Funkycube();
 var canvas = document.getElementsByTagName("canvas")[0];
 var gl = GLT.createContext(canvas);
+if(!gl) {
+ alert("Issues with WebGL :(");
+}
 var glAttachShader = gl.attachShader.bind(gl);
 var glBindBuffer = gl.bindBuffer.bind(gl);
 var glBindTexture = gl.bindTexture.bind(gl);
@@ -2348,7 +2438,6 @@ function drawCubes(program) {
  var uTextureOffset = glGetUniformLocation(program, "uTextureOffset");
  var aVertex = glGetAttribLocation(program, "aVertex");
  var aTextureuv = glGetAttribLocation(program, "aTextureuv");
- var aNormal = glGetAttribLocation(program, "aNormal");
  var modelviewprojection = tmpmatrix;
  glBindBuffer(GL_ARRAY_BUFFER, cubeBuffer);
  glVertexAttribPointer(aVertex, 4, GL_FLOAT, false, cube.stride, cube.voffset);
@@ -2357,10 +2446,6 @@ function drawCubes(program) {
   glVertexAttribPointer(aTextureuv, 4, GL_FLOAT, false, cube.stride, cube.toffset);
   glEnableVertexAttribArray(aTextureuv);
  }
- if(aNormal !== -1) {
-  glVertexAttribPointer(aNormal, 4, GL_FLOAT, false, cube.stride, cube.noffset);
-  glEnableVertexAttribArray(aNormal);
- }
  if(uTexture) {
   glBindTexture(GL_TEXTURE_2D, cubetex);
   glUniform1i(uTexture, 0);
@@ -2368,10 +2453,26 @@ function drawCubes(program) {
  for(var i = 0; i != cubelist.length; i++) {
   var object = cubelist[i];
   if(uTextureOffset) {
-   glUniform2f(uTextureOffset, 12/32, 12/32);
+   switch(object.getFace()) {
+    case 0:
+    glUniform2f(uTextureOffset, 0,0);
+    break;
+    case 1:
+    glUniform2f(uTextureOffset, 10/32,0);
+    break;
+    case 2:
+    glUniform2f(uTextureOffset, 10/32,10/32);
+    break;
+    case 3:
+    glUniform2f(uTextureOffset, 0,10/32);
+    break;
+    case 4:
+    glUniform2f(uTextureOffset, 20/32,0);
+    break;
+   }
   }
   mat4multiply(projection, camera, modelviewprojection);
-  mat4translate(modelviewprojection, object.vector);
+  mat4translate(modelviewprojection, object.position);
   glUniformMatrix4fv(uModelviewprojection, false, modelviewprojection);
   glDrawArrays(GL_TRIANGLES, 0, cube.numVertices);
  }
@@ -2430,10 +2531,10 @@ function drawSky(program) {
  var aTextureuv = glGetAttribLocation(program, "aTextureuv");
  var uTextureOffset = glGetUniformLocation(program, "uTextureOffset");
  var modelviewprojection = tmpmatrix;
- do { if(!(uModelviewprojection)) { __error("assertion failed: " + "uModelviewprojection" + " = " + (uModelviewprojection), "src/main.js", 356); } } while(false);
- do { if(!(uTexture)) { __error("assertion failed: " + "uTexture" + " = " + (uTexture), "src/main.js", 357); } } while(false);
- do { if(!(aTextureuv !== -1)) { __error("assertion failed: " + "aTextureuv !== -1" + " = " + (aTextureuv !== -1), "src/main.js", 358); } } while(false);
- do { if(!(aVertex !== -1)) { __error("assertion failed: " + "aVertex !== -1" + " = " + (aVertex !== -1), "src/main.js", 359); } } while(false);
+ do { if(!(uModelviewprojection)) { __error("assertion failed: " + "uModelviewprojection" + " = " + (uModelviewprojection), "src/main.js", 379); } } while(false);
+ do { if(!(uTexture)) { __error("assertion failed: " + "uTexture" + " = " + (uTexture), "src/main.js", 380); } } while(false);
+ do { if(!(aTextureuv !== -1)) { __error("assertion failed: " + "aTextureuv !== -1" + " = " + (aTextureuv !== -1), "src/main.js", 381); } } while(false);
+ do { if(!(aVertex !== -1)) { __error("assertion failed: " + "aVertex !== -1" + " = " + (aVertex !== -1), "src/main.js", 382); } } while(false);
  glBindBuffer(GL_ARRAY_BUFFER, skyBuffer);
  glVertexAttribPointer(aVertex, 4, GL_FLOAT, false, sky.stride, sky.voffset);
  glEnableVertexAttribArray(aVertex);
@@ -2455,8 +2556,8 @@ function drawPath(program, path) {
  var aVertex = glGetAttribLocation(program, "aVertex");
  var uModelviewprojection = glGetUniformLocation(program, "uModelviewprojection");
  var modelviewprojection = tmpmatrix;
- do { if(!(aVertex !== -1)) { __error("assertion failed: " + "aVertex !== -1" + " = " + (aVertex !== -1), "src/main.js", 392); } } while(false);
- do { if(!(uModelviewprojection !== -1)) { __error("assertion failed: " + "uModelviewprojection !== -1" + " = " + (uModelviewprojection !== -1), "src/main.js", 393); } } while(false);
+ do { if(!(aVertex !== -1)) { __error("assertion failed: " + "aVertex !== -1" + " = " + (aVertex !== -1), "src/main.js", 415); } } while(false);
+ do { if(!(uModelviewprojection !== -1)) { __error("assertion failed: " + "uModelviewprojection !== -1" + " = " + (uModelviewprojection !== -1), "src/main.js", 416); } } while(false);
  glBindBuffer(GL_ARRAY_BUFFER, pathBuffer);
  glVertexAttribPointer(aVertex, 3, GL_FLOAT, false, 0, 0);
  glEnableVertexAttribArray(aVertex);
@@ -2474,7 +2575,7 @@ function setCanvasForTexture(canvas, text) {
  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 }
 function createTexture(img) {
- do { if(!(img)) { __error("assertion failed: " + "img" + " = " + (img), "src/main.js", 421); } } while(false);
+ do { if(!(img)) { __error("assertion failed: " + "img" + " = " + (img), "src/main.js", 444); } } while(false);
  var tex = glCreateTexture();
  setCanvasForTexture(img, tex);
  glBindTexture(GL_TEXTURE_2D, null);
@@ -2482,9 +2583,9 @@ function createTexture(img) {
 }
 GLT.loadmanager.loadFiles({
  "files" : ["cube.obj", "sphere.obj", "diffuse.shader", "faces.png", "skybox.obj", "border.shader", "goal.obj"],
- "update" : function(p,q) { console.log("DEBUG (" + "src/main.js" + ":" + 433 + ")", p,q ); },
+ "update" : function(p,q) { console.log("DEBUG (" + "src/main.js" + ":" + 456 + ")", p,q ); },
  "error" : function(file, err) {
-  console.error("ERROR (" + "src/main.js" + ":" + 435 + ")", file, err );
+  console.error("ERROR (" + "src/main.js" + ":" + 458 + ")", file, err );
  },
  "finished" : function(files) {
   cube = files["cube.obj"];
@@ -2533,14 +2634,14 @@ GLT.loadmanager.loadFiles({
    setCanvasForTexture(funkycube.canvas, skytex);
   }, 100);
   var seed = (0xFFFF * Math.random()) & 0xFFFF;
-  console.log("DEBUG (" + "src/main.js" + ":" + 494 + ")", "SEED", seed );
+  console.log("DEBUG (" + "src/main.js" + ":" + 517 + ")", "SEED", seed );
   map = MapCreate(seed);
   for(var x = 0; x !== 16; x++)
    for(var y = 0; y !== 16; y++)
     for(var z = 0; z !== 16; z++) {
      var obj = map.getObject(x,y,z);
      if(obj === 1) {
-      cubelist.push( { vector : vec3create([x,y,z])} );
+      cubelist.push( new Cube( vec3create([x,y,z]) ) );
      }
      else if(obj === 3) {
       goalpos[0] = x;
@@ -2551,7 +2652,7 @@ GLT.loadmanager.loadFiles({
   cameraDir[0] = map.startingPosition.x;
   cameraDir[1] = map.startingPosition.x;
   cameraDir[2] = map.startingPosition.x;
-  sphere = new Sphere({ x : cameraDir[0], y : cameraDir[1], z : cameraDir[2] }, map);
+  sphere = new Sphere({ x : cameraDir[0], y : cameraDir[1], z : cameraDir[2] }, cubelist, goalpos, map.dimension);
   vec3set(cameraDir, cameraPos);
   cameraPos[0] = 0;
   cameraPos[1] = 0;
@@ -2568,7 +2669,7 @@ GLT.loadmanager.loadFiles({
   audio.src = SOUND.dataURI
  }
 });
-console.log("DEBUG (" + "src/main.js" + ":" + 546 + ")", "DEBUG Build:", "Sep 10 2012", "19:17:50" );
+console.log("DEBUG (" + "src/main.js" + ":" + 569 + ")", "DEBUG Build:", "Sep 11 2012", "15:10:37" );
 }
 catch(e) {
  var m = e.message || e;
