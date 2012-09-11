@@ -49,7 +49,7 @@ var cameraPos  = vec3create();
 var cameraDir  = vec3create(); 
 var cameraUp   = vec3create([0,1,0]); 
 var camera     = mat4identity();  
-var cameraScale = 10; 
+var cameraScale = 15; 
 
 canvas.onmousewheel = function(ev) {
 	var d = ev.wheelDelta; 
@@ -563,6 +563,9 @@ GLT.loadmanager.loadFiles({
 		var audio = new Audio(); 
 		audio.src = SOUND.dataURI
 		//audio.play(); 
+
+		spinHorz(3.14/4); 
+		spinVert(-3.14/4); 
 	}
 });
 	

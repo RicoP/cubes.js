@@ -2134,12 +2134,13 @@ var Sphere = (function() {
     break;
    }
   };
+  markCubesWhoSeeMeAsWatching(sphere.position, -1);
  }
  return function(position, cubelist, goalpos, dimension) {
-  do { if(typeof position === "undefined" || typeof (position . x) === "undefined") { __error("No property " + "x" + " in " + "position", "src/sphere.js", 174); } } while(false);
-  do { if(typeof position === "undefined" || typeof (position . y) === "undefined") { __error("No property " + "y" + " in " + "position", "src/sphere.js", 175); } } while(false);
-  do { if(typeof position === "undefined" || typeof (position . z) === "undefined") { __error("No property " + "z" + " in " + "position", "src/sphere.js", 176); } } while(false);
-  do { if(!(this !== window)) { __error("assertion failed: " + "this !== window" + " = " + (this !== window), "src/sphere.js", 177); } } while(false);
+  do { if(typeof position === "undefined" || typeof (position . x) === "undefined") { __error("No property " + "x" + " in " + "position", "src/sphere.js", 177); } } while(false);
+  do { if(typeof position === "undefined" || typeof (position . y) === "undefined") { __error("No property " + "y" + " in " + "position", "src/sphere.js", 178); } } while(false);
+  do { if(typeof position === "undefined" || typeof (position . z) === "undefined") { __error("No property " + "z" + " in " + "position", "src/sphere.js", 179); } } while(false);
+  do { if(!(this !== window)) { __error("assertion failed: " + "this !== window" + " = " + (this !== window), "src/sphere.js", 180); } } while(false);
   this.position = vec3create([position.x, position.y, position.z]);
   var state = new Statemachine(this, cubelist, goalpos, dimension);
   this.tap = function(info, dir) {
@@ -2368,7 +2369,7 @@ var cameraPos = vec3create();
 var cameraDir = vec3create();
 var cameraUp = vec3create([0,1,0]);
 var camera = mat4identity();
-var cameraScale = 10;
+var cameraScale = 15;
 canvas.onmousewheel = function(ev) {
  var d = ev.wheelDelta;
  if(d>0) cameraScale -= 0.5;
@@ -2750,9 +2751,11 @@ GLT.loadmanager.loadFiles({
   var SOUND = new Sfxr.SoundEffect(pdead).generate();
   var audio = new Audio();
   audio.src = SOUND.dataURI
+  spinHorz(3.14/4);
+  spinVert(-3.14/4);
  }
 });
-console.log("DEBUG (" + "src/main.js" + ":" + 569 + ")", "DEBUG Build:", "Sep 11 2012", "18:23:21" );
+console.log("DEBUG (" + "src/main.js" + ":" + 572 + ")", "DEBUG Build:", "Sep 11 2012", "18:50:14" );
 }
 catch(e) {
  var m = e.message || e;

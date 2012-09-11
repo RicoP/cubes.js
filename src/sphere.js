@@ -167,7 +167,10 @@ var Sphere = (function() {
 				derr("unknow state.", state); 
 				break; 
 			}
+			
 		};
+		
+		markCubesWhoSeeMeAsWatching(sphere.position, DIRECTION_ZERO); 
 	}
 
 	return function(position, cubelist, goalpos, dimension) {
