@@ -205,7 +205,44 @@ function mat4scale(mat, vec, dest) {
 
 //function mat4rotateX(){}
 
-//function mat4rotateY(){}
+function mat4rotateY(mat, angle, dest) {
+	var s = Math.sin(angle),
+	c = Math.cos(angle),
+	a00 = mat[0],
+	a01 = mat[1],
+	a02 = mat[2],
+	a03 = mat[3],
+	a20 = mat[8],
+	a21 = mat[9],
+	a22 = mat[10],
+	a23 = mat[11];
+
+	if (!dest) {
+		dest = mat;
+	} else if (mat !== dest) { // If the source and destination differ, copy the unchanged rows
+	dest[4] = mat[4];
+	dest[5] = mat[5];
+	dest[6] = mat[6];
+	dest[7] = mat[7];
+
+	dest[12] = mat[12];
+	dest[13] = mat[13];
+	dest[14] = mat[14];
+	dest[15] = mat[15];
+	}
+
+	// Perform axis-specific matrix multiplication
+	dest[0] = a00 * c + a20 * -s;
+	dest[1] = a01 * c + a21 * -s;
+	dest[2] = a02 * c + a22 * -s;
+	dest[3] = a03 * c + a23 * -s;
+
+	dest[8] = a00 * s + a20 * c;
+	dest[9] = a01 * s + a21 * c;
+	dest[10] = a02 * s + a22 * c;
+	dest[11] = a03 * s + a23 * c;
+	return dest;
+};
 
 //function mat4rotateZ(){}
 

@@ -65,6 +65,8 @@ var tmpvector = vec3create();
 
 var cubetex = null; 
 var skytex = null; 
+var spheretex = null; 
+var hearttex = null; 
 
 var asisX = vec3create([1,0,0]); 
 var asisY = vec3create([0,1,0]); 
@@ -234,7 +236,7 @@ function draw(info) {
 		
 	drawCubes(program); 
 	drawSphere(program); 
-	drawGoal(program); 
+	drawGoal(program, info); 
 	#ifndef RELEASE 
 		if(showPath) { 
 			drawPath(borderprogram, map.path); 
@@ -328,7 +330,7 @@ function drawSphere(program) {
 	}
 
 	if(uTexture) {
-		glBindTexture(GL_TEXTURE_2D, cubetex); 
+		glBindTexture(GL_TEXTURE_2D, spheretex); 
 		glUniform1i(uTexture, 0); 
 	}
 
@@ -343,7 +345,7 @@ function drawSphere(program) {
 	glDrawArrays(GL_TRIANGLES, 0, sphereData.numVertices); 
 }
 
-function drawGoal(program) {
+function drawGoal(program, info) {
 	glUseProgram(program); 
 
 	var uModelviewprojection = glGetUniformLocation(program, "uModelviewprojection"); 
@@ -365,12 +367,13 @@ function drawGoal(program) {
 	}
 
 	if(uTexture) {
-		glBindTexture(GL_TEXTURE_2D, cubetex); 
+		glBindTexture(GL_TEXTURE_2D, hearttex); 
 		glUniform1i(uTexture, 0); 
 	}
 
 	mat4multiply(projection, camera, modelviewprojection); 
 	mat4translate(modelviewprojection, goalpos); 
+	mat4rotateY(modelviewprojection, info.total); 
 
 	glUniformMatrix4fv(uModelviewprojection, false, modelviewprojection); 
 
@@ -463,6 +466,64 @@ function createTexture(img) {
 	return tex; 
 }
 
+/* Following canvas-based Perlin generation code originates from
+ * iron_wallaby's code at: http://www.ozoneasylum.com/30982
+ */
+function randomNoise(mode, canvas, x, y, width, height, alpha) {
+    x = x || 0;
+    y = y || 0;
+    width = width || canvas.width;
+    height = height || canvas.height;
+    alpha = alpha || 255;
+    var g = canvas.getContext("2d"),
+        imageData = g.getImageData(x, y, width, height),
+        random = Math.random,
+        pixels = imageData.data,
+        n = pixels.length,
+        i = 0;
+    while (i < n) {
+		if(mode === 1) { 
+	        pixels[i+0] = (random() * 256) | 0;
+			pixels[i+1] = 0; 
+			pixels[i+2] = 0; 
+			pixels[i+3] = alpha; 
+		}
+		else {
+			pixels[i+0] = 0; 
+		    pixels[i+1] = (random() * 256) | 0;
+			pixels[i+2] = 0; 
+			pixels[i+3] = alpha; 
+		}
+		i += 4; 
+    }
+    g.putImageData(imageData, x, y);
+    return canvas;
+}
+
+function createCanvas(w,h) {
+	var c = document.createElement("canvas"); 
+	c.width=w; 
+	c.height=h; 
+	return c; 
+}
+
+function perlinNoise(canvas, mode) {
+    var noise = randomNoise(mode, createCanvas(canvas.width, canvas.height));
+    var g = canvas.getContext("2d");
+    g.save();
+    
+    /* Scale random iterations onto the canvas to generate Perlin noise. */
+    for (var size = 4; size <= noise.width; size *= 2) {
+        var x = (Math.random() * (noise.width - size)) | 0,
+            y = (Math.random() * (noise.height - size)) | 0;
+        g.globalAlpha = 4 / size;
+        g.drawImage(noise, x, y, size, size, 0, 0, canvas.width, canvas.height);
+    }
+
+    g.restore();
+    return canvas;
+}
+
 GLT.loadmanager.loadFiles({
 	"files" : ["cube.obj", "sphere.obj", "diffuse.shader", "faces.gif", "skybox.obj", "border.shader", "heart.obj"], 
 	//"update" : function(p,q) { dlog(p,q); }, 
@@ -478,6 +539,13 @@ GLT.loadmanager.loadFiles({
 		borderprogram = GLT.shader.compileProgram(gl,files["border.shader"]);
 		cubetex = createTexture(files["faces.gif"]);
 		skytex = createTexture( funkycube.canvas );
+
+		var tmpcanvas = document.createElement("canvas"); 
+		tmpcanvas.width = tmpcanvas.height = 8; 
+
+
+		spheretex = createTexture( perlinNoise(tmpcanvas,2) );
+		hearttex = createTexture( perlinNoise(tmpcanvas,1) );
 
 		var MAX = 10; 
 
@@ -566,5 +634,6 @@ GLT.loadmanager.loadFiles({
 });
 	
 dlog("DEBUG Build:", __DATE__, __TIME__); 
+
 
 
