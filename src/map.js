@@ -170,23 +170,26 @@ function MapCreate(seed) {
 	function fill(seed) {
 		var dimension = 16; //(rand.next() % 8 + 4) * 2; 
 		var rand = new Random(seed); 
-		var iterations = 5 + (rand.next() % 4);
+		var iterations = 3 + (rand.next() % 4);
 		var startingPosition  = [ (dimension/2) | 0, (dimension/2) | 0, (dimension/2) | 0 ];  
 		
 		var field = clearField(dimension); 
 		set(field, startingPosition, MAP_START); 
 
 		var pathA = []; 
-		var fillA = fillRec(rand, startingPosition, iterations, 0, -1, pathA, field, dimension, true);
+		var fillA = fillRec(rand, startingPosition, iterations, 0, -1, pathA, field, dimension, false);
 
 		var pathB = []; 
 		var fillB = fillA && fillRec(rand, pathA[rand.next() % pathA.length], iterations, 0, -1, pathB, field, dimension, false);
 
-		if(fillA) {
+		var pathC = []; 
+		var fillC = fillB && fillRec(rand, pathB[rand.next() % pathB.length], iterations, 0, -1, pathC, field, dimension, true);
+
+		if(fillA && fillB && fillC) {
 			return {
 				"startingPosition" : { x : startingPosition[0], y : startingPosition[0], z : startingPosition[0] },  
 				"getObject" : function(x,y,z) { return get(field, dimension, [x,y,z]); }, 
-				"path" : pathA, 
+				"path" : pathC, 
 				"dimension" : dimension 
 			}; 
 		}

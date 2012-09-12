@@ -36,6 +36,7 @@ if(!gl) {
 
 	#ifdef RELEASE 
 		location = "http://get.webgl.org";
+		return; 
 	#endif
 }
 
