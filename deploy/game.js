@@ -1044,7 +1044,7 @@ function MapCreate(seed) {
   do { if(!(position[1] instanceof Number) && !("Number".toLowerCase() === typeof position[1])) { __error("Objct " + "position[1]" + " is not from type " + "Number", "src/map.js", 120); } } while(false);
   do { if(!(position[2] instanceof Number) && !("Number".toLowerCase() === typeof position[2])) { __error("Objct " + "position[2]" + " is not from type " + "Number", "src/map.js", 121); } } while(false);
   if(steps < 2) return true;
-  var newPos = getCoords(position, dir, 1);
+  var newPos = step(position, dir);
   var type = get(field,dimension, newPos);
   if( type !== 0 ) return false;
   return nothingInBetween(field, dimension, newPos, dir, steps-1);
@@ -1058,7 +1058,7 @@ function MapCreate(seed) {
   do { if(!(position[1] instanceof Number) && !("Number".toLowerCase() === typeof position[1])) { __error("Objct " + "position[1]" + " is not from type " + "Number", "src/map.js", 138); } } while(false);
   do { if(!(position[2] instanceof Number) && !("Number".toLowerCase() === typeof position[2])) { __error("Objct " + "position[2]" + " is not from type " + "Number", "src/map.js", 139); } } while(false);
   if(steps < 2) return true;
-  var newPos = getCoords(position, dir, 1);
+  var newPos = step(position, dir);
   if( get(field,dimension, newPos) !== 0 ) return false;
   set(field, newPos, 4);
   return nothingInBetween(field, dimension, newPos, dir, steps-1);
@@ -1944,7 +1944,7 @@ GLT.loadmanager.loadFiles({
   spinVert(-3.14/4);
  }
 });
-console.log("DEBUG (" + "src/main.js" + ":" + 559 + ")", "DEBUG Build:", "Sep 12 2012", "16:37:46" );
+console.log("DEBUG (" + "src/main.js" + ":" + 559 + ")", "DEBUG Build:", "Sep 12 2012", "16:39:28" );
 }
 catch(e) {
  var m = e.message || e;

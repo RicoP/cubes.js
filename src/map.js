@@ -122,7 +122,7 @@ function MapCreate(seed) {
 
 		if(steps < 2) return true; 
 
-		var newPos = getCoords(position, dir, 1);
+		var newPos = step(position, dir);
 		var type = get(field,dimension, newPos);
 		if( type !== MAP_AIR ) return false; 
 		return nothingInBetween(field, dimension, newPos, dir, steps-1); 
@@ -140,7 +140,7 @@ function MapCreate(seed) {
 
 		if(steps < 2) return true; 
 
-		var newPos = getCoords(position, dir, 1);
+		var newPos = step(position, dir);
 		if( get(field,dimension, newPos) !== MAP_AIR ) return false; 
 		set(field, newPos, MAP_PATH); 
 		return nothingInBetween(field, dimension, newPos, dir, steps-1); 
