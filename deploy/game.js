@@ -1837,7 +1837,7 @@ function createTexture(img) {
  return tex;
 }
 GLT.loadmanager.loadFiles({
- "files" : ["cube.obj", "sphere.obj", "diffuse.shader", "faces.gif", "skybox.obj", "border.shader", "goal.obj"],
+ "files" : ["cube.obj", "sphere.obj", "diffuse.shader", "faces.gif", "skybox.obj", "border.shader", "heart.obj"],
  "update" : function(p,q) { console.log("DEBUG (" + "src/main.js" + ":" + 459 + ")", p,q ); },
  "error" : function(file, err) {
   console.error("ERROR (" + "src/main.js" + ":" + 461 + ")", file, err );
@@ -1846,7 +1846,7 @@ GLT.loadmanager.loadFiles({
   cube = files["cube.obj"];
   sky = files["skybox.obj"];
   sphereData = files["sphere.obj"];
-  goal = files["goal.obj"];
+  goal = files["heart.obj"];
   program = GLT.shader.compileProgram(gl,files["diffuse.shader"]);
   borderprogram = GLT.shader.compileProgram(gl,files["border.shader"]);
   cubetex = createTexture(files["faces.gif"]);
@@ -1919,7 +1919,7 @@ GLT.loadmanager.loadFiles({
   spinVert(-3.14/4);
  }
 });
-console.log("DEBUG (" + "src/main.js" + ":" + 559 + ")", "DEBUG Build:", "Sep 12 2012", "13:31:58" );
+console.log("DEBUG (" + "src/main.js" + ":" + 559 + ")", "DEBUG Build:", "Sep 12 2012", "13:36:14" );
 }
 catch(e) {
  var m = e.message || e;
