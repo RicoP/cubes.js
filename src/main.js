@@ -230,7 +230,7 @@ function draw(info) {
 	drawCubes(program); 
 	drawSphere(program); 
 	drawGoal(program); 
-	//drawPath(borderprogram, map.path); 
+	drawPath(borderprogram, map.path); 
 } 
 
 function drawCubes(program) {

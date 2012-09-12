@@ -123,7 +123,8 @@ function MapCreate(seed) {
 		if(steps < 2) return true; 
 
 		var newPos = getCoords(position, dir, 1);
-		if( get(field,dimension, newPos) !== MAP_AIR ) return false; 
+		var type = get(field,dimension, newPos);
+		if( type !== MAP_AIR ) return false; 
 		return nothingInBetween(field, dimension, newPos, dir, steps-1); 
 	}
 
@@ -193,27 +194,40 @@ function MapCreate(seed) {
 	function fill(seed) {
 		var dimension = 16; //(rand.next() % 8 + 4) * 2; 
 		var rand = new Random(seed); 
-		var iterations = 3 + (rand.next() % 4);
+		var iterations = 2 + (rand.next() % 3);
 		var startingPosition  = [ (dimension/2) | 0, (dimension/2) | 0, (dimension/2) | 0 ];  
 		
 		var field = clearField(dimension); 
 		set(field, startingPosition, MAP_START); 
 
-		var steps = 10 - iterations; 
+		var steps = 7 - iterations; 
 	
 		var lastpath = []; 
+		var perfectpath = []; 
 		var succeed = fillRec(rand, startingPosition, iterations, 0, -1, lastpath, field, dimension, false);
 		for(var i = 0; i !== iterations; i++) {
-			var newPosition = lastpath[rand.next() % lastpath.length]; 
-			lastpath = []; 	
+			var tillPosition = rand.next() % lastpath.length;
+			var newPosition = lastpath[tillPosition]; 
+
+			for(var j = 0; j !== tillPosition+1; j++) {
+				perfectpath.push( lastpath[j] );
+			}
+
+			lastpath = []; 				
+
 			succeed = succeed && fillRec(rand, newPosition, iterations, 0, -1, lastpath, field, dimension, i === (iterations - 1));
 		}
+
+		for(var j = 0; j !== tillPosition; j++) {
+			perfectpath.push( lastpath[j] );
+		}
+
 
 		if(succeed) {			
 			return {
 				"startingPosition" : { x : startingPosition[0], y : startingPosition[0], z : startingPosition[0] },  
 				"getObject" : function(x,y,z) { return get(field, dimension, [x,y,z]); }, 
-				"path" : lastpath, 
+				"path" : perfectpath, 
 				"dimension" : dimension 
 			}; 
 		}

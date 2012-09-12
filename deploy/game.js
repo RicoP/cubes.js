@@ -1045,17 +1045,18 @@ function MapCreate(seed) {
   do { if(!(position[2] instanceof Number) && !("Number".toLowerCase() === typeof position[2])) { __error("Objct " + "position[2]" + " is not from type " + "Number", "src/map.js", 121); } } while(false);
   if(steps < 2) return true;
   var newPos = getCoords(position, dir, 1);
-  if( get(field,dimension, newPos) !== 0 ) return false;
+  var type = get(field,dimension, newPos);
+  if( type !== 0 ) return false;
   return nothingInBetween(field, dimension, newPos, dir, steps-1);
  }
  function markSpaceInBeteenAsPath(field, dimension, position, dir, steps) {
-  do { if(!(field.length)) { __error("assertion failed: " + "field.length" + " = " + (field.length), "src/map.js", 132); } } while(false);
-  do { if(!(dimension instanceof Number) && !("Number".toLowerCase() === typeof dimension)) { __error("Objct " + "dimension" + " is not from type " + "Number", "src/map.js", 133); } } while(false);
-  do { if(!(dir instanceof Number) && !("Number".toLowerCase() === typeof dir)) { __error("Objct " + "dir" + " is not from type " + "Number", "src/map.js", 134); } } while(false);
-  do { if(!(steps instanceof Number) && !("Number".toLowerCase() === typeof steps)) { __error("Objct " + "steps" + " is not from type " + "Number", "src/map.js", 135); } } while(false);
-  do { if(!(position[0] instanceof Number) && !("Number".toLowerCase() === typeof position[0])) { __error("Objct " + "position[0]" + " is not from type " + "Number", "src/map.js", 136); } } while(false);
-  do { if(!(position[1] instanceof Number) && !("Number".toLowerCase() === typeof position[1])) { __error("Objct " + "position[1]" + " is not from type " + "Number", "src/map.js", 137); } } while(false);
-  do { if(!(position[2] instanceof Number) && !("Number".toLowerCase() === typeof position[2])) { __error("Objct " + "position[2]" + " is not from type " + "Number", "src/map.js", 138); } } while(false);
+  do { if(!(field.length)) { __error("assertion failed: " + "field.length" + " = " + (field.length), "src/map.js", 133); } } while(false);
+  do { if(!(dimension instanceof Number) && !("Number".toLowerCase() === typeof dimension)) { __error("Objct " + "dimension" + " is not from type " + "Number", "src/map.js", 134); } } while(false);
+  do { if(!(dir instanceof Number) && !("Number".toLowerCase() === typeof dir)) { __error("Objct " + "dir" + " is not from type " + "Number", "src/map.js", 135); } } while(false);
+  do { if(!(steps instanceof Number) && !("Number".toLowerCase() === typeof steps)) { __error("Objct " + "steps" + " is not from type " + "Number", "src/map.js", 136); } } while(false);
+  do { if(!(position[0] instanceof Number) && !("Number".toLowerCase() === typeof position[0])) { __error("Objct " + "position[0]" + " is not from type " + "Number", "src/map.js", 137); } } while(false);
+  do { if(!(position[1] instanceof Number) && !("Number".toLowerCase() === typeof position[1])) { __error("Objct " + "position[1]" + " is not from type " + "Number", "src/map.js", 138); } } while(false);
+  do { if(!(position[2] instanceof Number) && !("Number".toLowerCase() === typeof position[2])) { __error("Objct " + "position[2]" + " is not from type " + "Number", "src/map.js", 139); } } while(false);
   if(steps < 2) return true;
   var newPos = getCoords(position, dir, 1);
   if( get(field,dimension, newPos) !== 0 ) return false;
@@ -1063,9 +1064,9 @@ function MapCreate(seed) {
   return nothingInBetween(field, dimension, newPos, dir, steps-1);
  }
  function fillRec(rand, position, iterationsLeft, attempt, directionICameFrom, path, field, dimension, setGoal) {
-  do { if(!(position[0] instanceof Number) && !("Number".toLowerCase() === typeof position[0])) { __error("Objct " + "position[0]" + " is not from type " + "Number", "src/map.js", 151); } } while(false);
-  do { if(!(position[1] instanceof Number) && !("Number".toLowerCase() === typeof position[1])) { __error("Objct " + "position[1]" + " is not from type " + "Number", "src/map.js", 152); } } while(false);
-  do { if(!(position[2] instanceof Number) && !("Number".toLowerCase() === typeof position[2])) { __error("Objct " + "position[2]" + " is not from type " + "Number", "src/map.js", 153); } } while(false);
+  do { if(!(position[0] instanceof Number) && !("Number".toLowerCase() === typeof position[0])) { __error("Objct " + "position[0]" + " is not from type " + "Number", "src/map.js", 152); } } while(false);
+  do { if(!(position[1] instanceof Number) && !("Number".toLowerCase() === typeof position[1])) { __error("Objct " + "position[1]" + " is not from type " + "Number", "src/map.js", 153); } } while(false);
+  do { if(!(position[2] instanceof Number) && !("Number".toLowerCase() === typeof position[2])) { __error("Objct " + "position[2]" + " is not from type " + "Number", "src/map.js", 154); } } while(false);
   var type = iterationsLeft === 1 && setGoal ? 3 : 1;
   var dir = rand.next() % 6;
   var steps = 3 + rand.next() % (dimension - 3);
@@ -1091,23 +1092,31 @@ function MapCreate(seed) {
  function fill(seed) {
   var dimension = 16;
   var rand = new Random(seed);
-  var iterations = 3 + (rand.next() % 4);
+  var iterations = 2 + (rand.next() % 3);
   var startingPosition = [ (dimension/2) | 0, (dimension/2) | 0, (dimension/2) | 0 ];
   var field = clearField(dimension);
   set(field, startingPosition, 2);
-  var steps = 10 - iterations;
+  var steps = 7 - iterations;
   var lastpath = [];
+  var perfectpath = [];
   var succeed = fillRec(rand, startingPosition, iterations, 0, -1, lastpath, field, dimension, false);
   for(var i = 0; i !== iterations; i++) {
-   var newPosition = lastpath[rand.next() % lastpath.length];
+   var tillPosition = rand.next() % lastpath.length;
+   var newPosition = lastpath[tillPosition];
+   for(var j = 0; j !== tillPosition+1; j++) {
+    perfectpath.push( lastpath[j] );
+   }
    lastpath = [];
    succeed = succeed && fillRec(rand, newPosition, iterations, 0, -1, lastpath, field, dimension, i === (iterations - 1));
+  }
+  for(var j = 0; j !== tillPosition; j++) {
+   perfectpath.push( lastpath[j] );
   }
   if(succeed) {
    return {
     "startingPosition" : { x : startingPosition[0], y : startingPosition[0], z : startingPosition[0] },
     "getObject" : function(x,y,z) { return get(field, dimension, [x,y,z]); },
-    "path" : lastpath,
+    "path" : perfectpath,
     "dimension" : dimension
    };
   }
@@ -1698,6 +1707,7 @@ function draw(info) {
  drawCubes(program);
  drawSphere(program);
  drawGoal(program);
+ drawPath(borderprogram, map.path);
 }
 function drawCubes(program) {
  glUseProgram(program);
@@ -1934,7 +1944,7 @@ GLT.loadmanager.loadFiles({
   spinVert(-3.14/4);
  }
 });
-console.log("DEBUG (" + "src/main.js" + ":" + 559 + ")", "DEBUG Build:", "Sep 12 2012", "16:07:17" );
+console.log("DEBUG (" + "src/main.js" + ":" + 559 + ")", "DEBUG Build:", "Sep 12 2012", "16:37:46" );
 }
 catch(e) {
  var m = e.message || e;
