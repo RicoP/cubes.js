@@ -86,6 +86,7 @@ function Cube(position) {
 	that.unview = unview; 
 	that.touch = touch; 
 	that.leave = leave; 
+	that.reset = function() { face = FACE_NEUTRAL; }; 
 }
 
 #endif 

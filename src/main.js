@@ -324,6 +324,9 @@ function drawSphere(program) {
 
 	mat4multiply(projection, camera, modelviewprojection); 
 	mat4translate(modelviewprojection, sphere.position); 
+	if(sphere.size !== 1.0) {  
+		mat4scale(modelviewprojection, [sphere.size, sphere.size, sphere.size]); 
+	}
 
 	glUniformMatrix4fv(uModelviewprojection, false, modelviewprojection); 
 

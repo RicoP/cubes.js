@@ -162,7 +162,44 @@ function mat4translate(mat, vec, dest) {
 };
 
 
-//function mat4scale(){}
+function mat4scale(mat, vec, dest) {
+        var x = vec[0], y = vec[1], z = vec[2];
+
+        if (!dest || mat === dest) {
+            mat[0] *= x;
+            mat[1] *= x;
+            mat[2] *= x;
+            mat[3] *= x;
+            mat[4] *= y;
+            mat[5] *= y;
+            mat[6] *= y;
+            mat[7] *= y;
+            mat[8] *= z;
+            mat[9] *= z;
+            mat[10] *= z;
+            mat[11] *= z;
+            return mat;
+        }
+
+        dest[0] = mat[0] * x;
+        dest[1] = mat[1] * x;
+        dest[2] = mat[2] * x;
+        dest[3] = mat[3] * x;
+        dest[4] = mat[4] * y;
+        dest[5] = mat[5] * y;
+        dest[6] = mat[6] * y;
+        dest[7] = mat[7] * y;
+        dest[8] = mat[8] * z;
+        dest[9] = mat[9] * z;
+        dest[10] = mat[10] * z;
+        dest[11] = mat[11] * z;
+        dest[12] = mat[12];
+        dest[13] = mat[13];
+        dest[14] = mat[14];
+        dest[15] = mat[15];
+        return dest;
+    };
+
 
 //function mat4rotate(){}
 

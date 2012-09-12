@@ -692,6 +692,41 @@ function mat4translate(mat, vec, dest) {
  dest[15] = a03 * x + a13 * y + a23 * z + mat[15];
  return dest;
 };
+function mat4scale(mat, vec, dest) {
+        var x = vec[0], y = vec[1], z = vec[2];
+        if (!dest || mat === dest) {
+            mat[0] *= x;
+            mat[1] *= x;
+            mat[2] *= x;
+            mat[3] *= x;
+            mat[4] *= y;
+            mat[5] *= y;
+            mat[6] *= y;
+            mat[7] *= y;
+            mat[8] *= z;
+            mat[9] *= z;
+            mat[10] *= z;
+            mat[11] *= z;
+            return mat;
+        }
+        dest[0] = mat[0] * x;
+        dest[1] = mat[1] * x;
+        dest[2] = mat[2] * x;
+        dest[3] = mat[3] * x;
+        dest[4] = mat[4] * y;
+        dest[5] = mat[5] * y;
+        dest[6] = mat[6] * y;
+        dest[7] = mat[7] * y;
+        dest[8] = mat[8] * z;
+        dest[9] = mat[9] * z;
+        dest[10] = mat[10] * z;
+        dest[11] = mat[11] * z;
+        dest[12] = mat[12];
+        dest[13] = mat[13];
+        dest[14] = mat[14];
+        dest[15] = mat[15];
+        return dest;
+    };
 function mat4frustum(left, right, bottom, top, near, far, dest) {
         if (!dest) { dest = mat4create(); }
         var rl = (right - left),
@@ -1127,8 +1162,19 @@ var Sphere = (function() {
   var speed = 8.0;
   var state = 0;
   var direction = vec3create();
-  var startpos = vec3create();
+  var currentPosition = vec3create();
+  var startingPosition = vec3create(sphere.position);
   var movetime = 0;
+  function reset() {
+   for(var i = 0; i !== cubelist.length; i++) {
+    var cube = cubelist[i];
+    cube.reset();
+   }
+   vec3set(startingPosition, sphere.position);
+   state = 0;
+   sphere.size = 1;
+   markCubesWhoSeeMeAsWatching(sphere.position, -1);
+  }
   function markCubesWhoSeeMe(position, dir, view) {
    var x = position[0];
    var y = position[1];
@@ -1180,11 +1226,17 @@ var Sphere = (function() {
    switch(state) {
     case 0:
     break;
+    case 2:
+    sphere.size -= time.delta * .5;
+    if(sphere.size < 0) {
+     reset();
+     return;
+    }
     case 1:
     vec3add(sphere.position, vec3scale(direction, time.delta * speed, tmpvector));
     movetime += time.delta * speed;
-    if(movetime >= 1) {
-     vec3set(vec3add(startpos, direction, tmpvector), sphere.position);
+    if(movetime >= 1 && state !== 2) {
+     vec3set(vec3add(currentPosition, direction, tmpvector), sphere.position);
      markCubesWhoSeeMeAsWatching(sphere.position, Directions.getDirectionBasedOnVector(direction));
      state = 0;
      movetime = 0.0;
@@ -1192,27 +1244,29 @@ var Sphere = (function() {
     }
     break;
     default:
-    console.error("ERROR (" + "src/sphere.js" + ":" + 107 + ")", "unknow state.", state );
+    console.error("ERROR (" + "src/sphere.js" + ":" + 129 + ")", "unknow state.", state );
     break;
    }
   };
   this.tap = function(time, dir) {
-   do { if(!(time.delta instanceof Number) && !("Number".toLowerCase() === typeof time.delta)) { __error("Objct " + "time.delta" + " is not from type " + "Number", "src/sphere.js", 113); } } while(false);
-   do { if(!(dir instanceof Float32Array) && !("Float32Array".toLowerCase() === typeof dir)) { __error("Objct " + "dir" + " is not from type " + "Float32Array", "src/sphere.js", 114); } } while(false);
-   do { if(!(Math.abs((vec3length(dir) - 1.0)) < 0.0001)) { __error("assertion failed: " + "Math.abs((vec3length(dir) - 1.0)) < 0.0001" + " = " + (Math.abs((vec3length(dir) - 1.0)) < 0.0001), "src/sphere.js", 115); } } while(false);
+   do { if(!(time.delta instanceof Number) && !("Number".toLowerCase() === typeof time.delta)) { __error("Objct " + "time.delta" + " is not from type " + "Number", "src/sphere.js", 135); } } while(false);
+   do { if(!(dir instanceof Float32Array) && !("Float32Array".toLowerCase() === typeof dir)) { __error("Objct " + "dir" + " is not from type " + "Float32Array", "src/sphere.js", 136); } } while(false);
+   do { if(!(Math.abs((vec3length(dir) - 1.0)) < 0.0001)) { __error("assertion failed: " + "Math.abs((vec3length(dir) - 1.0)) < 0.0001" + " = " + (Math.abs((vec3length(dir) - 1.0)) < 0.0001), "src/sphere.js", 137); } } while(false);
    switch(state) {
     case 1:
+    case 2:
     break;
     case 0:
     var destx = Math.round(sphere.position[0] + dir[0]);
     var desty = Math.round(sphere.position[1] + dir[1]);
     var destz = Math.round(sphere.position[2] + dir[2]);
     if(destx === goalpos[0] && desty === goalpos[1] && destz === goalpos[2]) {
-     console.log("DEBUG (" + "src/sphere.js" + ":" + 128 + ")", "winning" );
+     console.log("DEBUG (" + "src/sphere.js" + ":" + 151 + ")", "winning" );
      return;
     }
     if(destx < 0 || destx >= dimension || desty < 0 || desty >= dimension || destz < 0 || destz >= dimension) {
-     console.log("DEBUG (" + "src/sphere.js" + ":" + 133 + ")", "dead" );
+     state = 2;
+     markCubesWhoSeeMeAsUnwatching(sphere.position, Directions.getDirectionBasedOnVector(direction));
      return;
     }
     var cube = getCube(destx, desty, destz);
@@ -1229,24 +1283,26 @@ var Sphere = (function() {
     }
     sphere.lastCube = cube;
     vec3set(dir, direction);
-    vec3set(sphere.position, startpos);
+    vec3set(sphere.position, currentPosition);
     movetime = 0.0;
     markCubesWhoSeeMeAsUnwatching(sphere.position, Directions.getDirectionBasedOnVector(direction));
     state = 1;
     break;
     default:
-    console.error("ERROR (" + "src/sphere.js" + ":" + 167 + ")", "unknow state.", state );
+    console.error("ERROR (" + "src/sphere.js" + ":" + 191 + ")", "unknow state.", state );
     break;
    }
   };
   markCubesWhoSeeMeAsWatching(sphere.position, -1);
  }
  return function(position, cubelist, goalpos, dimension) {
-  do { if(typeof position === "undefined" || typeof (position . x) === "undefined") { __error("No property " + "x" + " in " + "position", "src/sphere.js", 177); } } while(false);
-  do { if(typeof position === "undefined" || typeof (position . y) === "undefined") { __error("No property " + "y" + " in " + "position", "src/sphere.js", 178); } } while(false);
-  do { if(typeof position === "undefined" || typeof (position . z) === "undefined") { __error("No property " + "z" + " in " + "position", "src/sphere.js", 179); } } while(false);
-  do { if(!(this !== window)) { __error("assertion failed: " + "this !== window" + " = " + (this !== window), "src/sphere.js", 180); } } while(false);
+  do { if(typeof position === "undefined" || typeof (position . x) === "undefined") { __error("No property " + "x" + " in " + "position", "src/sphere.js", 201); } } while(false);
+  do { if(typeof position === "undefined" || typeof (position . y) === "undefined") { __error("No property " + "y" + " in " + "position", "src/sphere.js", 202); } } while(false);
+  do { if(typeof position === "undefined" || typeof (position . z) === "undefined") { __error("No property " + "z" + " in " + "position", "src/sphere.js", 203); } } while(false);
+  do { if(!(this !== window)) { __error("assertion failed: " + "this !== window" + " = " + (this !== window), "src/sphere.js", 204); } } while(false);
   this.position = vec3create([position.x, position.y, position.z]);
+  this.size = 1;
+  this.lastCube = null;
   var state = new Statemachine(this, cubelist, goalpos, dimension);
   this.tap = function(info, dir) {
    state.tap(info, dir);
@@ -1254,7 +1310,6 @@ var Sphere = (function() {
   this.tick = function(info) {
    state.tick(info);
   };
-  this.lastCube = null;
  };
 }());
 function Cube(position) {
@@ -1317,6 +1372,7 @@ function Cube(position) {
  that.unview = unview;
  that.touch = touch;
  that.leave = leave;
+ that.reset = function() { face = 0; };
 }
 do { if(!(64 === 16 * 4)) { __error("assertion failed: " + "CUBE_WIDTH === FACE_WIDTH * 4" + " = " + (64 === 16 * 4), "src/funkycube.js", 8); } } while(false);
 var Funkycube;
@@ -1686,6 +1742,9 @@ function drawSphere(program) {
  }
  mat4multiply(projection, camera, modelviewprojection);
  mat4translate(modelviewprojection, sphere.position);
+ if(sphere.size !== 1.0) {
+  mat4scale(modelviewprojection, [sphere.size, sphere.size, sphere.size]);
+ }
  glUniformMatrix4fv(uModelviewprojection, false, modelviewprojection);
  glDrawArrays(GL_TRIANGLES, 0, sphereData.numVertices);
 }
@@ -1720,10 +1779,10 @@ function drawSky(program) {
  var aTextureuv = glGetAttribLocation(program, "aTextureuv");
  var uTextureOffset = glGetUniformLocation(program, "uTextureOffset");
  var modelviewprojection = tmpmatrix;
- do { if(!(uModelviewprojection)) { __error("assertion failed: " + "uModelviewprojection" + " = " + (uModelviewprojection), "src/main.js", 378); } } while(false);
- do { if(!(uTexture)) { __error("assertion failed: " + "uTexture" + " = " + (uTexture), "src/main.js", 379); } } while(false);
- do { if(!(aTextureuv !== -1)) { __error("assertion failed: " + "aTextureuv !== -1" + " = " + (aTextureuv !== -1), "src/main.js", 380); } } while(false);
- do { if(!(aVertex !== -1)) { __error("assertion failed: " + "aVertex !== -1" + " = " + (aVertex !== -1), "src/main.js", 381); } } while(false);
+ do { if(!(uModelviewprojection)) { __error("assertion failed: " + "uModelviewprojection" + " = " + (uModelviewprojection), "src/main.js", 381); } } while(false);
+ do { if(!(uTexture)) { __error("assertion failed: " + "uTexture" + " = " + (uTexture), "src/main.js", 382); } } while(false);
+ do { if(!(aTextureuv !== -1)) { __error("assertion failed: " + "aTextureuv !== -1" + " = " + (aTextureuv !== -1), "src/main.js", 383); } } while(false);
+ do { if(!(aVertex !== -1)) { __error("assertion failed: " + "aVertex !== -1" + " = " + (aVertex !== -1), "src/main.js", 384); } } while(false);
  glBindBuffer(GL_ARRAY_BUFFER, skyBuffer);
  glVertexAttribPointer(aVertex, 4, GL_FLOAT, false, sky.stride, sky.voffset);
  glEnableVertexAttribArray(aVertex);
@@ -1745,8 +1804,8 @@ function drawPath(program, path) {
  var aVertex = glGetAttribLocation(program, "aVertex");
  var uModelviewprojection = glGetUniformLocation(program, "uModelviewprojection");
  var modelviewprojection = tmpmatrix;
- do { if(!(aVertex !== -1)) { __error("assertion failed: " + "aVertex !== -1" + " = " + (aVertex !== -1), "src/main.js", 414); } } while(false);
- do { if(!(uModelviewprojection !== -1)) { __error("assertion failed: " + "uModelviewprojection !== -1" + " = " + (uModelviewprojection !== -1), "src/main.js", 415); } } while(false);
+ do { if(!(aVertex !== -1)) { __error("assertion failed: " + "aVertex !== -1" + " = " + (aVertex !== -1), "src/main.js", 417); } } while(false);
+ do { if(!(uModelviewprojection !== -1)) { __error("assertion failed: " + "uModelviewprojection !== -1" + " = " + (uModelviewprojection !== -1), "src/main.js", 418); } } while(false);
  glBindBuffer(GL_ARRAY_BUFFER, pathBuffer);
  glVertexAttribPointer(aVertex, 3, GL_FLOAT, false, 0, 0);
  glEnableVertexAttribArray(aVertex);
@@ -1764,7 +1823,7 @@ function setCanvasForTexture(canvas, text) {
  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 }
 function createTexture(img) {
- do { if(!(img)) { __error("assertion failed: " + "img" + " = " + (img), "src/main.js", 443); } } while(false);
+ do { if(!(img)) { __error("assertion failed: " + "img" + " = " + (img), "src/main.js", 446); } } while(false);
  var tex = glCreateTexture();
  setCanvasForTexture(img, tex);
  glBindTexture(GL_TEXTURE_2D, null);
@@ -1772,9 +1831,9 @@ function createTexture(img) {
 }
 GLT.loadmanager.loadFiles({
  "files" : ["cube.obj", "sphere.obj", "diffuse.shader", "faces.png", "skybox.obj", "border.shader", "goal.obj"],
- "update" : function(p,q) { console.log("DEBUG (" + "src/main.js" + ":" + 455 + ")", p,q ); },
+ "update" : function(p,q) { console.log("DEBUG (" + "src/main.js" + ":" + 458 + ")", p,q ); },
  "error" : function(file, err) {
-  console.error("ERROR (" + "src/main.js" + ":" + 457 + ")", file, err );
+  console.error("ERROR (" + "src/main.js" + ":" + 460 + ")", file, err );
  },
  "finished" : function(files) {
   cube = files["cube.obj"];
@@ -1823,7 +1882,7 @@ GLT.loadmanager.loadFiles({
    setCanvasForTexture(funkycube.canvas, skytex);
   }, 100);
   var seed = (0xFFFF * Math.random()) & 0xFFFF;
-  console.log("DEBUG (" + "src/main.js" + ":" + 516 + ")", "SEED", seed );
+  console.log("DEBUG (" + "src/main.js" + ":" + 519 + ")", "SEED", seed );
   map = MapCreate(seed);
   for(var x = 0; x !== 16; x++)
    for(var y = 0; y !== 16; y++)
@@ -1853,7 +1912,7 @@ GLT.loadmanager.loadFiles({
   spinVert(-3.14/4);
  }
 });
-console.log("DEBUG (" + "src/main.js" + ":" + 555 + ")", "DEBUG Build:", "Sep 11 2012", "18:55:43" );
+console.log("DEBUG (" + "src/main.js" + ":" + 558 + ")", "DEBUG Build:", "Sep 12 2012", "12:01:16" );
 }
 catch(e) {
  var m = e.message || e;

@@ -9,6 +9,8 @@
 
 #define STATE_NONE   0 
 #define STATE_MOVE   1
+#define STATE_DEAD   2
+
 
 var Sphere = (function() { 
 	var tmpvector = vec3create();
@@ -18,10 +20,23 @@ var Sphere = (function() {
 
 		var speed = 8.0;
 
-		var state       = STATE_NONE;  
-		var direction   = vec3create(); 
-		var startpos    = vec3create(); 
-		var movetime    = 0; 
+		var state            = STATE_NONE;  
+		var direction        = vec3create(); 
+		var currentPosition  = vec3create(); 
+		var startingPosition = vec3create(sphere.position); 
+		var movetime         = 0; 
+
+		function reset() {
+			for(var i = 0; i !== cubelist.length; i++) {
+				var cube = cubelist[i]; 
+				cube.reset(); 
+			}
+
+			vec3set(startingPosition, sphere.position); 
+			state = STATE_NONE; 
+			sphere.size = 1; 
+			markCubesWhoSeeMeAsWatching(sphere.position, DIRECTION_ZERO); 
+		}
 
 		function markCubesWhoSeeMe(position, dir, view) {
 			var x = position[0];
@@ -86,12 +101,19 @@ var Sphere = (function() {
 				case STATE_NONE: 
 				break; 
 
+				case STATE_DEAD: 
+				sphere.size -= time.delta * .5; 
+				if(sphere.size < 0) {
+					reset(); 
+					return; 
+				} 
+				//breakthrough
 				case STATE_MOVE: 
 				vec3add(sphere.position, vec3scale(direction, time.delta * speed, tmpvector)); 
 				movetime += time.delta * speed;
-				if(movetime >= 1) {				
+				if(movetime >= 1 && state !== STATE_DEAD) {				
 					//we reached our destination.
-					vec3set(vec3add(startpos, direction, tmpvector), sphere.position); 					
+					vec3set(vec3add(currentPosition, direction, tmpvector), sphere.position); 					
 
 					markCubesWhoSeeMeAsWatching(sphere.position, Directions.getDirectionBasedOnVector(direction)); 
 
@@ -116,6 +138,7 @@ var Sphere = (function() {
 
 			switch(state) {
 				case STATE_MOVE: 
+				case STATE_DEAD: 
 				break; 
 
 				case STATE_NONE: 
@@ -130,7 +153,8 @@ var Sphere = (function() {
 				}
 
 				if(destx < 0 || destx >= dimension || desty < 0 || desty >= dimension || destz < 0 || destz >= dimension) {
-					dlog("dead"); 
+					state = STATE_DEAD; 
+					markCubesWhoSeeMeAsUnwatching(sphere.position, Directions.getDirectionBasedOnVector(direction)); 
 					return; 
 				} 
 
@@ -154,7 +178,7 @@ var Sphere = (function() {
 				sphere.lastCube = cube; 
 
 				vec3set(dir, direction); 
-				vec3set(sphere.position, startpos); 
+				vec3set(sphere.position, currentPosition); 
 				movetime = 0.0; 
 
 				//Tell old cubes who have seen me, that they don't see me 				
@@ -180,6 +204,8 @@ var Sphere = (function() {
 		assertNew(); 
 
 		this.position = vec3create([position.x, position.y, position.z]); 
+		this.size = 1; 
+		this.lastCube = null; 
 
 		var state  = new Statemachine(this, cubelist, goalpos, dimension); 
 
@@ -190,12 +216,12 @@ var Sphere = (function() {
 		this.tick = function(info) {
 			state.tick(info); 
 		};		
-		this.lastCube = null; 
 	};
 }());
 
 
 #undef STATE_NONE  
 #undef STATE_MOVE 
+#undef STATE_DEAD 
 
 #endif 
