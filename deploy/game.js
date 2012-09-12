@@ -3,28 +3,11 @@
 
 
 try {
-var GL_ARRAY_BUFFER = 34962;
-var GL_CLAMP_TO_EDGE = 33071;
-var GL_CULL_FACE = 2884;
-var GL_DEPTH_BUFFER_BIT = 256;
-var GL_DEPTH_TEST = 2929;
-var GL_FLOAT = 5126;
-var GL_LINES = 1;
-var GL_NEAREST = 9728;
-var GL_RGBA = 6408;
-var GL_STATIC_DRAW = 35044;
-var GL_TEXTURE_2D = 3553;
-var GL_TEXTURE_MAG_FILTER = 10240;
-var GL_TEXTURE_MIN_FILTER = 10241;
-var GL_TEXTURE_WRAP_S = 10242;
-var GL_TEXTURE_WRAP_T = 10243;
-var GL_TRIANGLES = 4;
-var GL_UNPACK_FLIP_Y_WEBGL = 37440;
-var GL_UNSIGNED_BYTE = 5121;
 var GLT = {};
 (function(GLT) {
 "use strict";
 var names = ["experimental-webgl", "webgl", "moz-webgl", "webkit-3d"];
+
 function createContext(canvas) {
   var i;
   var name;
@@ -35,8 +18,10 @@ function createContext(canvas) {
     return gl;
    }
   }
+
   return null;
 }
+
 GLT.createContext = createContext;
 }(GLT));
 (function(GLT) {
@@ -98,10 +83,12 @@ GLT.createContext = createContext;
   "multiply":106, "add":107, "subtract":109, "decimalPoint":110, "divide":111,
   "f1":112, "f2":113, "f3":114, "f4":115, "f5":116, "f6":117,
   "f7":118, "f8":119, "f9":120, "f10":121, "f11":122, "f12":123,
+
   "numlock":144, "scrolllock":145, "semicolon":186, "equals":187, "comma":188,
   "dash":189, "period":190, "slash":191, "graveAccent":192, "openBracket":219,
   "backSlash":220, "closeBraket":221, "quote":222
  };
+
  GLT.keys = {
   codes : codes,
   update : update,
@@ -1476,6 +1463,24 @@ var Funkycube;
   this.ctx = ctx;
  };
 }();
+var GL_ARRAY_BUFFER = 34962;
+var GL_CLAMP_TO_EDGE = 33071;
+var GL_CULL_FACE = 2884;
+var GL_DEPTH_BUFFER_BIT = 256;
+var GL_DEPTH_TEST = 2929;
+var GL_FLOAT = 5126;
+var GL_LINES = 1;
+var GL_NEAREST = 9728;
+var GL_RGBA = 6408;
+var GL_STATIC_DRAW = 35044;
+var GL_TEXTURE_2D = 3553;
+var GL_TEXTURE_MAG_FILTER = 10240;
+var GL_TEXTURE_MIN_FILTER = 10241;
+var GL_TEXTURE_WRAP_S = 10242;
+var GL_TEXTURE_WRAP_T = 10243;
+var GL_TRIANGLES = 4;
+var GL_UNPACK_FLIP_Y_WEBGL = 37440;
+var GL_UNSIGNED_BYTE = 5121;
 var cube;
 var sphereData;
 var sphere;
@@ -1914,7 +1919,7 @@ GLT.loadmanager.loadFiles({
   spinVert(-3.14/4);
  }
 });
-console.log("DEBUG (" + "src/main.js" + ":" + 559 + ")", "DEBUG Build:", "Sep 12 2012", "13:18:16" );
+console.log("DEBUG (" + "src/main.js" + ":" + 559 + ")", "DEBUG Build:", "Sep 12 2012", "13:31:58" );
 }
 catch(e) {
  var m = e.message || e;

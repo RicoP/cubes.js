@@ -1,5 +1,5 @@
 #/bin/sh
-cpp entry.js -P -undef -nostdinc -Wtrigraphs -fdollars-in-identifiers -I include -I gltoolbox.js/src -D RELEASE | uglifyjs > deploy/game.js
+cpp entry.js -P -undef -nostdinc -Wtrigraphs -fdollars-in-identifiers -I gltoolbox.js/src -D RELEASE | uglifyjs > deploy/game.js
 cd deploy
 rm release.zip
 7z a -mx=9 release.zip index.html game.js cube.obj faces.gif skybox.obj goal.obj sphere.obj

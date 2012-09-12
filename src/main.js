@@ -1,4 +1,3 @@
-#include <glconstants.js> 
 #include <glt.createcontext.js>  
 #include <glt.requestgameframe.js>  
 #include <glt.loadmanager.js>  
@@ -12,6 +11,7 @@
 #include "random.js" 
 #include "funkycube.js" 
 #include "map.js" 
+#include "glconstants.js"
 
 var cube; 
 var sphereData; 
