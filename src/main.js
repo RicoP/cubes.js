@@ -26,6 +26,7 @@ var sphereBuffer;
 var skyBuffer; 
 var borderBuffer; 
 var map; 
+var showPath = false; 
 var funkycube = new Funkycube(); 
 
 var canvas = document.getElementsByTagName("canvas")[0]; 
@@ -204,6 +205,10 @@ var getClickDirection = (function() {
 }()); 
 
 function update(info) {
+	if(GLT.keys.wasReleased(GLT.keys.codes.p)) {
+		showPath = !showPath; 
+	}
+
 	if(input.poke) {
 		var dir = getClickDirection(cameraPos);
 		sphere.tap(info, dir); 		
@@ -230,7 +235,11 @@ function draw(info) {
 	drawCubes(program); 
 	drawSphere(program); 
 	drawGoal(program); 
-	drawPath(borderprogram, map.path); 
+	#ifndef RELEASE 
+		if(showPath) { 
+			drawPath(borderprogram, map.path); 
+		} 
+	#endif 
 } 
 
 function drawCubes(program) {
