@@ -15,6 +15,6 @@ try {
 catch(e) {
 	var m = e.message || e; 
 	document.body.innerHTML = m; 
-	alert(m); 
+	throw e; 
 }
 #endif 

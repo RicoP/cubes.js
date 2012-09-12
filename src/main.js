@@ -27,14 +27,15 @@ var skyBuffer;
 var borderBuffer; 
 var map; 
 var showPath = false; 
+var render = true; 
 var funkycube = new Funkycube(); 
+var funkycubecolor = "#FF0000"; 
+var funkyid = 0; 
 
 var canvas = document.getElementsByTagName("canvas")[0]; 
 var gl = GLT.createContext(canvas); 
 
 if(!gl) { 
-	alert("Issues with WebGL :(");
-
 	#ifdef RELEASE 
 		location = "http://get.webgl.org";
 		return; 
@@ -142,7 +143,7 @@ function setup() {
 	goalBuffer = glCreateBuffer(); 
 	glBindBuffer(GL_ARRAY_BUFFER, goalBuffer); 
 	glBufferData(GL_ARRAY_BUFFER, goal.rawData, GL_STATIC_DRAW); 
-	
+/*	
 	var path = new Float32Array( 3 * map.path.length ); 
 	var j = 0; 
 	path[j++] = map.startingPosition.x;
@@ -158,6 +159,7 @@ function setup() {
 	pathBuffer = glCreateBuffer(); 
 	glBindBuffer(GL_ARRAY_BUFFER, pathBuffer); 
 	glBufferData(GL_ARRAY_BUFFER, path, GL_STATIC_DRAW); 
+	*/
 }
 
 function gameloop(info) {
@@ -211,9 +213,9 @@ function update(info) {
 		showPath = !showPath; 
 	}
 
-	if(input.poke) {
+	if(input.poke || GLT.keys.wasPressed(GLT.keys.codes.space)) {
 		var dir = getClickDirection(cameraPos);
-		sphere.tap(info, dir); 		
+		sphere.tap(info, dir);
 	} 
 
 	if(input.drag) {
@@ -222,6 +224,24 @@ function update(info) {
 		spinHorz(disx); 
 		spinVert(disy); 
 	}
+
+	if(GLT.keys.isDown(GLT.keys.codes.left) || GLT.keys.isDown(GLT.keys.codes.a)) {
+		spinHorz(info.delta * Math.PI); 
+	} 
+ 	if(GLT.keys.isDown(GLT.keys.codes.right) || GLT.keys.isDown(GLT.keys.codes.d)) {
+		spinHorz(-info.delta * Math.PI); 
+	} 
+ 	if(GLT.keys.isDown(GLT.keys.codes.up) || GLT.keys.isDown(GLT.keys.codes.w)) {
+		spinVert(info.delta * Math.PI); 
+	} 
+ 	if(GLT.keys.isDown(GLT.keys.codes.down) || GLT.keys.isDown(GLT.keys.codes.s)) {
+		spinVert(-info.delta * Math.PI); 
+	} 
+ 
+
+	if(sphere.isWinning()) {
+		loadNextLevel(); 
+	} 
 
 	input.update(); 
 	sphere.tick(info); 
@@ -233,7 +253,8 @@ function draw(info) {
 	glEnable( GL_DEPTH_TEST ); 
 
 	glClear(GL_DEPTH_BUFFER_BIT); 
-		
+	
+	if(render) { 
 	drawCubes(program); 
 	drawSphere(program); 
 	drawGoal(program, info); 
@@ -242,6 +263,7 @@ function draw(info) {
 			drawPath(borderprogram, map.path); 
 		} 
 	#endif 
+	}
 } 
 
 function drawCubes(program) {
@@ -524,6 +546,65 @@ function perlinNoise(canvas, mode) {
     return canvas;
 }
 
+var level = [15905,26470,43162,62220,11365,10170,61515,54975,35340,14145,8364 ]; 
+
+function loadNextLevel() {
+	var seed = level.shift(); 
+
+	if(!seed) {
+		//alert("Congratulation. But beat every level!"); 
+		render = false; 
+
+	/*	var color = 255; 
+		var interid = setInterval(function() {
+			if(color <0) { 
+				color = 0; 
+				clearInterval(interid); 	
+				clearInterval(funkyid); 
+			}
+
+			funkycubecolor = "#" + color.toString(16).toUpperCase() + "0000";
+			//dlog(funkycubecolor); 
+
+			color-=10;
+		}, 100);*/
+
+		return; 
+	}
+
+	dlog("SEED", seed); 
+	map = MapCreate(seed);  
+
+	cubelist = []; 
+
+	for(var x = 0; x !== 16; x++) 
+		for(var y = 0; y !== 16; y++) 
+			for(var z = 0; z !== 16; z++) {
+				var obj = map.getObject(x,y,z); 
+				if(obj === MAP_CUBE) { 
+					cubelist.push( new Cube( vec3create([x,y,z]) ) ); 
+				}
+				else if(obj === MAP_GOAL) {
+					goalpos[0] = x; 
+					goalpos[1] = y; 
+					goalpos[2] = z; 
+				}
+			}
+
+	cameraDir[0] = map.startingPosition.x;
+	cameraDir[1] = map.startingPosition.x;
+	cameraDir[2] = map.startingPosition.x;
+
+	sphere = new Sphere({ x : cameraDir[0], y : cameraDir[1], z : cameraDir[2] }, cubelist, goalpos, map.dimension); 
+
+	vec3set(cameraDir, cameraPos); 
+	cameraPos[0] = 0; 	
+	cameraPos[1] = 0;  	
+	cameraPos[2] = 1; 	
+
+	recalcCamera(); 
+}
+
 GLT.loadmanager.loadFiles({
 	"files" : ["cube.obj", "sphere.obj", "diffuse.shader", "faces.gif", "skybox.obj", "border.shader", "heart.obj"], 
 	//"update" : function(p,q) { dlog(p,q); }, 
@@ -561,7 +642,11 @@ GLT.loadmanager.loadFiles({
 			dotsface[i] = (Math.random() * 6) | 0;  //[0..5]
 		}
 
-		setInterval(function() {
+		var color = 255; 
+		var pleasestop = false; 
+		funkyid = setInterval(function() {
+			if(pleasestop) return; 
+
 			funkycube.ctx.beginPath();
 			funkycube.ctx.fillStyle = "#000000";
 			funkycube.ctx.globalAlpha = 0.2; 
@@ -578,7 +663,7 @@ GLT.loadmanager.loadFiles({
 				var posincanvas = funkycube.getCanvasCoordinate(face, posx, posy); 
 
 				funkycube.ctx.beginPath();
-				funkycube.ctx.fillStyle = "#FF0000"; 
+				funkycube.ctx.fillStyle = funkycubecolor; 
 				funkycube.ctx.rect(posincanvas.x,posincanvas.y, 1, 1); 
 				funkycube.ctx.fill();
 
@@ -591,43 +676,30 @@ GLT.loadmanager.loadFiles({
 			}
 
 			setCanvasForTexture(funkycube.canvas, skytex); 	
-		}, 100); 
 
-		var seed = (0xFFFF * Math.random()) & 0xFFFF; 
-		dlog("SEED", seed); 
-		map = MapCreate(seed);  
+			if(!render) {
+				if(color === 0) {
+					clearInterval(funkyid); 
 
-		for(var x = 0; x !== 16; x++) 
-			for(var y = 0; y !== 16; y++) 
-				for(var z = 0; z !== 16; z++) {
-					var obj = map.getObject(x,y,z); 
-					if(obj === MAP_CUBE) { 
-						cubelist.push( new Cube( vec3create([x,y,z]) ) ); 
-					}
-					else if(obj === MAP_GOAL) {
-						goalpos[0] = x; 
-						goalpos[1] = y; 
-						goalpos[2] = z; 
-					}
+					gl.clearColor(0,0,0,0);
+					gl.clear(GL_COLOR_BUFFER_BIT); 					
+					GLT = 0; // UGLY!  
+					pleasestop = true;
 				}
 
-		cameraDir[0] = map.startingPosition.x;
-		cameraDir[1] = map.startingPosition.x;
-		cameraDir[2] = map.startingPosition.x;
+				funkycubecolor = "#" + color.toString(16) + "0000"; 
 
-		sphere = new Sphere({ x : cameraDir[0], y : cameraDir[1], z : cameraDir[2] }, cubelist, goalpos, map.dimension); 
+				color -= 5; 
+				if(color < 0) color = 0; 
+			}
+		}, 100); 
 
-		vec3set(cameraDir, cameraPos); 
-		cameraPos[0] = 0; 	
-		cameraPos[1] = 0;  	
-		cameraPos[2] = 1; 	
-
-		setup(); 
-		recalcCamera(); 
+		loadNextLevel(); 
 
 		//(new GLT.Gameloop(gameloop)).start(); 
 		GLT.requestGameFrame(gameloop); 
 
+		setup(); 
 		spinHorz(3.14/4); 
 		spinVert(-3.14/4); 
 	}

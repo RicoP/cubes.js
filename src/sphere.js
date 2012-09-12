@@ -149,6 +149,7 @@ var Sphere = (function() {
 
 				if(destx === goalpos[0] && desty === goalpos[1] && destz === goalpos[2]) {
 					dlog("winning"); 
+					sphere.winning = true; 
 					return; 
 				}
 
@@ -216,6 +217,13 @@ var Sphere = (function() {
 		this.tick = function(info) {
 			state.tick(info); 
 		};		
+
+		this.winning = false; 
+		var that = this; 
+
+		this.isWinning = function() {
+			return that.winning; 
+		};
 	};
 }());
 
