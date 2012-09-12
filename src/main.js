@@ -143,23 +143,8 @@ function setup() {
 	goalBuffer = glCreateBuffer(); 
 	glBindBuffer(GL_ARRAY_BUFFER, goalBuffer); 
 	glBufferData(GL_ARRAY_BUFFER, goal.rawData, GL_STATIC_DRAW); 
-/*	
-	var path = new Float32Array( 3 * map.path.length ); 
-	var j = 0; 
-	path[j++] = map.startingPosition.x;
-	path[j++] = map.startingPosition.y;
-	path[j++] = map.startingPosition.z;
+	
 
-	for(var i = 0; i !== map.path.length; i++) {
-		path[j++] = map.path[i][0];
-		path[j++] = map.path[i][1];
-		path[j++] = map.path[i][2];
-	}
-
-	pathBuffer = glCreateBuffer(); 
-	glBindBuffer(GL_ARRAY_BUFFER, pathBuffer); 
-	glBufferData(GL_ARRAY_BUFFER, path, GL_STATIC_DRAW); 
-	*/
 }
 
 function gameloop(info) {
@@ -603,6 +588,25 @@ function loadNextLevel() {
 	cameraPos[2] = 1; 	
 
 	recalcCamera(); 
+
+	#ifndef RELEASE 
+	var path = new Float32Array( 3 * map.path.length ); 
+	var j = 0; 
+	path[j++] = map.startingPosition.x;
+	path[j++] = map.startingPosition.y;
+	path[j++] = map.startingPosition.z;
+
+	for(var i = 0; i !== map.path.length; i++) {
+		path[j++] = map.path[i][0];
+		path[j++] = map.path[i][1];
+		path[j++] = map.path[i][2];
+	}
+
+	pathBuffer = glCreateBuffer(); 
+	glBindBuffer(GL_ARRAY_BUFFER, pathBuffer); 
+	glBufferData(GL_ARRAY_BUFFER, path, GL_STATIC_DRAW); 
+	
+	#endif 
 }
 
 GLT.loadmanager.loadFiles({

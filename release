@@ -2,5 +2,5 @@
 cpp entry.js -P -undef -nostdinc -Wtrigraphs -fdollars-in-identifiers -I gltoolbox.js/src -D RELEASE | uglifyjs > deploy/game.js
 cd deploy
 rm release.zip
-7z a -mx=9 release.zip index.html game.js cube.obj faces.gif skybox.obj heart.obj sphere.obj t.gif g.gif
+7z a -mx=9 release.zip index.html game.js cube.obj faces.gif skybox.obj heart.obj sphere.obj t.gif g.gif diffuse.shader border.shader
 7z l release.zip
