@@ -454,7 +454,7 @@ function createTexture(img) {
 }
 
 GLT.loadmanager.loadFiles({
-	"files" : ["cube.obj", "sphere.obj", "diffuse.shader", "faces.png", "skybox.obj", "border.shader", "goal.obj"], 
+	"files" : ["cube.obj", "sphere.obj", "diffuse.shader", "faces.gif", "skybox.obj", "border.shader", "goal.obj"], 
 	"update" : function(p,q) { dlog(p,q); }, 
 	"error" : function(file, err) {
 		derr(file, err); 
@@ -466,7 +466,7 @@ GLT.loadmanager.loadFiles({
 		goal = files["goal.obj"]; 
 		program = GLT.shader.compileProgram(gl,files["diffuse.shader"]);
 		borderprogram = GLT.shader.compileProgram(gl,files["border.shader"]);
-		cubetex = createTexture(files["faces.png"]);
+		cubetex = createTexture(files["faces.gif"]);
 		skytex = createTexture( funkycube.canvas );
 
 		var MAX = 10; 
