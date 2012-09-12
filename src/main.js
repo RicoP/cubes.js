@@ -148,9 +148,12 @@ function setup() {
 }
 
 function gameloop(info) {
-	update(info); 
-	draw(info); 
-	GLT.requestGameFrame(gameloop); 
+	try { 
+		update(info); 
+		draw(info); 
+		GLT.requestGameFrame(gameloop); 
+	} catch(e) {
+	}
 } 
 
 var getClickDirection = (function() {
