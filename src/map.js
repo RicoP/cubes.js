@@ -9,6 +9,7 @@
 #define MAP_CUBE           1
 #define MAP_START          2
 #define MAP_GOAL           3
+#define MAP_PATH           4 
 
 function MapCreate(seed) {
 	"use strict"; 
@@ -126,6 +127,25 @@ function MapCreate(seed) {
 		return nothingInBetween(field, dimension, newPos, dir, steps-1); 
 	}
 
+	//markSpaceInBeteenAsPath(field, dimension, position, dir, steps); 
+	function markSpaceInBeteenAsPath(field, dimension, position, dir, steps) {
+		assert(field.length); 
+		checkclass(dimension, Number); 
+		checkclass(dir, Number); 
+		checkclass(steps, Number); 
+		checkclass(position[0], Number); 
+		checkclass(position[1], Number); 
+		checkclass(position[2], Number); 
+
+		if(steps < 2) return true; 
+
+		var newPos = getCoords(position, dir, 1);
+		if( get(field,dimension, newPos) !== MAP_AIR ) return false; 
+		set(field, newPos, MAP_PATH); 
+		return nothingInBetween(field, dimension, newPos, dir, steps-1); 
+		
+	}
+
 	// iterationsLeft > 1 -> CUBE, iterationsLeft === 1 -> GOAL, iterationsLeft === 0 -> done
 	function fillRec(rand, position, iterationsLeft, attempt, directionICameFrom, path, field, dimension, setGoal) {
 		checkclass(position[0], Number); 
@@ -159,6 +179,9 @@ function MapCreate(seed) {
 			return fillRec(rand, position, iterationsLeft, attempt+1, directionICameFrom, path, field, dimension, setGoal); 
 		}
 
+		//fill 
+		markSpaceInBeteenAsPath(field, dimension, position, dir, steps); 
+
 		set(field, newObjectCoords, type); 
 
 		var newStartingPoint = getCoords(position, dir, steps-1); 
@@ -176,20 +199,21 @@ function MapCreate(seed) {
 		var field = clearField(dimension); 
 		set(field, startingPosition, MAP_START); 
 
-		var pathA = []; 
-		var fillA = fillRec(rand, startingPosition, iterations, 0, -1, pathA, field, dimension, false);
+		var steps = 10 - iterations; 
+	
+		var lastpath = []; 
+		var succeed = fillRec(rand, startingPosition, iterations, 0, -1, lastpath, field, dimension, false);
+		for(var i = 0; i !== iterations; i++) {
+			var newPosition = lastpath[rand.next() % lastpath.length]; 
+			lastpath = []; 	
+			succeed = succeed && fillRec(rand, newPosition, iterations, 0, -1, lastpath, field, dimension, i === (iterations - 1));
+		}
 
-		var pathB = []; 
-		var fillB = fillA && fillRec(rand, pathA[rand.next() % pathA.length], iterations, 0, -1, pathB, field, dimension, false);
-
-		var pathC = []; 
-		var fillC = fillB && fillRec(rand, pathB[rand.next() % pathB.length], iterations, 0, -1, pathC, field, dimension, true);
-
-		if(fillA && fillB && fillC) {
+		if(succeed) {			
 			return {
 				"startingPosition" : { x : startingPosition[0], y : startingPosition[0], z : startingPosition[0] },  
 				"getObject" : function(x,y,z) { return get(field, dimension, [x,y,z]); }, 
-				"path" : pathC, 
+				"path" : lastpath, 
 				"dimension" : dimension 
 			}; 
 		}

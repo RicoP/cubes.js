@@ -230,7 +230,7 @@ function draw(info) {
 	drawCubes(program); 
 	drawSphere(program); 
 	drawGoal(program); 
-	drawPath(borderprogram, map.path); 
+	//drawPath(borderprogram, map.path); 
 } 
 
 function drawCubes(program) {
@@ -456,7 +456,7 @@ function createTexture(img) {
 
 GLT.loadmanager.loadFiles({
 	"files" : ["cube.obj", "sphere.obj", "diffuse.shader", "faces.gif", "skybox.obj", "border.shader", "heart.obj"], 
-	"update" : function(p,q) { dlog(p,q); }, 
+	//"update" : function(p,q) { dlog(p,q); }, 
 	"error" : function(file, err) {
 		derr(file, err); 
 	}, 
