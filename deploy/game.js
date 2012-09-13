@@ -2085,7 +2085,7 @@ GLT.loadmanager.loadFiles({
   spinVert(-3.14/4);
  }
 });
-console.log("DEBUG (" + "src/main.js" + ":" + 715 + ")", "DEBUG Build:", "Sep 12 2012", "22:27:09" );
+console.log("DEBUG (" + "src/main.js" + ":" + 715 + ")", "DEBUG Build:", "Sep 13 2012", "13:33:20" );
 }
 catch(e) {
  var m = e.message || e;
